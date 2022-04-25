@@ -301,14 +301,21 @@ class InnovationPlayer(Player):
         self.winner = False
 
     def total_icons_on_board(self):
+        """Returns a list of the total icons a player has of each type"""
+        total_icons = []
+        icons = [0, 1, 2, 3, 4, 5]
+
+        for icon in icons:
+            total_icons.append(self.count_icons_on_board(icon))
+
+        return total_icons
+
+    def count_icons_on_board(self, icon_type):
+        """Counts all icons of a specific type on a board"""
+        total_icons = 0
         all_stacks = [self.blue_stack, self.green_stack, self.purple_stack, self.red_stack, self.yellow_stack]
-        total_icons = [0, 0, 0, 0, 0, 0]
-
         for stack in all_stacks:
-            stack_total = stack.total_icons_in_stack()
-
-            for i in range(6):
-                total_icons[i] = total_icons[i] + stack_total[i]
+            total_icons = total_icons + stack.count_icons_in_stack(icon_type)
 
         return total_icons
 
@@ -387,5 +394,6 @@ print(player.blue_stack.cards)
 print(player.green_stack.cards)
 print(player.purple_stack.cards)
 
-print(player.blue_stack.total_icons_in_stack())
+# print(player.blue_stack.total_icons_in_stack())
 print(player.total_icons_on_board())
+print(player.count_icons_on_board(4))
