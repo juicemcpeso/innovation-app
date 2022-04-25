@@ -7,8 +7,23 @@ import math
 
 
 class Card:
-    def __init__(self, n, c, a, t, i0, i1, i2, i3, t0, t1, t2):
+    """Base class for a card in a game"""
+
+    def __init__(self, n):
         self.name = n
+
+    def __repr__(self):
+        return "<Card: %s>" % self.name
+
+    def __str__(self):
+        return self.name
+
+
+class InnovationCard(Card):
+    """Class of cards specific to the game Innovation"""
+
+    def __init__(self, n, c, a, t, i0, i1, i2, i3, t0, t1, t2):
+        Card.__init__(self, n)
 
         # Set color to an int 0-4, alphabetically with options
         color_options = ['blue', 'green', 'purple', 'red', 'yellow']
@@ -32,14 +47,8 @@ class Card:
             if t == effect_type:
                 self.effect_type = effect_type_options.index(t)
 
-    def __repr__(self):
-        return "<Card: %s>" % self.name
 
-    def __str__(self):
-        return self.name
-
-
-card = Card('Agriculture', 'red', '1', 'leaf','','','','','','','')
+card = InnovationCard('Agriculture', 'red', '1', 'leaf','','','','','','','')
 print(card.name)
 print(card.color)
 print(card.effect_type)
