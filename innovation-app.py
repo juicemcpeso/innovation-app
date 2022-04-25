@@ -136,3 +136,39 @@ class Pile:
     def __str__(self):
         return self.name
 
+
+class Game:
+    """Base class for a collection of CardPile objects"""
+
+    def __init__(self, n, d):
+        self.name = n
+        self.date = d
+        self.piles = []
+
+    def add_pile(self, p):
+        if (isinstance(p, CardPile)):
+            self.piles.append(p)
+        else:
+            raise ValueError("Could not add pile " + str(p) + " to card game " + str(self.name) + ".")
+
+    def remove_pile(self, p):
+        try:
+            self.piles.remove(p)
+        except ValueError:
+            raise ValueError("Could not remove pile " + str(p) + " from card game " + str(self.name) + ".")
+
+    def get_pile(self, n):
+        pile = None
+        pile_list = list(filter(lambda x: x.name == n, self.piles))
+        if (len(pile_list)):
+            pile = pile_list.pop()
+        return pile
+
+    def __repr__(self):
+        string = "<CardGame: %s on %s>" % (self.name, self.date)
+        for pile in self.piles:
+            string += "\t" + repr(pile) + "\n"
+        return string
+
+    def __str__(self):
+        return "%s on %s" % (self.name, self.date)
