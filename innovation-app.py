@@ -218,6 +218,7 @@ class Game:
         self.name = n
         self.date = d
         self.piles = []
+        self.players = []
 
     def add_pile(self, p):
         if isinstance(p, Pile):
@@ -237,6 +238,19 @@ class Game:
         if len(pile_list):
             pile = pile_list.pop()
         return pile
+
+    def add_player(self, p):
+        if isinstance(p, Player):
+            self.players.append(p)
+        else:
+            raise ValueError("Could not add player " + str(p) + " to card game " + str(self.name) + ".")
+
+    def get_player(self, player_number):
+        player = None
+        player_list = list(filter(lambda x: x.number == player_number, self.players))
+        if len(player_list):
+            player = player_list.pop()
+        return player
 
     def __repr__(self):
         string = "<CardGame: %s on %s>" % (self.name, self.date)
