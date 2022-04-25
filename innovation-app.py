@@ -154,11 +154,9 @@ class Pile:
     def __str__(self):
         return self.name
 
-# TODO - Class InnovationPile(Pile) (is this needed?)
-
 
 class InnovationStack(Pile):
-    """Class for an innovation stack on a board"""
+    """Class for an Innovation stack on a board"""
 
     def __init__(self, n, c, seed):
         Pile.__init__(self, n, seed, [])
@@ -208,17 +206,54 @@ class Player:
     def __str__(self):
         return self.name
 
-# TODO - class InnovationPlayer(player)
+
+class InnovationPlayer(Player):
+    """Class for a player for the game Innovation"""
+
+    def __init__(self, n, num, ai, p_achieve, p_score, p_hand, s_blue, s_green, s_purple, s_red, s_yellow, tp, so):
+        Player.__init__(self, n)
+
+        if not isinstance(num, int):
+            raise ValueError("Error creating Innovation player. Player number must be an integer.")
+        self.number = num
+
+        if not isinstance(ai, bool):
+            raise ValueError("Error creating Innovation player. AI flag must be True or False.")
+        self.ai_flag = ai
+
+        # Associate all the piles with the player
+        self.achievement_pile = p_achieve
+        self.score_pile = p_score
+        self.hand = p_hand
+
+        # Associate all the stacks with the player
+        self.blue_stack = s_blue
+        self.green_stack = s_green
+        self.purple_stack = s_purple
+        self.red_stack = s_red
+        self.yellow_stack = s_yellow
+
+        # Set the table position
+        if not isinstance(tp, int):
+            raise ValueError("Error creating Innovation player. Table position must be an integer.")
+        self.table_position = tp
+
+        # Set the share order
+        # This depends on the number of players. Position 1 in a 3 player game is [2, 3, 1])
+        self.share_order = so
+
+        self.winner = False
 
 
 class Game:
-    """Base class for a collection of CardPile objects"""
+    """Base class for a collection of Pile objects and players"""
 
     def __init__(self, n, d):
         self.name = n
         self.date = d
         self.piles = []
         self.players = []
+        self.game_over = False
 
     def add_pile(self, p):
         if isinstance(p, Pile):
@@ -253,13 +288,14 @@ class Game:
         return player
 
     def __repr__(self):
-        string = "<CardGame: %s on %s>" % (self.name, self.date)
+        string = "<Game: %s on %s>" % (self.name, self.date)
         for pile in self.piles:
             string += "\t" + repr(pile) + "\n"
         return string
 
     def __str__(self):
         return "%s on %s" % (self.name, self.date)
+
 
 # TODO - Class InnovationGame(Game)
 a = InnovationCard('a', 'blue', '1', 'crown', '','','','','','','')
