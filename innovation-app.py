@@ -104,13 +104,21 @@ class Pile:
         self.seed = seed
         self.cards = []
         for card in card_list:
-            self.add_card(card)
+            self.add_card_to_bottom(card)
 
-    def add_card(self, c):
-        if isinstance(c, Card):
-            self.cards.append(c)
+    def add_card_to_bottom(self, card_object):
+        """Adds a card to the top of a pile"""
+        if isinstance(card_object, Card):
+            self.cards.append(card_object)
         else:
-            raise ValueError("Could not add card " + str(c) + " to card pile " + str(self) + ".")
+            raise ValueError("Could not add card " + str(card_object) + " to bottom of card pile " + str(self) + ".")
+
+    def add_card_to_top(self, card_object):
+        """Adds a card to the bottom of a pile"""
+        if isinstance(card_object, Card):
+            self.cards.insert(0, card_object)
+        else:
+            raise ValueError("Could not add card " + str(card_object) + " to top of card pile " + str(self) + ".")
 
     def remove_card(self, c):
         try:
@@ -243,8 +251,8 @@ class Game:
 a = InnovationCard('a', 'blue', '1', 'crown', '','','','','','','')
 b = InnovationCard('b', 'blue', '1', 'leaf', '','','','','','','')
 c = InnovationCard('c', 'blue', '1', 'castle', '','','','','','','')
-s = Pile('test', 18, [a, b, c])
+s = Pile('test', 18, [a, b])
 s.shuffle_pile()
 print(s.cards)
-print(s.get_top_card())
+s.add_card_to_bottom(c)
 print(s.cards)
