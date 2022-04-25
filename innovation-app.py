@@ -146,7 +146,7 @@ class Game:
         self.piles = []
 
     def add_pile(self, p):
-        if (isinstance(p, CardPile)):
+        if isinstance(p, Pile):
             self.piles.append(p)
         else:
             raise ValueError("Could not add pile " + str(p) + " to card game " + str(self.name) + ".")
@@ -160,7 +160,7 @@ class Game:
     def get_pile(self, n):
         pile = None
         pile_list = list(filter(lambda x: x.name == n, self.piles))
-        if (len(pile_list)):
+        if len(pile_list):
             pile = pile_list.pop()
         return pile
 
