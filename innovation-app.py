@@ -136,6 +136,62 @@ class Pile:
     def __str__(self):
         return self.name
 
+# TODO - Class InnovationPile(Pile) (is this needed?)
+
+
+class InnovationStack(Pile):
+    """Class for an innovation stack on a board"""
+
+    def __init__(self, n, c):
+        Pile.__init__(self, n, [])
+
+        # Set color to an int 0-4, alphabetically with options
+        color_options = ['blue', 'green', 'purple', 'red', 'yellow']
+        if c not in color_options:
+            raise ValueError("Error creating Innovation Card. Color must be blue, green, purple, red, or yellow.")
+        for color in color_options:
+            if c == color:
+                self.color = color_options.index(c)
+
+        self.splay_left = False
+        self.splay_right = False
+        self.splay_up = False
+
+    def set_splay(self, splay_direction):
+        """Takes splay direction as input, sets splay in that direction"""
+        splay_options = ['left', 'right', 'up']
+        if splay_direction not in splay_options:
+            raise ValueError("Error setting splay. Splay must be left, right, or up.")
+
+        self.cancel_splay()
+        if splay_direction == 'left':
+            self.splay_left = True
+        elif splay_direction == 'right':
+            self.splay_right = True
+        elif splay_direction == 'up':
+            self.splay_up = True
+
+    def cancel_splay(self):
+        """Sets all splays to false"""
+        self.splay_left = False
+        self.splay_right = False
+        self.splay_up = False
+
+
+class Player:
+    """Base class for a player in a game"""
+
+    def __init__(self, n):
+        self.name = n
+
+    def __repr__(self):
+        return "<Player: %s>" % self.name
+
+    def __str__(self):
+        return self.name
+
+# TODO - class InnovationPlayer(player)
+
 
 class Game:
     """Base class for a collection of CardPile objects"""
@@ -173,15 +229,7 @@ class Game:
     def __str__(self):
         return "%s on %s" % (self.name, self.date)
 
+# TODO - Class InnovationGame(Game)
 
-class Player:
-    """Base class for a player in a game"""
+s = InnovationStack('blue_stack', 'green')
 
-    def __init__(self, n):
-        self.name = n
-
-    def __repr__(self):
-        return "<Player: %s>" % self.name
-
-    def __str__(self):
-        return self.name
