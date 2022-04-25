@@ -323,12 +323,21 @@ class InnovationPlayer(Player):
 class Game:
     """Base class for a collection of Pile objects and players"""
 
-    def __init__(self, n, d):
+    def __init__(self, n, d, se=None):
         self.name = n
         self.date = d
         self.piles = []
         self.players = []
         self.game_over = False
+
+        # Set the random see if not specified
+        if se is None:
+            self.seed = random.randint(0, 9999999999)
+        else:
+            if isinstance(se, int) and (0 <= se <= 9999999999):
+                self.seed = se
+            else:
+                raise ValueError("Could not create game. Seed must be int between 0 and 9,999,999,999")
 
     def add_pile(self, p):
         if isinstance(p, Pile):
@@ -372,6 +381,60 @@ class Game:
         return "%s on %s" % (self.name, self.date)
 
 
+class InnovationGame(Game):
+    """Class of a game of Innovation"""
+
+    def __init__(self, n, d, num_p, se=None):
+        Game.__init__(self, n, d, se)
+
+        # Set number of players
+        if not isinstance(num_p, int) and (2 <= num_p <= 4):
+            raise ValueError("Could not create game. Number of players must be int between 2 and 4")
+
+        # Create dictionaries to find objects
+        self.cards = {}
+        self.draw_piles = {}
+
+        # Create everything needed for the game
+        self.__create_piles()
+        # self.__create_cards()
+        self.__create_players()
+        self.__set_up_game()
+
+    def __create_cards(self):
+        with open('cards/card_list.csv', 'r') as handle:
+            handle.readline()
+            lines = handle.read().splitlines()
+
+        for line in lines:
+            card = InnovationCard(*line.split('|'))
+            start_pile = self.draw_piles[card.age]
+            if not start_pile:
+                raise ValueError("Error adding card " + str(card) + " to pile " + str(start_pile) + ".")
+            start_pile.add_card(card)
+            self.cards.update({card.name: card})
+
+    def __create_piles(self):
+        # Create the draw piles
+        pile_list = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+        for pile in pile_list:
+            draw_pile = Pile(pile, self.seed)
+            self.add_pile(draw_pile)
+            self.draw_piles.update({int(pile): draw_pile})
+
+    def __create_players(self):
+        # TODO - create players
+        pass
+
+    def __set_up_game(self):
+        # TODO - set up game
+        pass
+
+
+
+
+
+
 # TODO - Class InnovationGame(Game)
 a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
 b = InnovationCard('b', 'blue', '1', 'leaf', 'leaf','','','clock','','','')
@@ -397,3 +460,8 @@ print(player.purple_stack.cards)
 # print(player.blue_stack.total_icons_in_stack())
 print(player.total_icons_on_board())
 print(player.count_icons_on_board(4))
+print('---')
+
+g = InnovationGame('test', '2022-04-25', 2)
+
+print(g.draw_piles[1].name)
