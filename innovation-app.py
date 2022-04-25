@@ -249,6 +249,7 @@ class InnovationStack(Pile):
 
         return total_icons
 
+
 class Player:
     """Base class for a player in a game"""
 
