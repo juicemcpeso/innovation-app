@@ -99,8 +99,9 @@ class InnovationCard(Card):
 class Pile:
     """Base class for a collection of card objects"""
 
-    def __init__(self, n, card_list=[]):
+    def __init__(self, n, seed, card_list=[]):
         self.name = n
+        self.seed = seed
         self.cards = []
         for card in card_list:
             self.add_card(card)
@@ -127,6 +128,10 @@ class Pile:
     def get_pile_size(self):
         return len(self.cards)
 
+    def shuffle_pile(self):
+        random.seed(self.seed)
+        random.shuffle(self.cards)
+
     def __repr__(self):
         string = "<CardPile: %s>\n" % self.name
         for card in self.cards:
@@ -142,8 +147,8 @@ class Pile:
 class InnovationStack(Pile):
     """Class for an innovation stack on a board"""
 
-    def __init__(self, n, c):
-        Pile.__init__(self, n, [])
+    def __init__(self, n, c, seed):
+        Pile.__init__(self, n, seed, [])
 
         # Set color to an int 0-4, alphabetically with options
         color_options = ['blue', 'green', 'purple', 'red', 'yellow']
@@ -230,6 +235,9 @@ class Game:
         return "%s on %s" % (self.name, self.date)
 
 # TODO - Class InnovationGame(Game)
-
-s = InnovationStack('blue_stack', 'green')
-
+a = InnovationCard('a', 'blue', '1', 'crown', '','','','','','','')
+b = InnovationCard('b', 'blue', '1', 'leaf', '','','','','','','')
+c = InnovationCard('c', 'blue', '1', 'castle', '','','','','','','')
+s = Pile('test', 18, [a, b, c])
+s.shuffle_pile()
+print(s.cards)
