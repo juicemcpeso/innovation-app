@@ -90,13 +90,8 @@ class InnovationCard(Card):
             if i3 == icon and i3 != '':
                 self.icon_3 = icon_options.index(i3)
 
+        # Add in event texts
+        self.effect_text_0 = t0
+        self.effect_text_1 = t1
+        self.effect_text_2 = t2
 
-card = InnovationCard('Agriculture', 'red', '1', 'leaf','crown','castle','','lightbulb','','','')
-print(card.name)
-print(card.color)
-print(card.age)
-print(card.effect_type)
-print(card.icon_0)
-print(card.icon_1)
-print(card.icon_2)
-print(card.icon_3)
