@@ -97,7 +97,7 @@ class InnovationCard(Card):
         self.effect_text_1 = t1
         self.effect_text_2 = t2
 
-    def total_icons_on_card(self, icon_type):
+    def count_icons_on_card(self, icon_type):
         total_icons = 0
         for icon in self.icons:
             if icon == icon_type:
@@ -203,7 +203,7 @@ class InnovationStack(Pile):
         self.splay_right = False
         self.splay_up = False
 
-    def total_icons_in_pile(self, icon_type):
+    def count_icons_in_stack(self, icon_type):
         """Gets the total number of icons of a type in a stack"""
         total_icons = 0
         pile_size = self.get_pile_size()
@@ -214,7 +214,7 @@ class InnovationStack(Pile):
 
         # Add the icons for the top card
         card = self.cards[0]
-        total_icons = card.total_icons_on_card(icon_type)
+        total_icons = card.count_icons_on_card(icon_type)
 
         # Add in additional icons if the stack is splayed
         if pile_size > 1:
@@ -239,6 +239,15 @@ class InnovationStack(Pile):
 
         return total_icons
 
+    def total_icons_in_stack(self):
+        """Counts all icons in a stack and returns a list"""
+        icon_list = [0, 1, 2, 3, 4, 5]
+        total_icons = []
+
+        for icon in icon_list:
+            total_icons.append(self.count_icons_in_stack(icon))
+
+        return total_icons
 
 class Player:
     """Base class for a player in a game"""
@@ -289,6 +298,18 @@ class InnovationPlayer(Player):
         self.share_order = so
 
         self.winner = False
+
+    def total_icons_on_board(self):
+        all_stacks = [self.blue_stack, self.green_stack, self.purple_stack, self.red_stack, self.yellow_stack]
+        total_icons = [0, 0, 0, 0, 0, 0]
+
+        for stack in all_stacks:
+            stack_total = stack.total_icons_in_stack()
+
+            for i in range(6):
+                total_icons[i] = total_icons[i] + stack_total[i]
+
+        return total_icons
 
 
 class Game:
@@ -345,19 +366,25 @@ class Game:
 
 # TODO - Class InnovationGame(Game)
 a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
-b = InnovationCard('b', 'blue', '1', 'leaf', 'leaf','','','','','','')
+b = InnovationCard('b', 'blue', '1', 'leaf', 'leaf','','','clock','','','')
 c = InnovationCard('Clothing', 'green', '1', 'leaf', '', 'crown', 'leaf', 'leaf', '','','')
+
 p = InnovationStack('blue stack', 'blue', 18)
-# p.add_card_to_top(c)
-# p.add_card_to_top(a)
+q = InnovationStack('green stack', 'green', 18)
+r = InnovationStack('purple stack', 'purple', 18)
+s = InnovationStack('red stack', 'red', 18)
+t = InnovationStack('yellow stack', 'yellow', 18)
+
+p.add_card_to_top(a)
+q.add_card_to_top(b)
+r.add_card_to_top(c)
+
+player = InnovationPlayer('1', 1, False, [], [], [], p, q, r, s, t, 0, [1, 0])
 
 
-print(p.cards)
-p.set_splay('up')
-print(p.total_icons_in_pile(1))
+print(player.blue_stack.cards)
+print(player.green_stack.cards)
+print(player.purple_stack.cards)
 
-# s = Pile('test', 18, [a, b])
-# s.shuffle_pile()
-# print(s.cards)
-# s.add_card_to_bottom(c)
-# print(s.cards)
+print(player.blue_stack.total_icons_in_stack())
+print(player.total_icons_on_board())
