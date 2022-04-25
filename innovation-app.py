@@ -401,7 +401,7 @@ class InnovationGame(Game):
 
         # Create everything needed for the game
         self.__create_piles()
-        # self.__create_cards()
+        self.__create_cards()
         self.__create_players()
         self.__set_up_game()
 
@@ -415,7 +415,7 @@ class InnovationGame(Game):
             start_pile = self.draw_piles[card.age]
             if not start_pile:
                 raise ValueError("Error adding card " + str(card) + " to pile " + str(start_pile) + ".")
-            start_pile.add_card(card)
+            start_pile.add_card_to_bottom(card)
             self.cards.update({card.name: card})
 
     def __create_piles(self):
@@ -483,3 +483,4 @@ g = InnovationGame('test', '2022-04-25', 2, "Ryan", False, "Mookifer", True)
 print(g.draw_piles[1].name)
 print(g.get_player(0).green_stack)
 print(g.players)
+print(g.get_pile('1').cards)
