@@ -422,6 +422,10 @@ class InnovationGame(Game):
             self.add_pile(draw_pile)
             self.draw_piles.update({int(pile): draw_pile})
 
+        # Create box and reveal piles
+        self.add_pile(Pile('reveal', self.seed))
+        self.add_pile(Pile('box', self.seed))
+
     def __create_players(self):
         # TODO - create players
         pass
