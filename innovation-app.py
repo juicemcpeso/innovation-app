@@ -42,13 +42,61 @@ class InnovationCard(Card):
         effect_type_options = ['crown', 'leaf', 'lightbulb', 'castle', 'factory', 'clock']
         if t not in effect_type_options:
             raise ValueError("Error creating Innovation Card. "
-                             "Type must be crown, lead, lightbulb, castle, factory, or clock.")
+                             "Effect type must be crown, lead, lightbulb, castle, factory, or clock.")
         for effect_type in effect_type_options:
             if t == effect_type:
                 self.effect_type = effect_type_options.index(t)
 
+        # Set each of the card icons to an int 0-5, matching the effect_type.
+        icon_options = ['crown', 'leaf', 'lightbulb', 'castle', 'factory', 'clock', '']
+        self.icon_0 = None
+        self.icon_1 = None
+        self.icon_2 = None
+        self.icon_3 = None
 
-card = InnovationCard('Agriculture', 'red', '1', 'leaf','','','','','','','')
+        # Set icon 0 - top left
+        if i0 not in icon_options:
+            raise ValueError("Error creating Innovation Card. "
+                             "Icon 0 type must be crown, lead, lightbulb, castle, factory, or clock.")
+
+        for icon in icon_options:
+            if i0 == icon and i0 != '':
+                self.icon_0 = icon_options.index(i0)
+
+        # Set icon 1 - bottom left
+        if i1 not in icon_options:
+            raise ValueError("Error creating Innovation Card. "
+                             "Icon 0 type must be crown, lead, lightbulb, castle, factory, or clock.")
+
+        for icon in icon_options:
+            if i1 == icon and i1 != '':
+                self.icon_1 = icon_options.index(i1)
+
+        # Set icon 2 - bottom middle
+        if i2 not in icon_options:
+            raise ValueError("Error creating Innovation Card. "
+                             "Icon 0 type must be crown, lead, lightbulb, castle, factory, or clock.")
+
+        for icon in icon_options:
+            if i2 == icon and i2 != '':
+                self.icon_2 = icon_options.index(i2)
+
+        # Set icon 3 - bottom right
+        if i2 not in icon_options:
+            raise ValueError("Error creating Innovation Card. "
+                             "Icon 0 type must be crown, lead, lightbulb, castle, factory, or clock.")
+
+        for icon in icon_options:
+            if i3 == icon and i3 != '':
+                self.icon_3 = icon_options.index(i3)
+
+
+card = InnovationCard('Agriculture', 'red', '1', 'leaf','crown','castle','','lightbulb','','','')
 print(card.name)
 print(card.color)
+print(card.age)
 print(card.effect_type)
+print(card.icon_0)
+print(card.icon_1)
+print(card.icon_2)
+print(card.icon_3)
