@@ -128,6 +128,11 @@ class Pile:
     def get_pile_size(self):
         return len(self.cards)
 
+    def get_top_card(self):
+        if len(self.cards):
+            card = self.cards.pop(0)
+            return card
+
     def shuffle_pile(self):
         random.seed(self.seed)
         random.shuffle(self.cards)
@@ -240,4 +245,6 @@ b = InnovationCard('b', 'blue', '1', 'leaf', '','','','','','','')
 c = InnovationCard('c', 'blue', '1', 'castle', '','','','','','','')
 s = Pile('test', 18, [a, b, c])
 s.shuffle_pile()
+print(s.cards)
+print(s.get_top_card())
 print(s.cards)
