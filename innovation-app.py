@@ -266,7 +266,7 @@ class Player:
 class InnovationPlayer(Player):
     """Class for a player for the game Innovation"""
 
-    def __init__(self, n, num, ai, p_achieve, p_score, p_hand, s_blue, s_green, s_purple, s_red, s_yellow, tp, so):
+    def __init__(self, n, num, ai, p_achieve, p_score, p_hand, s_blue, s_green, s_purple, s_red, s_yellow):
         Player.__init__(self, n)
 
         if not isinstance(num, int):
@@ -289,14 +289,8 @@ class InnovationPlayer(Player):
         self.red_stack = s_red
         self.yellow_stack = s_yellow
 
-        # Set the table position
-        if not isinstance(tp, int):
-            raise ValueError("Error creating Innovation player. Table position must be an integer.")
-        self.table_position = tp
-
-        # Set the share order
-        # This depends on the number of players. Position 1 in a 3 player game is [2, 3, 1])
-        self.share_order = so
+        self.table_position = 0
+        self.share_order = []
 
         self.winner = False
 
@@ -384,12 +378,22 @@ class Game:
 class InnovationGame(Game):
     """Class of a game of Innovation"""
 
-    def __init__(self, n, d, num_p, se=None):
+    def __init__(self, n, d, num_p, p1_n='', p1_ai=False, p2_n='', p2_ai=False, p3_n='', p3_ai=False, p4_n='', p4_ai=False, se=None):
         Game.__init__(self, n, d, se)
 
         # Set number of players
         if not isinstance(num_p, int) and (2 <= num_p <= 4):
             raise ValueError("Could not create game. Number of players must be int between 2 and 4")
+        self.number_of_players = num_p
+
+        possible_player_names = [p1_n, p2_n, p3_n, p4_n]
+        possible_ai_players = [p1_ai, p2_ai, p3_ai, p4_ai]
+        self.player_names = []
+        self.ai_players = []
+
+        for i in range(self.number_of_players):
+            self.player_names.append(possible_player_names[i])
+            self.ai_players.append(possible_ai_players[i])
 
         # Create dictionaries to find objects
         self.cards = {}
@@ -427,19 +431,27 @@ class InnovationGame(Game):
         self.add_pile(Pile('box', self.seed))
 
     def __create_players(self):
-        # TODO - create players
-        pass
+        for i in range(self.number_of_players):
+            # Create an achievement pile, score_pile, and hand for each player
+            achievement_pile = Pile((self.player_names[i] + "achievement pile"), self.seed)
+            score_pile = Pile((self.player_names[i] + "score pile"), self.seed)
+            hand = Pile((self.player_names[i] + "hand"), self.seed)
+
+            # Create stacks of each color for each player
+            b_stack = InnovationStack(self.player_names[i] + "'s blue stack", 'blue', self.seed)
+            g_stack = InnovationStack(self.player_names[i] + "'s green stack", 'green', self.seed)
+            p_stack = InnovationStack(self.player_names[i] + "'s purple stack", 'purple', self.seed)
+            r_stack = InnovationStack(self.player_names[i] + "'s red stack", 'red', self.seed)
+            y_stack = InnovationStack(self.player_names[i] + "'s yellow stack", 'yellow', self.seed)
+
+            player = InnovationPlayer(self.player_names[i], i, self.ai_players[i], achievement_pile, score_pile, hand, b_stack, g_stack, p_stack, r_stack, y_stack)
+            self.add_player(player)
 
     def __set_up_game(self):
         # TODO - set up game
         pass
 
 
-
-
-
-
-# TODO - Class InnovationGame(Game)
 a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
 b = InnovationCard('b', 'blue', '1', 'leaf', 'leaf','','','clock','','','')
 c = InnovationCard('Clothing', 'green', '1', 'leaf', '', 'crown', 'leaf', 'leaf', '','','')
@@ -454,7 +466,7 @@ p.add_card_to_top(a)
 q.add_card_to_top(b)
 r.add_card_to_top(c)
 
-player = InnovationPlayer('1', 1, False, [], [], [], p, q, r, s, t, 0, [1, 0])
+player = InnovationPlayer('1', 1, False, [], [], [], p, q, r, s, t)
 
 
 print(player.blue_stack.cards)
@@ -466,6 +478,8 @@ print(player.total_icons_on_board())
 print(player.count_icons_on_board(4))
 print('---')
 
-g = InnovationGame('test', '2022-04-25', 2)
+g = InnovationGame('test', '2022-04-25', 2, "Ryan", False, "Mookifer", True)
 
 print(g.draw_piles[1].name)
+print(g.get_player(0).green_stack)
+print(g.players)
