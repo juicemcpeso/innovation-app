@@ -57,7 +57,7 @@ class InnovationCard(Card):
         # Set icon 0 - top left
         if i0 not in icon_options:
             raise ValueError("Error creating Innovation Card. "
-                             "Icon 0 type must be crown, lead, lightbulb, castle, factory, or clock.")
+                             "Icon 0 type must be crown, leaf, lightbulb, castle, factory, or clock.")
 
         for icon in icon_options:
             if i0 == icon and i0 != '':
@@ -66,7 +66,7 @@ class InnovationCard(Card):
         # Set icon 1 - bottom left
         if i1 not in icon_options:
             raise ValueError("Error creating Innovation Card. "
-                             "Icon 0 type must be crown, lead, lightbulb, castle, factory, or clock.")
+                             "Icon 0 type must be crown, leaf, lightbulb, castle, factory, or clock.")
 
         for icon in icon_options:
             if i1 == icon and i1 != '':
@@ -75,7 +75,7 @@ class InnovationCard(Card):
         # Set icon 2 - bottom middle
         if i2 not in icon_options:
             raise ValueError("Error creating Innovation Card. "
-                             "Icon 0 type must be crown, lead, lightbulb, castle, factory, or clock.")
+                             "Icon 0 type must be crown, leaf, lightbulb, castle, factory, or clock.")
 
         for icon in icon_options:
             if i2 == icon and i2 != '':
@@ -84,16 +84,26 @@ class InnovationCard(Card):
         # Set icon 3 - bottom right
         if i2 not in icon_options:
             raise ValueError("Error creating Innovation Card. "
-                             "Icon 0 type must be crown, lead, lightbulb, castle, factory, or clock.")
+                             "Icon 0 type must be crown, leaf, lightbulb, castle, factory, or clock.")
 
         for icon in icon_options:
             if i3 == icon and i3 != '':
                 self.icon_3 = icon_options.index(i3)
 
+        self.icons = [self.icon_0, self.icon_1, self.icon_2, self.icon_3]
+
         # Add in event texts
         self.effect_text_0 = t0
         self.effect_text_1 = t1
         self.effect_text_2 = t2
+
+    def total_icons_on_card(self, icon_type):
+        total_icons = 0
+        for icon in self.icons:
+            if icon == icon_type:
+                total_icons += 1
+
+        return total_icons
 
 
 class Pile:
@@ -192,6 +202,42 @@ class InnovationStack(Pile):
         self.splay_left = False
         self.splay_right = False
         self.splay_up = False
+
+    def total_icons_in_pile(self, icon_type):
+        """Gets the total number of icons of a type in a stack"""
+        total_icons = 0
+        pile_size = self.get_pile_size()
+
+        # If there are no cards in the stack, return 0.
+        if pile_size == 0:
+            return total_icons
+
+        # Add the icons for the top card
+        card = self.cards[0]
+        total_icons = card.total_icons_on_card(icon_type)
+
+        # Add in additional icons if the stack is splayed
+        if pile_size > 1:
+            if self.splay_left:
+                for card in self.cards[1:]:
+                    if card.icon_3 == icon_type:
+                        total_icons += 1
+            elif self.splay_right:
+                for card in self.cards[1:]:
+                    if card.icon_0 == icon_type:
+                        total_icons += 1
+                    if card.icon_1 == icon_type:
+                        total_icons += 1
+            elif self.splay_up:
+                for card in self.cards[1:]:
+                    if card.icon_1 == icon_type:
+                        total_icons += 1
+                    if card.icon_2 == icon_type:
+                        total_icons += 1
+                    if card.icon_3 == icon_type:
+                        total_icons += 1
+
+        return total_icons
 
 
 class Player:
@@ -298,11 +344,20 @@ class Game:
 
 
 # TODO - Class InnovationGame(Game)
-a = InnovationCard('a', 'blue', '1', 'crown', '','','','','','','')
-b = InnovationCard('b', 'blue', '1', 'leaf', '','','','','','','')
-c = InnovationCard('c', 'blue', '1', 'castle', '','','','','','','')
-s = Pile('test', 18, [a, b])
-s.shuffle_pile()
-print(s.cards)
-s.add_card_to_bottom(c)
-print(s.cards)
+a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
+b = InnovationCard('b', 'blue', '1', 'leaf', 'leaf','','','','','','')
+c = InnovationCard('Clothing', 'green', '1', 'leaf', '', 'crown', 'leaf', 'leaf', '','','')
+p = InnovationStack('blue stack', 'blue', 18)
+# p.add_card_to_top(c)
+# p.add_card_to_top(a)
+
+
+print(p.cards)
+p.set_splay('up')
+print(p.total_icons_in_pile(1))
+
+# s = Pile('test', 18, [a, b])
+# s.shuffle_pile()
+# print(s.cards)
+# s.add_card_to_bottom(c)
+# print(s.cards)
