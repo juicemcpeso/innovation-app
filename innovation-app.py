@@ -451,6 +451,20 @@ class InnovationGame(Game):
         # TODO - set up game
         pass
 
+    def game_end(self):
+        self.game_over = True
+        # TODO - write code to evaluate scores
+
+    def draw_value(self, draw_value):
+        """Function to draw a card of a specified value"""
+        for value in range(draw_value, 11):
+            pile = self.get_pile(str(value))
+            if pile.get_pile_size() > 0:
+                card = pile.get_top_card()
+                return card
+
+        self.game_end()
+
 
 a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
 b = InnovationCard('b', 'blue', '1', 'leaf', 'leaf','','','clock','','','')
@@ -480,7 +494,4 @@ print('---')
 
 g = InnovationGame('test', '2022-04-25', 2, "Ryan", False, "Mookifer", True)
 
-print(g.draw_piles[1].name)
-print(g.get_player(0).green_stack)
-print(g.players)
-print(g.get_pile('1').cards)
+print(g.draw_value(10))
