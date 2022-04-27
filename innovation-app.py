@@ -314,6 +314,14 @@ class InnovationPlayer(Player):
 
         return total_icons
 
+    def score(self):
+        """Returns the total value of cards in a players score pile"""
+        total_score = 0
+        for card in self.score_pile.cards:
+            total_score = total_score + card.age
+
+        return total_score
+
 
 class Game:
     """Base class for a collection of Pile objects and players"""
@@ -457,7 +465,7 @@ class InnovationGame(Game):
         # TODO - write code to evaluate scores
 
     # Base functions
-    def draw(self, draw_value):
+    def draw_card(self, draw_value):
         """Base function to draw a card of a specified value"""
         for value in range(draw_value, 11):
             pile = self.get_pile(str(value))
@@ -467,7 +475,7 @@ class InnovationGame(Game):
 
         self.game_end()
 
-    def meld(self, card, player):
+    def meld_card(self, card, player):
         """Base function to meld a card"""
         player.stacks[card.color].add_card_to_top(card)
 
@@ -479,9 +487,13 @@ class InnovationGame(Game):
         """Base function to score a card"""
         player.score_pile.add_card_to_bottom(card)
 
+    def tuck_card(self, card, player):
+        """Base function to tuck a card in a stack"""
+        player.stacks[card.color].add_card_to_bottom(card)
+
 
 a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
-b = InnovationCard('b', 'yellow', '1', 'leaf', 'leaf','','','clock','','','')
+b = InnovationCard('b', 'yellow', '2', 'leaf', 'leaf','','','clock','','','')
 c = InnovationCard('Clothing', 'green', '1', 'leaf', '', 'crown', 'leaf', 'leaf', '','','')
 
 p = InnovationStack('blue stack', 'blue', 18)
@@ -508,6 +520,8 @@ print('---')
 
 g = InnovationGame('test', '2022-04-25', 2, "Ryan", False, "Mookifer", True)
 
-print(g.get_player(0).score_pile.cards)
-g.score_card(a, g.get_player(0))
-print(g.get_player(0).score_pile.cards)
+print(g.get_player(0).yellow_stack.cards)
+g.meld_card(a, g.get_player(0))
+g.meld_card(b, g.get_player(0))
+print(g.get_player(0).yellow_stack.cards)
+
