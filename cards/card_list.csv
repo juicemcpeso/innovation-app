@@ -1,3 +1,12 @@
 Name|Color|Age|Effect Type|Icon 0|Icon 1|Icon 2|Icon 3|Effect 0|Effect 1|Effect 2
 Agriculture|yellow|1|leaf||leaf|leaf|leaf|You may return a card from your hand. If you do, draw and score a card of value one higher than the card you returned.||
 Archery|red|1|castle|castle|lightbulb||castle|I DEMAND you draw a [1], then transfer the highest card in your hand to my hand.||
+Calendar|blue|2|leaf||leaf|leaf|lightbulb|If you have more cards in your score pile than in your hand, draw two 3.||
+Alchemy|blue|3|castle||leaf|castle|castle|Draw and reveal a 4 for every three [Castle] icons on your board. If any of the drawn cards are red, return the cards drawn and all cards in your hand. Otherwise, keep them.|Meld a card from your hand, then score a card from your hand.|
+Anatomy|yellow|4|leaf||leaf|leaf|leaf|I DEMAND you return a card from your score pile! If you do, return a top card of equal value from your board!||
+Astronomy|purple|5|lightbulb|crown|lightbulb|lightbulb||Draw and reveal a 6. If the card is green or blue, meld it and repeat this dogma effect.|If all non-purple top cards on your board are value 6 or higher, claim the Universe achievement.|
+Atomic Theory|blue|6|lightbulb|lightbulb|lightbulb|lightbulb||You may splay your blue cards right.|Draw and meld a 7.|
+Bicycle|green|7|crown|crown|crown|crown||You may exchange all the cards in your hand with all the cards in your score pile. If you exchange one, you must exchange them all.||
+Antibiotics|yellow|8|leaf|leaf|leaf|leaf||You may return up to three cards from your hand. For every different value of card that you returned, draw two 8.||
+Collaboration|green|9|crown||crown|clock|crown|I demand you draw two 9 and reveal them. Transfer the card of my choice to my board, and meld the other.|If you have ten or more green cards on your board, you win.|
+A.I.|purple|10|clock|lightbulb|lightbulb|clock||Draw and score a 10.|If Robotics and Software are top cards on any board, the single player with the lowest score wins.|
