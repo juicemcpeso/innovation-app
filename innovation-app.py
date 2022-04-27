@@ -475,6 +475,10 @@ class InnovationGame(Game):
         """Base function to return a card"""
         self.draw_piles[card.age].add_card_to_bottom(card)
 
+    def score_card(self, card, player):
+        """Base function to score a card"""
+        player.score_pile.add_card_to_bottom(card)
+
 
 a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
 b = InnovationCard('b', 'yellow', '1', 'leaf', 'leaf','','','clock','','','')
@@ -504,9 +508,6 @@ print('---')
 
 g = InnovationGame('test', '2022-04-25', 2, "Ryan", False, "Mookifer", True)
 
-print(g.draw_piles[1].cards)
-test = g.draw(1)
-g.meld(test, player_1)
-print(g.draw_piles[1].cards)
-g.return_card(test)
-print(g.draw_piles[1].cards)
+print(g.get_player(0).score_pile.cards)
+g.score_card(a, g.get_player(0))
+print(g.get_player(0).score_pile.cards)
