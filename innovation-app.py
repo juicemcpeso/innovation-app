@@ -106,6 +106,15 @@ class InnovationCard(Card):
         return total_icons
 
 
+class SpecialAchievementCard(Card):
+    """Class of special achievement cards for the game Innovation"""
+    def __init__(self, n, c, a):
+        Card.__init__(self, n)
+
+        self.criteria_text = c
+        self.alternative_text = a
+
+
 class Pile:
     """Base class for a collection of card objects"""
 
@@ -406,6 +415,8 @@ class InnovationGame(Game):
 
         # Create dictionaries to find objects
         self.cards = {}
+        self.achievements = {}
+        self.special_achievements = {}
         self.draw_piles = {}
 
         # Create everything needed for the game
@@ -427,6 +438,20 @@ class InnovationGame(Game):
             start_pile.add_card_to_bottom(card)
             self.cards.update({card.name: card})
 
+    def __create_special_achievements(self):
+        """Makes the five special achievement cards"""
+        with open('cards/special_achievement_list.csv', 'r') as handle:
+            handle.readline()
+            lines = handle.read().splitlines()
+
+        for line in lines:
+            card = SpecialAchievementCard(*line.split('|'))
+            start_pile = self.get_pile('special achievements')
+            if not start_pile:
+                raise ValueError("Error adding card " + str(card) + " to pile " + str(start_pile) + ".")
+            start_pile.add_card_to_bottom(card)
+            self.cards.update({card.name: card})
+
     def __create_piles(self):
         # Create the draw piles
         pile_list = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
@@ -434,6 +459,10 @@ class InnovationGame(Game):
             draw_pile = Pile(pile, self.seed)
             self.add_pile(draw_pile)
             self.draw_piles.update({int(pile): draw_pile})
+
+        # Create achievement piles
+        self.add_pile(Pile('achievements', self.seed))
+        self.add_pile(Pile('special achievements', self.seed))
 
         # Create box and reveal piles
         self.add_pile(Pile('reveal', self.seed))
