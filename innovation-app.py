@@ -498,6 +498,10 @@ class InnovationGame(Game):
             self.get_pile('achievements').add_card_to_bottom(card)
             self.achievements.update({card.age: card})
 
+        for player in self.players:
+            self.draw_to_hand(player, 1)
+            self.draw_to_hand(player, 1)
+
     def game_end(self):
         self.game_over = True
         # TODO - write code to evaluate scores
@@ -528,6 +532,21 @@ class InnovationGame(Game):
     def tuck_card(self, card, player):
         """Base function to tuck a card in a stack"""
         player.stacks[card.color].add_card_to_bottom(card)
+
+    # Base functions to move cards around
+    def transfer_card(self, card, to_location, from_location):
+        """Base function to move a card from one pile to another. Do not use for stacks, use meld/tuck instead."""
+        from_location.remove_card(card)
+        to_location.add_card_to_top(card)
+
+    def add_card_to_hand(self, card, player):
+        """Moves selected card to hand"""
+        player.hand.add_card_to_bottom(card)
+
+    # Combination functions used as card actions
+    def draw_to_hand(self, player, draw_value):
+        """Draws a card to a players hand of a specified draw value"""
+        self.add_card_to_hand(self.draw_card(draw_value), player)
 
 
 a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
@@ -564,4 +583,8 @@ t = InnovationStack('yellow stack', 'yellow', 18)
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Ryan", False, "Mookifer", True)
 print(g.get_pile('1').cards)
-print(g.get_pile('achievements').cards)
+print(g.get_player(0).hand.cards)
+test = g.draw_card(1)
+g.add_card_to_hand(test, g.get_player(0))
+print(g.get_pile('1').cards)
+print(g.get_player(0).hand.cards)
