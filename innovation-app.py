@@ -422,6 +422,7 @@ class InnovationGame(Game):
         # Create everything needed for the game
         self.__create_piles()
         self.__create_cards()
+        self.__create_special_achievements()
         self.__create_players()
         self.__set_up_game()
 
