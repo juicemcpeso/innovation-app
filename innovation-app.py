@@ -396,7 +396,7 @@ class Game:
 class InnovationGame(Game):
     """Class of a game of Innovation"""
 
-    def __init__(self, n, d, num_p, p1_n='', p1_ai=False, p2_n='', p2_ai=False, p3_n='', p3_ai=False, p4_n='', p4_ai=False, se=None):
+    def __init__(self, n, d, num_p, se=None, p1_n='', p1_ai=False, p2_n='', p2_ai=False, p3_n='', p3_ai=False, p4_n='', p4_ai=False):
         Game.__init__(self, n, d, se)
 
         # Set number of players
@@ -487,8 +487,16 @@ class InnovationGame(Game):
             self.add_player(player)
 
     def __set_up_game(self):
-        # TODO - set up game
-        pass
+        """Sets up the game to be played"""
+        # Shuffle all the piles
+        for pile in self.draw_piles.values():
+            pile.shuffle_pile()
+
+        # Pick a card from each of the piles 1-9 to use as an achievement
+        for i in range(1, 10):
+            card = self.get_pile(str(i)).get_top_card()
+            self.get_pile('achievements').add_card_to_bottom(card)
+            self.achievements.update({card.age: card})
 
     def game_end(self):
         self.game_over = True
@@ -532,27 +540,28 @@ r = InnovationStack('purple stack', 'purple', 18)
 s = InnovationStack('red stack', 'red', 18)
 t = InnovationStack('yellow stack', 'yellow', 18)
 
-# p.add_card_to_top(a)
-# q.add_card_to_top(b)
-# r.add_card_to_top(c)
+# # p.add_card_to_top(a)
+# # q.add_card_to_top(b)
+# # r.add_card_to_top(c)
+#
+# player_1 = InnovationPlayer('1', 1, False, [], [], [], p, q, r, s, t)
+#
+#
+# print(player_1.blue_stack.cards)
+# print(player_1.green_stack.cards)
+# print(player_1.purple_stack.cards)
+#
+# # print(player.blue_stack.total_icons_in_stack())
+# print(player_1.total_icons_on_board())
+# print(player_1.count_icons_on_board(4))
+# print('---')
+#
+# print(g.get_player(0).yellow_stack.cards)
+# g.meld_card(a, g.get_player(0))
+# g.meld_card(b, g.get_player(0))
+# print(g.get_player(0).yellow_stack.cards)
+# print(g.get_pile('special achievements').cards)
 
-player_1 = InnovationPlayer('1', 1, False, [], [], [], p, q, r, s, t)
-
-
-print(player_1.blue_stack.cards)
-print(player_1.green_stack.cards)
-print(player_1.purple_stack.cards)
-
-# print(player.blue_stack.total_icons_in_stack())
-print(player_1.total_icons_on_board())
-print(player_1.count_icons_on_board(4))
-print('---')
-
-g = InnovationGame('test', '2022-04-25', 2, "Ryan", False, "Mookifer", True)
-
-print(g.get_player(0).yellow_stack.cards)
-g.meld_card(a, g.get_player(0))
-g.meld_card(b, g.get_player(0))
-print(g.get_player(0).yellow_stack.cards)
-print(g.get_pile('special achievements').cards)
-
+g = InnovationGame('test', '2022-04-25', 2, None, "Ryan", False, "Mookifer", True)
+print(g.get_pile('1').cards)
+print(g.get_pile('achievements').cards)
