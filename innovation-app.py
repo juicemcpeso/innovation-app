@@ -554,4 +554,5 @@ print(g.get_player(0).yellow_stack.cards)
 g.meld_card(a, g.get_player(0))
 g.meld_card(b, g.get_player(0))
 print(g.get_player(0).yellow_stack.cards)
+print(g.get_pile('special achievements').cards)
 
