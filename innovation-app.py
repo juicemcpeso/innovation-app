@@ -288,6 +288,7 @@ class InnovationPlayer(Player):
         self.purple_stack = s_purple
         self.red_stack = s_red
         self.yellow_stack = s_yellow
+        self.stacks = [self.blue_stack, self.green_stack, self.purple_stack, self.red_stack, self.yellow_stack]
 
         self.table_position = 0
         self.share_order = []
@@ -455,8 +456,9 @@ class InnovationGame(Game):
         self.game_over = True
         # TODO - write code to evaluate scores
 
-    def draw_value(self, draw_value):
-        """Function to draw a card of a specified value"""
+    # Draw functions
+    def draw(self, draw_value):
+        """Base function to draw a card of a specified value"""
         for value in range(draw_value, 11):
             pile = self.get_pile(str(value))
             if pile.get_pile_size() > 0:
@@ -465,9 +467,14 @@ class InnovationGame(Game):
 
         self.game_end()
 
+    # Meld functions
+    def meld(self, card, player):
+        """Base function to meld a card"""
+        player.stacks[card.color].add_card_to_top(card)
+
 
 a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
-b = InnovationCard('b', 'blue', '1', 'leaf', 'leaf','','','clock','','','')
+b = InnovationCard('b', 'yellow', '1', 'leaf', 'leaf','','','clock','','','')
 c = InnovationCard('Clothing', 'green', '1', 'leaf', '', 'crown', 'leaf', 'leaf', '','','')
 
 p = InnovationStack('blue stack', 'blue', 18)
@@ -476,22 +483,26 @@ r = InnovationStack('purple stack', 'purple', 18)
 s = InnovationStack('red stack', 'red', 18)
 t = InnovationStack('yellow stack', 'yellow', 18)
 
-p.add_card_to_top(a)
-q.add_card_to_top(b)
-r.add_card_to_top(c)
+# p.add_card_to_top(a)
+# q.add_card_to_top(b)
+# r.add_card_to_top(c)
 
-player = InnovationPlayer('1', 1, False, [], [], [], p, q, r, s, t)
+player_1 = InnovationPlayer('1', 1, False, [], [], [], p, q, r, s, t)
 
 
-print(player.blue_stack.cards)
-print(player.green_stack.cards)
-print(player.purple_stack.cards)
+print(player_1.blue_stack.cards)
+print(player_1.green_stack.cards)
+print(player_1.purple_stack.cards)
 
 # print(player.blue_stack.total_icons_in_stack())
-print(player.total_icons_on_board())
-print(player.count_icons_on_board(4))
+print(player_1.total_icons_on_board())
+print(player_1.count_icons_on_board(4))
 print('---')
 
 g = InnovationGame('test', '2022-04-25', 2, "Ryan", False, "Mookifer", True)
 
-print(g.draw_value(10))
+print(player_1.yellow_stack.cards)
+g.meld(a, player_1)
+print(player_1.yellow_stack.cards)
+g.meld(b, player_1)
+print(player_1.yellow_stack.cards)
