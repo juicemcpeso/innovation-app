@@ -498,6 +498,7 @@ class InnovationGame(Game):
             self.get_pile('achievements').add_card_to_bottom(card)
             self.achievements.update({card.age: card})
 
+        # Give each player two cards
         for player in self.players:
             self.draw_to_hand(player, 1)
             self.draw_to_hand(player, 1)
@@ -582,9 +583,5 @@ t = InnovationStack('yellow stack', 'yellow', 18)
 # print(g.get_pile('special achievements').cards)
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Ryan", False, "Mookifer", True)
-print(g.get_pile('1').cards)
 print(g.get_player(0).hand.cards)
-test = g.draw_card(1)
-g.add_card_to_hand(test, g.get_player(0))
-print(g.get_pile('1').cards)
-print(g.get_player(0).hand.cards)
+print(g.get_player(1).hand.cards)
