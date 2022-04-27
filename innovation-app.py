@@ -431,16 +431,13 @@ class InnovationGame(Game):
             handle.readline()
             lines = handle.read().splitlines()
 
-        i = 1
         for line in lines:
-            print(i)
             card = InnovationCard(*line.split('|'))
             start_pile = self.draw_piles[card.age]
             if not start_pile:
                 raise ValueError("Error adding card " + str(card) + " to pile " + str(start_pile) + ".")
             start_pile.add_card_to_bottom(card)
             self.cards.update({card.name: card})
-            i=i+1
 
     def __create_special_achievements(self):
         """Makes the five special achievement cards"""
