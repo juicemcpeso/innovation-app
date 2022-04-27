@@ -456,7 +456,7 @@ class InnovationGame(Game):
         self.game_over = True
         # TODO - write code to evaluate scores
 
-    # Draw functions
+    # Base functions
     def draw(self, draw_value):
         """Base function to draw a card of a specified value"""
         for value in range(draw_value, 11):
@@ -467,10 +467,13 @@ class InnovationGame(Game):
 
         self.game_end()
 
-    # Meld functions
     def meld(self, card, player):
         """Base function to meld a card"""
         player.stacks[card.color].add_card_to_top(card)
+
+    def return_card(self, card):
+        """Base function to return a card"""
+        self.draw_piles[card.age].add_card_to_bottom(card)
 
 
 a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
@@ -501,8 +504,9 @@ print('---')
 
 g = InnovationGame('test', '2022-04-25', 2, "Ryan", False, "Mookifer", True)
 
-print(player_1.yellow_stack.cards)
-g.meld(a, player_1)
-print(player_1.yellow_stack.cards)
-g.meld(b, player_1)
-print(player_1.yellow_stack.cards)
+print(g.draw_piles[1].cards)
+test = g.draw(1)
+g.meld(test, player_1)
+print(g.draw_piles[1].cards)
+g.return_card(test)
+print(g.draw_piles[1].cards)
