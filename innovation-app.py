@@ -492,10 +492,11 @@ class InnovationGame(Game):
         for pile in self.draw_piles.values():
             pile.shuffle_pile()
 
-        # Pick a card from each of the piles 1-9 to use as an achievement
+        # Pick a card from each of the piles 1-9 to use as an achievement. Change the name of the card to achievement.
         for i in range(1, 10):
             card = self.get_pile(str(i)).get_top_card()
             self.get_pile('achievements').add_card_to_bottom(card)
+            card.name = "Achievement {n}".format(n=i)
             self.achievements.update({card.age: card})
 
         # Give each player two cards
@@ -518,7 +519,7 @@ class InnovationGame(Game):
 
         self.game_end()
 
-    def meld_card(self, card, player):
+    def meld_card(self, player, card):
         """Base function to meld a card"""
         player.stacks[card.color].add_card_to_top(card)
 
@@ -526,11 +527,11 @@ class InnovationGame(Game):
         """Base function to return a card"""
         self.draw_piles[card.age].add_card_to_bottom(card)
 
-    def score_card(self, card, player):
+    def score_card(self, player, card):
         """Base function to score a card"""
         player.score_pile.add_card_to_bottom(card)
 
-    def tuck_card(self, card, player):
+    def tuck_card(self, player, card):
         """Base function to tuck a card in a stack"""
         player.stacks[card.color].add_card_to_bottom(card)
 
@@ -540,14 +541,83 @@ class InnovationGame(Game):
         from_location.remove_card(card)
         to_location.add_card_to_top(card)
 
-    def add_card_to_hand(self, card, player):
+    def add_card_to_hand(self, player, card):
         """Moves selected card to hand"""
         player.hand.add_card_to_bottom(card)
 
     # Combination functions used as card actions
     def draw_to_hand(self, player, draw_value):
         """Draws a card to a players hand of a specified draw value"""
-        self.add_card_to_hand(self.draw_card(draw_value), player)
+        self.add_card_to_hand(player, self.draw_card(draw_value))
+
+    # Functions to select and simulate actions
+    def available_actions(self, player):
+        options = [['draw']]
+
+        # Check to see if a player is eligible to claim any achievements, add them to the available options
+        eligible_achievements = self.eligible_achievements(player)
+        if len(eligible_achievements) > 0:
+            for achievement in eligible_achievements:
+                options.append(['achieve', achievement])
+
+        # Check to see if the player has any cards in hand, add the ability to meld them to the available options
+        if len(player.hand.cards) > 0:
+            for card in player.hand.cards:
+                options.append(['meld', card])
+
+        # Check to see if the player has any dogma effects that can be activated
+        for stack in player.stacks:
+            if len(stack.cards) > 0:
+                options.append(['dogma', stack.cards[0]])
+
+        print(options)
+        return options
+
+    def select_action(self, player, action_list):
+        """Function that takes a list of possible actions and selects which one to execute. Human code will select
+        based off input, AI via algorithm."""
+        if player.ai:
+            # TODO - write function for AI to select an action
+            selected_action = action_list[0]
+        else:
+            # TODO - write function for a human to select an action
+            selected_action = action_list[0]
+
+        return selected_action
+
+    def execute_action(self, player, action):
+        """Function that takes an action pair ['action', card]"""
+        if action[0] == 'draw':
+            self.draw_to_hand(player, 1)
+        elif action[0] == 'meld':
+            self.meld_card(player, action[a])
+        elif action[0] == 'achieve':
+            # TODO - write function to achieve a card
+            pass
+        elif action[0] == 'dogma':
+            # TODO - write function to activate dogma
+            pass
+
+    # # Does this actually provide any value? Or should I just use this statement in the available actions?
+    # def check_achievement(self, player):
+    #     """Checks to see if a player is eligible to take an achievement"""
+    #     return True if len(self.eligible_achievements(player)) > 0 else False
+
+    def eligible_achievements(self, player):
+        """Returns list of achievements that can be taken by the player"""
+        score = player.score()
+        highest_melded = 0
+        eligible_achievements = []
+        for stack in player.stacks:
+            if len(stack.cards) > 0:
+                if stack.cards[0].age > highest_melded:
+                    highest_melded = stack.cards[0].age
+
+        for achievement in self.get_pile('achievements').cards:
+            if highest_melded >= achievement.age and score > (achievement.age * 5):
+                eligible_achievements.append(achievement)
+
+        return eligible_achievements
 
 
 a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
@@ -583,5 +653,11 @@ t = InnovationStack('yellow stack', 'yellow', 18)
 # print(g.get_pile('special achievements').cards)
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Ryan", False, "Mookifer", True)
-print(g.get_player(0).hand.cards)
-print(g.get_player(1).hand.cards)
+g.available_actions(g.get_player(0))
+g.eligible_achievements(g.get_player(0))
+g.score_card(g.get_player(0), g.cards['A.I.'])
+g.score_card(g.get_player(0), g.cards['A.I.'])
+g.score_card(g.get_player(0), g.cards['Clothing'])
+g.meld_card(g.get_player(0), g.cards['Domestication'])
+g.eligible_achievements(g.get_player(0))
+g.available_actions(g.get_player(0))
