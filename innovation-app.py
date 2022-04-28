@@ -413,6 +413,14 @@ class InnovationGame(Game):
             self.player_names.append(possible_player_names[i])
             self.ai_players.append(possible_ai_players[i])
 
+        # Set number of achievements needed to win game
+        if self.number_of_players == 2:
+            self.achievement_goal = 6
+        elif self.number_of_players == 3:
+            self.achievement_goal = 5
+        elif self.number_of_players == 4:
+            self.achievement_goal = 4
+
         # Create dictionaries to find objects
         self.cards = {}
         self.achievements = {}
@@ -471,10 +479,13 @@ class InnovationGame(Game):
 
     def __create_players(self):
         for i in range(self.number_of_players):
-            # Create an achievement pile, score_pile, and hand for each player
-            achievement_pile = Pile((self.player_names[i] + "achievement pile"), self.seed)
-            score_pile = Pile((self.player_names[i] + "score pile"), self.seed)
-            hand = Pile((self.player_names[i] + "hand"), self.seed)
+            # Create an achievement pile, score_pile, and hand for each player, add to master list
+            achievement_pile = Pile((self.player_names[i] + " achievement pile"), self.seed)
+            self.add_pile(achievement_pile)
+            score_pile = Pile((self.player_names[i] + " score pile"), self.seed)
+            self.add_pile(score_pile)
+            hand = Pile((self.player_names[i] + " hand"), self.seed)
+            self.add_pile(hand)
 
             # Create stacks of each color for each player
             b_stack = InnovationStack(self.player_names[i] + "'s blue stack", 'blue', self.seed)
@@ -508,6 +519,13 @@ class InnovationGame(Game):
         self.game_over = True
         # TODO - write code to evaluate scores
 
+    def check_game_end(self):
+        """Runs when a card is added to an achievement pile. Checks to see if anybody has met goal."""
+        for player in self.players:
+            print(player.achievement_pile.get_pile_size())
+            if player.achievement_pile.get_pile_size() >= self.achievement_goal:
+                self.game_end()
+
     # Base functions
     def draw_card(self, draw_value):
         """Base function to draw a card of a specified value"""
@@ -535,17 +553,36 @@ class InnovationGame(Game):
         """Base function to tuck a card in a stack"""
         player.stacks[card.color].add_card_to_bottom(card)
 
+    def find_and_remove_card(self, card):
+        """Finds pile where card is located and removes it from that pile"""
+        for pile in self.piles:
+            for c in pile.cards:
+                if c == card:
+                    pile.remove_card(c)
+
     # Base functions to move cards around
     def transfer_card(self, card, to_location, from_location):
         """Base function to move a card from one pile to another. Do not use for stacks, use meld/tuck instead."""
         from_location.remove_card(card)
         to_location.add_card_to_top(card)
 
+    # Combination functions used as card actions
+    def add_card_to_achievement_pile(self, player, card):
+        """Moves selected card to a player's achievement pile"""
+        self.find_and_remove_card(card)
+        player.achievement_pile.add_card_to_bottom(card)
+        self.check_game_end()
+
     def add_card_to_hand(self, player, card):
         """Moves selected card to hand"""
+        self.find_and_remove_card(card)
         player.hand.add_card_to_bottom(card)
 
-    # Combination functions used as card actions
+    def add_card_to_score_pile(self, player, card):
+        """Moves selected card to the score pile"""
+        self.find_and_remove_card(card)
+        self.score_card(player, card)
+
     def draw_to_hand(self, player, draw_value):
         """Draws a card to a players hand of a specified draw value"""
         self.add_card_to_hand(player, self.draw_card(draw_value))
@@ -653,11 +690,31 @@ t = InnovationStack('yellow stack', 'yellow', 18)
 # print(g.get_pile('special achievements').cards)
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Ryan", False, "Mookifer", True)
-g.available_actions(g.get_player(0))
-g.eligible_achievements(g.get_player(0))
-g.score_card(g.get_player(0), g.cards['A.I.'])
-g.score_card(g.get_player(0), g.cards['A.I.'])
-g.score_card(g.get_player(0), g.cards['Clothing'])
-g.meld_card(g.get_player(0), g.cards['Domestication'])
-g.eligible_achievements(g.get_player(0))
-g.available_actions(g.get_player(0))
+# g.available_actions(g.get_player(0))
+# g.eligible_achievements(g.get_player(0))
+# g.score_card(g.get_player(0), g.cards['A.I.'])
+# g.score_card(g.get_player(0), g.cards['A.I.'])
+# g.score_card(g.get_player(0), g.cards['Clothing'])
+# g.meld_card(g.get_player(0), g.cards['Domestication'])
+# g.eligible_achievements(g.get_player(0))
+# g.available_actions(g.get_player(0))
+
+# print(g.get_pile('10').cards)
+# print(g.get_player(0).score_pile.cards)
+# g.score_card(g.get_player(0), g.cards['A.I.'])
+# print(g.get_pile('10').cards)
+# print(g.get_player(0).score_pile.cards)
+print(g.get_player(0).hand.cards)
+print(g.get_player(0).score_pile.cards)
+print(g.get_pile('10').cards)
+print('---')
+g.add_card_to_hand(g.get_player(0), g.cards['A.I.'])
+print(g.get_player(0).hand.cards)
+print(g.get_player(0).score_pile.cards)
+print(g.get_pile('10').cards)
+print('---')
+g.add_card_to_achievement_pile(g.get_player(0), g.cards['A.I.'])
+print(g.get_player(0).hand.cards)
+print(g.get_player(0).score_pile.cards)
+print(g.get_pile('10').cards)
+print('---')
