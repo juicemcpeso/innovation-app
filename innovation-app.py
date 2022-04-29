@@ -341,6 +341,7 @@ class Game:
         self.piles = []
         self.players = []
         self.game_over = False
+        self.round = 0
 
         # Set the random see if not specified
         if se is None:
@@ -409,6 +410,8 @@ class InnovationGame(Game):
         self.player_names = []
         self.ai_players = []
 
+        self.ordered_players = []
+
         for i in range(self.number_of_players):
             self.player_names.append(possible_player_names[i])
             self.ai_players.append(possible_ai_players[i])
@@ -432,7 +435,9 @@ class InnovationGame(Game):
         self.__create_cards()
         self.__create_special_achievements()
         self.__create_players()
-        self.__set_up_game()
+
+        # Play a game
+        self.play_game()
 
     def __create_cards(self):
         with open('cards/card_list.csv', 'r') as handle:
@@ -500,7 +505,7 @@ class InnovationGame(Game):
             # Create a player's share order
             self.set_share_order(player)
 
-    def __set_up_game(self):
+    def set_up_game(self):
         """Sets up the game to be played"""
         # Shuffle all the piles
         for pile in self.draw_piles.values():
@@ -512,8 +517,6 @@ class InnovationGame(Game):
             self.get_pile('achievements').add_card_to_bottom(card)
             card.name = "Achievement {n}".format(n=i)
             self.achievements.update({card.age: card})
-
-        self.starting_play()
 
     def starting_play(self):
         """Give everybody two cards, AI evaluates which one to play. Save the selection. Once all picked, execute"""
@@ -546,13 +549,14 @@ class InnovationGame(Game):
         self.set_table_positions(alphabetical_order[0][0])
 
         # Print for testing
-        for player in self.players:
-            print("{num} {p} {n} {so}".format(num=player.number, p=player.table_position, n=player.name, so=player.share_order))
+        # for player in self.players:
+        #     print("{num} {p} {n} {so}".format(num=player.number, p=player.table_position, n=player.name, so=player.share_order))
 
     def set_table_positions(self, first_player):
         """Given the first player, sets the table positions for each player"""
         position = 0
         first_player.table_position = position
+        self.ordered_players.append(first_player)
 
         start_index = first_player.number
         index = start_index + 1
@@ -563,6 +567,7 @@ class InnovationGame(Game):
                 if index == start_index:
                     break
             self.get_player(index).table_position = position
+            self.ordered_players.append(self.get_player(index))
             position += 1
             index += 1
 
@@ -582,9 +587,60 @@ class InnovationGame(Game):
             share_order.append(index)
         player.share_order = share_order
 
+    def play_first_round(self):
+        """Round structure for the first round where players sometimes get fewer actions"""
+        self.round += 1
+
+        for player in self.ordered_players:
+            # Print for testing
+            print('---')
+            print("Round {r} - {n}'s Turn".format(r=self.round, n=player.name))
+            if self.number_of_players < 4 and player.table_position == 0:
+                # Print for testing
+                print("{n}'s first action:".format(n=player.name))
+                self.take_action(player)
+            elif self.number_of_players == 4 and (player.table_position == 0 or player.table_position == 1):
+                # Print for testing
+                print("{n}'s first action:".format(n=player.name))
+                self.take_action(player)
+            else:
+                # Print for testing
+                print("{n}'s first action:".format(n=player.name))
+                self.take_action(player)
+
+                # Print for testing
+                print("\n{n}'s second action:".format(n=player.name))
+                self.take_action(player)
+
+    def play_round(self):
+        """Normal round of Innovation where everybody gets two actions"""
+        self.round += 1
+        for player in self.ordered_players:
+            # Print for testing
+            print('---')
+            print("Round {r} - {n}'s Turn".format(r=self.round, n=player.name))
+            print("{n}'s first action:".format(n=player.name))
+            self.take_action(player)
+
+            # Print for testing
+            print("\n{n}'s second action:".format(n=player.name))
+            self.take_action(player)
+
+    def play_game(self):
+        """Play a game of Innovation"""
+        self.set_up_game()
+        self.starting_play()
+        self.play_first_round()
+
+        # All other rounds
+        while not self.game_over:
+            self.play_round()
+
     def game_end(self):
         self.game_over = True
+        print('Game over')
         # TODO - write code to evaluate scores
+        quit()
 
     def check_game_end(self):
         """Runs when a card is added to an achievement pile. Checks to see if anybody has met goal."""
@@ -675,8 +731,8 @@ class InnovationGame(Game):
                 options.append(['dogma', stack.cards[0]])
 
         # Print for testing
-        print('Test: Action options:')
-        print(options)
+        # print('Action options:')
+        # print(options)
         return options
 
     def select_action(self, player, action_list):
@@ -719,6 +775,12 @@ class InnovationGame(Game):
         """Baseline AI to determine which action to select by random selection"""
         index = random.randrange(len(action_list))
         return action_list[index]
+
+    def take_action(self, player):
+        """Function to take an action"""
+        available_actions = self.available_actions(player)
+        selected_action = self.select_action(player, available_actions)
+        self.execute_action(player, selected_action)
 
     # # Does this actually provide any value? Or should I just use this statement in the available actions?
     # def check_achievement(self, player):
@@ -774,7 +836,7 @@ t = InnovationStack('yellow stack', 'yellow', 18)
 # print(g.get_player(0).yellow_stack.cards)
 # print(g.get_pile('special achievements').cards)
 
-g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
+g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 # g.available_actions(g.get_player(0))
 # g.eligible_achievements(g.get_player(0))
 # g.score_card(g.get_player(0), g.cards['A.I.'])
