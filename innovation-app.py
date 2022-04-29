@@ -607,33 +607,51 @@ class InnovationGame(Game):
             if len(stack.cards) > 0:
                 options.append(['dogma', stack.cards[0]])
 
+        # Print for testing
+        print('Test: Action options:')
         print(options)
         return options
 
     def select_action(self, player, action_list):
         """Function that takes a list of possible actions and selects which one to execute. Human code will select
         based off input, AI via algorithm."""
-        if player.ai:
+        if player.ai_flag:
             # TODO - write function for AI to select an action
-            selected_action = action_list[0]
+            selected_action = self.ai_select_action_random(player, action_list)
         else:
             # TODO - write function for a human to select an action
             selected_action = action_list[0]
 
+        # Print for testing
+        print('Test: Selected action:')
+        print(selected_action)
         return selected_action
 
     def execute_action(self, player, action):
         """Function that takes an action pair ['action', card]"""
         if action[0] == 'draw':
+            # Print for testing
+            print('Test: Drawing card')
             self.draw_to_hand(player, 1)
         elif action[0] == 'meld':
-            self.meld_card(player, action[a])
+            # Print for testing
+            print('Test: Melding Card')
+            self.meld_card(player, action[1])
         elif action[0] == 'achieve':
+            # Print for testing
+            print('Test: Achieve card')
             # TODO - write function to achieve a card
             pass
         elif action[0] == 'dogma':
+            # Print for testing
+            print('Test: Dogma')
             # TODO - write function to activate dogma
             pass
+
+    def ai_select_action_random(self, player, action_list):
+        """Baseline AI to determine which action to select by random selection"""
+        index = random.randrange(len(action_list))
+        return action_list[index]
 
     # # Does this actually provide any value? Or should I just use this statement in the available actions?
     # def check_achievement(self, player):
@@ -689,7 +707,7 @@ t = InnovationStack('yellow stack', 'yellow', 18)
 # print(g.get_player(0).yellow_stack.cards)
 # print(g.get_pile('special achievements').cards)
 
-g = InnovationGame('test', '2022-04-25', 2, None, "Ryan", False, "Mookifer", True)
+g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True)
 # g.available_actions(g.get_player(0))
 # g.eligible_achievements(g.get_player(0))
 # g.score_card(g.get_player(0), g.cards['A.I.'])
@@ -718,3 +736,7 @@ print(g.get_player(0).hand.cards)
 print(g.get_player(0).score_pile.cards)
 print(g.get_pile('10').cards)
 print('---')
+
+options = g.available_actions(g.get_player(0))
+action = g.select_action(g.get_player(0), options)
+g.execute_action(g.get_player(0), action)
