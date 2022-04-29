@@ -497,6 +497,9 @@ class InnovationGame(Game):
             player = InnovationPlayer(self.player_names[i], i, self.ai_players[i], achievement_pile, score_pile, hand, b_stack, g_stack, p_stack, r_stack, y_stack)
             self.add_player(player)
 
+            # Create a player's share order
+            self.set_share_order(player)
+
     def __set_up_game(self):
         """Sets up the game to be played"""
         # Shuffle all the piles
@@ -510,10 +513,74 @@ class InnovationGame(Game):
             card.name = "Achievement {n}".format(n=i)
             self.achievements.update({card.age: card})
 
+        self.starting_play()
+
+    def starting_play(self):
+        """Give everybody two cards, AI evaluates which one to play. Save the selection. Once all picked, execute"""
+        # Each player and their selected starting melds
+        starting_actions = []
+        starting_melds = []
         # Give each player two cards
         for player in self.players:
             self.draw_to_hand(player, 1)
             self.draw_to_hand(player, 1)
+
+            # Create a list of the possible actions (meld either of the cards)
+            action_options = []
+            for card in player.hand.cards:
+                action_options.append(['meld', card])
+
+            # Select one of the cards to meld
+            selected_action = self.select_action(player, action_options)
+
+            # Add the player and their selected card to meld to the list of all the melds.
+            starting_actions.append([player, selected_action])
+            starting_melds.append([player, selected_action[1]])
+
+        # Once everybody has selected their action, meld them all
+        for combination in starting_actions:
+            self.execute_action(combination[0], combination[1])
+
+        # Determine who has the first card alphabetically and set each player's turn position
+        alphabetical_order = sorted(starting_actions, key=lambda x: x[1][1].name)
+        self.set_table_positions(alphabetical_order[0][0])
+
+        # Print for testing
+        for player in self.players:
+            print("{num} {p} {n} {so}".format(num=player.number, p=player.table_position, n=player.name, so=player.share_order))
+
+    def set_table_positions(self, first_player):
+        """Given the first player, sets the table positions for each player"""
+        position = 0
+        first_player.table_position = position
+
+        start_index = first_player.number
+        index = start_index + 1
+        position += 1
+        while index != start_index:
+            if index > self.number_of_players - 1:
+                index = 0
+                if index == start_index:
+                    break
+            self.get_player(index).table_position = position
+            position += 1
+            index += 1
+
+    def set_share_order(self, player):
+        """Based off a player's number and table position, create a list of the order they share cards in. Could do this
+        each time a dogma is shared, figured it would be quicker if it was created once."""
+        share_order = []
+        start_index = player.number
+        index = start_index
+        while True:
+            index += 1
+            if index > self.number_of_players - 1:
+                index = 0
+            if index == start_index:
+                share_order.append(index)
+                break
+            share_order.append(index)
+        player.share_order = share_order
 
     def game_end(self):
         self.game_over = True
@@ -623,23 +690,23 @@ class InnovationGame(Game):
             selected_action = action_list[0]
 
         # Print for testing
-        print('Test: Selected action:')
-        print(selected_action)
+        print('{p} selects {a}'.format(p=player.name, a=selected_action[0]))
+
         return selected_action
 
     def execute_action(self, player, action):
         """Function that takes an action pair ['action', card]"""
         if action[0] == 'draw':
             # Print for testing
-            print('Test: Drawing card')
+            print('{p} draws a card'.format(p=player.name))
             self.draw_to_hand(player, 1)
         elif action[0] == 'meld':
             # Print for testing
-            print('Test: Melding Card')
+            print('{p} melds {c}'.format(p=player.name, c=action[1]))
             self.meld_card(player, action[1])
         elif action[0] == 'achieve':
             # Print for testing
-            print('Test: Achieve card')
+            print('{p} achieves {c}'.format(p=player.name, c=action[1]))
             # TODO - write function to achieve a card
             pass
         elif action[0] == 'dogma':
@@ -707,7 +774,7 @@ t = InnovationStack('yellow stack', 'yellow', 18)
 # print(g.get_player(0).yellow_stack.cards)
 # print(g.get_pile('special achievements').cards)
 
-g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True)
+g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 # g.available_actions(g.get_player(0))
 # g.eligible_achievements(g.get_player(0))
 # g.score_card(g.get_player(0), g.cards['A.I.'])
@@ -722,21 +789,21 @@ g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", Tr
 # g.score_card(g.get_player(0), g.cards['A.I.'])
 # print(g.get_pile('10').cards)
 # print(g.get_player(0).score_pile.cards)
-print(g.get_player(0).hand.cards)
-print(g.get_player(0).score_pile.cards)
-print(g.get_pile('10').cards)
-print('---')
-g.add_card_to_hand(g.get_player(0), g.cards['A.I.'])
-print(g.get_player(0).hand.cards)
-print(g.get_player(0).score_pile.cards)
-print(g.get_pile('10').cards)
-print('---')
-g.add_card_to_achievement_pile(g.get_player(0), g.cards['A.I.'])
-print(g.get_player(0).hand.cards)
-print(g.get_player(0).score_pile.cards)
-print(g.get_pile('10').cards)
-print('---')
-
-options = g.available_actions(g.get_player(0))
-action = g.select_action(g.get_player(0), options)
-g.execute_action(g.get_player(0), action)
+# print(g.get_player(0).hand.cards)
+# print(g.get_player(0).score_pile.cards)
+# print(g.get_pile('10').cards)
+# print('---')
+# g.add_card_to_hand(g.get_player(0), g.cards['A.I.'])
+# print(g.get_player(0).hand.cards)
+# print(g.get_player(0).score_pile.cards)
+# print(g.get_pile('10').cards)
+# print('---')
+# g.add_card_to_achievement_pile(g.get_player(0), g.cards['A.I.'])
+# print(g.get_player(0).hand.cards)
+# print(g.get_player(0).score_pile.cards)
+# print(g.get_pile('10').cards)
+# print('---')
+#
+# options = g.available_actions(g.get_player(0))
+# action = g.select_action(g.get_player(0), options)
+# g.execute_action(g.get_player(0), action)
