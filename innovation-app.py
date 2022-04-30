@@ -340,6 +340,7 @@ class Game:
         self.date = d
         self.piles = []
         self.players = []
+        self.cards = []
         self.game_over = False
         self.round = 0
 
@@ -364,7 +365,7 @@ class Game:
         except ValueError:
             raise ValueError("Could not remove pile " + str(p) + " from card game " + str(self.name) + ".")
 
-    def get_pile(self, n):
+    def get_pile_object(self, n):
         pile = None
         pile_list = list(filter(lambda x: x.name == n, self.piles))
         if len(pile_list):
@@ -377,12 +378,27 @@ class Game:
         else:
             raise ValueError("Could not add player " + str(p) + " to card game " + str(self.name) + ".")
 
-    def get_player(self, player_number):
+    def get_player_object(self, player_number):
         player = None
         player_list = list(filter(lambda x: x.number == player_number, self.players))
         if len(player_list):
             player = player_list.pop()
         return player
+
+    def add_card_to_game(self, c):
+        """Adds a card object to the game's list of cards"""
+        if isinstance(c, Card):
+            self.cards.append(c)
+        else:
+            raise ValueError("Could not add card " + str(c) + " to card game " + str(self.name) + ".")
+
+    def get_card_object(self, card_name):
+        """Given a card name (string), returns the card object"""
+        card = None
+        card_list = list(filter(lambda x: x.name == card_name, self.cards))
+        if len(card_list):
+            card = card_list.pop()
+        return card
 
     def __repr__(self):
         string = "<Game: %s on %s>" % (self.name, self.date)
@@ -425,7 +441,7 @@ class InnovationGame(Game):
             self.achievement_goal = 4
 
         # Create dictionaries to find objects
-        self.cards = {}
+        # self.cards = {}
         self.achievements = {}
         self.special_achievements = {}
         self.draw_piles = {}
@@ -437,7 +453,7 @@ class InnovationGame(Game):
         self.__create_players()
 
         # Play a game
-        self.play_game()
+        # self.play_game()
 
     def __create_cards(self):
         with open('cards/card_list.csv', 'r') as handle:
@@ -450,7 +466,8 @@ class InnovationGame(Game):
             if not start_pile:
                 raise ValueError("Error adding card " + str(card) + " to pile " + str(start_pile) + ".")
             start_pile.add_card_to_bottom(card)
-            self.cards.update({card.name: card})
+            self.add_card_to_game(card)
+            # self.cards.update({card.name: card})
 
     def __create_special_achievements(self):
         """Makes the five special achievement cards"""
@@ -460,11 +477,12 @@ class InnovationGame(Game):
 
         for line in lines:
             card = SpecialAchievementCard(*line.split('|'))
-            start_pile = self.get_pile('special achievements')
+            start_pile = self.get_pile_object('special achievements')
             if not start_pile:
                 raise ValueError("Error adding card " + str(card) + " to pile " + str(start_pile) + ".")
             start_pile.add_card_to_bottom(card)
-            self.cards.update({card.name: card})
+            self.add_card_to_game(card)
+            # self.cards.update({card.name: card})
 
     def __create_piles(self):
         # Create the draw piles
@@ -513,8 +531,8 @@ class InnovationGame(Game):
 
         # Pick a card from each of the piles 1-9 to use as an achievement. Change the name of the card to achievement.
         for i in range(1, 10):
-            card = self.get_pile(str(i)).get_top_card()
-            self.get_pile('achievements').add_card_to_bottom(card)
+            card = self.get_pile_object(str(i)).get_top_card()
+            self.get_pile_object('achievements').add_card_to_bottom(card)
             card.name = "Achievement {n}".format(n=i)
             self.achievements.update({card.age: card})
 
@@ -566,8 +584,8 @@ class InnovationGame(Game):
                 index = 0
                 if index == start_index:
                     break
-            self.get_player(index).table_position = position
-            self.ordered_players.append(self.get_player(index))
+            self.get_player_object(index).table_position = position
+            self.ordered_players.append(self.get_player_object(index))
             position += 1
             index += 1
 
@@ -653,7 +671,7 @@ class InnovationGame(Game):
     def draw_card(self, draw_value):
         """Base function to draw a card of a specified value"""
         for value in range(draw_value, 11):
-            pile = self.get_pile(str(value))
+            pile = self.get_pile_object(str(value))
             if pile.get_pile_size() > 0:
                 card = pile.get_top_card()
                 return card
@@ -797,7 +815,7 @@ class InnovationGame(Game):
                 if stack.cards[0].age > highest_melded:
                     highest_melded = stack.cards[0].age
 
-        for achievement in self.get_pile('achievements').cards:
+        for achievement in self.get_pile_object('achievements').cards:
             if highest_melded >= achievement.age and score > (achievement.age * 5):
                 eligible_achievements.append(achievement)
 
@@ -869,3 +887,7 @@ g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", Tr
 # options = g.available_actions(g.get_player(0))
 # action = g.select_action(g.get_player(0), options)
 # g.execute_action(g.get_player(0), action)
+
+a = g.get_card_object('Agriculture')
+print(a.effect_type)
+
