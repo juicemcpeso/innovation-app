@@ -116,6 +116,42 @@ class SpecialAchievementCard(Card):
         self.criteria_text = c
         self.alternative_text = a
 
+# [Card name, effect number, effect type (str), demand_flag]
+class Effect:
+    """Class for a card effect"""
+    def __init__(self, cn, en, et, d, f):
+        self.name = cn + ' Effect ' + str(en)
+        self.card_name = cn
+        self.function = None
+
+        if not isinstance(en, int):
+            raise ValueError("Error creating Innovation effect. Effect number must be an integer.")
+        self.number = en
+
+        # Set effect type to an int 0-5, in specified order
+        effect_type_options = ['crown', 'leaf', 'lightbulb', 'castle', 'factory', 'clock']
+        if et not in effect_type_options:
+            raise ValueError("Error creating Innovation Effect. "
+                             "Effect type must be crown, lead, lightbulb, castle, factory, or clock.")
+        for effect_type in effect_type_options:
+            if et == effect_type:
+                self.type = effect_type_options.index(et)
+
+        if not isinstance(d, bool):
+            raise ValueError("Error creating Innovation effect. Demand must be True or False.")
+        self.demand = d
+
+        self.function = f
+
+    def activate(self, player):
+        self.function(player)
+
+    def __repr__(self):
+        return "<Card: %s>" % self.name
+
+    def __str__(self):
+        return self.name
+
 
 class Pile:
     """Base class for a collection of card objects"""
@@ -427,6 +463,9 @@ class InnovationGame(Game):
         possible_ai_players = [p1_ai, p2_ai, p3_ai, p4_ai]
         self.player_names = []
         self.ai_players = []
+
+        self.active_player = None
+        self.turn_player = None
 
         self.ordered_players = []
 
@@ -823,6 +862,19 @@ class InnovationGame(Game):
 
         return eligible_achievements
 
+    # Effects
+    # [Card name, effect number, effect type (str), demand_flag, function]
+    effects_list = ['The Wheel', 0, 'castle', False]
+
+    # The Wheel
+    def the_wheel_effect_0(self, player):
+        self.draw_to_hand(player, 1)
+        self.draw_to_hand(player, 1)
+
+    def test_effects(self):
+        e = Effect('The Wheel', 0, 'castle', False, self.the_wheel_effect_0)
+        e.activate(self.get_player_object(0))
+
 
 a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
 b = InnovationCard('b', 'yellow', '2', 'leaf', 'leaf','','','clock','','','')
@@ -890,6 +942,5 @@ g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", Tr
 # action = g.select_action(g.get_player(0), options)
 # g.execute_action(g.get_player(0), action)
 
-a = g.get_card_object('Agriculture')
-print(a.effect_type)
+g.test_effects()
 
