@@ -25,6 +25,8 @@ class InnovationCard(Card):
     def __init__(self, n, c, a, t, i0, i1, i2, i3, t0, t1, t2):
         Card.__init__(self, n)
 
+        self.dogma = []
+
         # Set color to an int 0-4, alphabetically with options
         color_options = ['blue', 'green', 'purple', 'red', 'yellow']
         if c not in color_options:
