@@ -862,6 +862,12 @@ class InnovationGame(Game):
 
         return eligible_achievements
 
+    def dogma(self, player, card):
+        """Function to execute the dogma effects"""
+        for effect in card.dogma:
+            effect.activate(player)
+
+
     # Effects
     # [Card name, effect number, effect type (str), demand_flag, function]
     effects_list = ['The Wheel', 0, 'castle', False]
@@ -878,6 +884,10 @@ class InnovationGame(Game):
     def test_effects(self):
         e = Effect('The Wheel', 0, 'castle', False, self.the_wheel_effect_0)
         e.activate(self.get_player_object(0))
+
+    def test_writing(self):
+        e = Effect('Writing', 0, 'lightbulb', False, self.writing_effect_0)
+        self.get_card_object('Writing').dogma.append(e)
 
 
 a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
@@ -947,6 +957,7 @@ g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", Tr
 # g.execute_action(g.get_player(0), action)
 
 print(g.get_player_object(0).hand.cards)
-g.test_effects()
+g.test_writing()
+g.dogma(g.get_player_object(0), g.get_card_object('Writing'))
 print(g.get_player_object(0).hand.cards)
 
