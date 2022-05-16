@@ -865,8 +865,26 @@ class InnovationGame(Game):
 
     def dogma(self, player, card):
         """Function to execute the dogma effects"""
+        sharing_players = self.check_sharing(player, card)
         for effect in card.dogma:
-            effect.activate(player)
+            for eligible_player in sharing_players:
+                effect.activate(eligible_player)
+
+        # Take a draw action if others shared
+        # TODO - update this to make sure something in the game state changes
+        if len(sharing_players) > 1:
+            self.draw_to_hand(player, 1)
+
+    def check_sharing(self, player, card):
+        """Function to see who can share in an effect"""
+        sharing_players = []
+        for opponent in player.share_order:
+            if opponent == player:
+                sharing_players.append(player)
+            elif opponent.count_icons_on_board(card.effect_type) >= player.count_icons_on_board(card.effect_type):
+                sharing_players.append(opponent)
+
+        return sharing_players
 
 
 
@@ -959,12 +977,16 @@ g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", Tr
 # g.execute_action(g.get_player(0), action)
 
 print(g.get_player_object(0).hand.cards)
+print(g.get_player_object(1).hand.cards)
+print(g.get_player_object(2).hand.cards)
+print(g.get_player_object(3).hand.cards)
+g.meld_card(g.get_player_object(1), g.get_card_object('Astronomy'))
+g.meld_card(g.get_player_object(0), g.get_card_object('Archery'))
 g.test_writing()
 g.dogma(g.get_player_object(0), g.get_card_object('Writing'))
 print(g.get_player_object(0).hand.cards)
-print(g.get_player_object(0).name)
-print(g.get_player_object(1).name)
-print(g.get_player_object(2).name)
-print(g.get_player_object(3).name)
-print(g.get_player_object(3).share_order)
+print(g.get_player_object(1).hand.cards)
+print(g.get_player_object(2).hand.cards)
+print(g.get_player_object(3).hand.cards)
+
 
