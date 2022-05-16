@@ -561,6 +561,7 @@ class InnovationGame(Game):
             player = InnovationPlayer(self.player_names[i], i, self.ai_players[i], achievement_pile, score_pile, hand, b_stack, g_stack, p_stack, r_stack, y_stack)
             self.add_player(player)
 
+        for player in self.players:
             # Create a player's share order
             self.set_share_order(player)
 
@@ -641,9 +642,9 @@ class InnovationGame(Game):
             if index > self.number_of_players - 1:
                 index = 0
             if index == start_index:
-                share_order.append(index)
+                share_order.append(self.get_player_object(index))
                 break
-            share_order.append(index)
+            share_order.append(self.get_player_object(index))
         player.share_order = share_order
 
     def play_first_round(self):
@@ -868,6 +869,7 @@ class InnovationGame(Game):
             effect.activate(player)
 
 
+
     # Effects
     # [Card name, effect number, effect type (str), demand_flag, function]
     effects_list = ['The Wheel', 0, 'castle', False]
@@ -922,7 +924,7 @@ t = InnovationStack('yellow stack', 'yellow', 18)
 # print(g.get_player(0).yellow_stack.cards)
 # print(g.get_pile('special achievements').cards)
 
-g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
+g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 # g.available_actions(g.get_player(0))
 # g.eligible_achievements(g.get_player(0))
 # g.score_card(g.get_player(0), g.cards['A.I.'])
@@ -960,4 +962,9 @@ print(g.get_player_object(0).hand.cards)
 g.test_writing()
 g.dogma(g.get_player_object(0), g.get_card_object('Writing'))
 print(g.get_player_object(0).hand.cards)
+print(g.get_player_object(0).name)
+print(g.get_player_object(1).name)
+print(g.get_player_object(2).name)
+print(g.get_player_object(3).name)
+print(g.get_player_object(3).share_order)
 
