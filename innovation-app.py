@@ -871,6 +871,10 @@ class InnovationGame(Game):
         self.draw_to_hand(player, 1)
         self.draw_to_hand(player, 1)
 
+    # Writing
+    def writing_effect_0(self, player):
+        self.draw_to_hand(player, 2)
+
     def test_effects(self):
         e = Effect('The Wheel', 0, 'castle', False, self.the_wheel_effect_0)
         e.activate(self.get_player_object(0))
@@ -942,5 +946,7 @@ g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", Tr
 # action = g.select_action(g.get_player(0), options)
 # g.execute_action(g.get_player(0), action)
 
+print(g.get_player_object(0).hand.cards)
 g.test_effects()
+print(g.get_player_object(0).hand.cards)
 
