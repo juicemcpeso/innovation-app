@@ -723,6 +723,8 @@ class InnovationGame(Game):
     def meld_card(self, player, card):
         """Base function to meld a card"""
         player.stacks[card.color].add_card_to_top(card)
+        # Print for testing
+        print('{p} melds {c}'.format(p=player.name, c=card.name))
 
     def return_card(self, card):
         """Base function to return a card"""
@@ -768,7 +770,10 @@ class InnovationGame(Game):
 
     def draw_to_hand(self, player, draw_value):
         """Draws a card to a players hand of a specified draw value"""
-        self.add_card_to_hand(player, self.draw_card(draw_value))
+        card = self.draw_card(draw_value)
+        self.add_card_to_hand(player, card)
+        # Print for testing
+        print('{p} draws {c}'.format(p=player, c=card.name))
 
     # Functions to select and simulate actions
     def available_actions(self, player):
@@ -806,19 +811,15 @@ class InnovationGame(Game):
             selected_action = action_list[0]
 
         # Print for testing
-        print('{p} selects {a}'.format(p=player.name, a=selected_action[0]))
+        print('{a}'.format(a=selected_action[0].upper()))
 
         return selected_action
 
     def execute_action(self, player, action):
         """Function that takes an action pair ['action', card]"""
         if action[0] == 'draw':
-            # Print for testing
-            print('{p} draws a card'.format(p=player.name))
             self.draw_to_hand(player, 1)
         elif action[0] == 'meld':
-            # Print for testing
-            print('{p} melds {c}'.format(p=player.name, c=action[1]))
             self.meld_card(player, action[1])
         elif action[0] == 'achieve':
             # Print for testing
@@ -826,10 +827,7 @@ class InnovationGame(Game):
             # TODO - write function to achieve a card
             pass
         elif action[0] == 'dogma':
-            # Print for testing
-            print('Test: Dogma')
-            # TODO - write function to activate dogma
-            pass
+            self.dogma(player, action[1])
 
     def ai_select_action_random(self, player, action_list):
         """Baseline AI to determine which action to select by random selection"""
@@ -868,11 +866,15 @@ class InnovationGame(Game):
         sharing_players = self.check_sharing(player, card)
         for effect in card.dogma:
             for eligible_player in sharing_players:
+                # Print for testing
+                print('{p} activates {c} dogma'.format(p=player.name, c=card.name))
                 effect.activate(eligible_player)
 
         # Take a draw action if others shared
         # TODO - update this to make sure something in the game state changes
         if len(sharing_players) > 1:
+            # Print for testing
+            print('{p} draws a card due to other players sharing effect'.format(p=player))
             self.draw_to_hand(player, 1)
 
     def check_sharing(self, player, card):
@@ -885,8 +887,6 @@ class InnovationGame(Game):
                 sharing_players.append(opponent)
 
         return sharing_players
-
-
 
     # Effects
     # [Card name, effect number, effect type (str), demand_flag, function]
@@ -942,7 +942,7 @@ t = InnovationStack('yellow stack', 'yellow', 18)
 # print(g.get_player(0).yellow_stack.cards)
 # print(g.get_pile('special achievements').cards)
 
-g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
+g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 # g.available_actions(g.get_player(0))
 # g.eligible_achievements(g.get_player(0))
 # g.score_card(g.get_player(0), g.cards['A.I.'])
@@ -971,22 +971,19 @@ g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", Tr
 # print(g.get_player(0).score_pile.cards)
 # print(g.get_pile('10').cards)
 # print('---')
-#
-# options = g.available_actions(g.get_player(0))
-# action = g.select_action(g.get_player(0), options)
-# g.execute_action(g.get_player(0), action)
 
-print(g.get_player_object(0).hand.cards)
-print(g.get_player_object(1).hand.cards)
-print(g.get_player_object(2).hand.cards)
-print(g.get_player_object(3).hand.cards)
-g.meld_card(g.get_player_object(1), g.get_card_object('Astronomy'))
-g.meld_card(g.get_player_object(0), g.get_card_object('Archery'))
+
+# print(g.get_player_object(0).hand.cards)
+# print(g.get_player_object(1).hand.cards)
+# print(g.get_player_object(2).hand.cards)
+# print(g.get_player_object(3).hand.cards)
+# g.meld_card(g.get_player_object(1), g.get_card_object('Astronomy'))
+# g.meld_card(g.get_player_object(0), g.get_card_object('Archery'))
+# g.test_writing()
+# g.dogma(g.get_player_object(0), g.get_card_object('Writing'))
+# print(g.get_player_object(0).hand.cards)
+# print(g.get_player_object(1).hand.cards)
+# print(g.get_player_object(2).hand.cards)
+# print(g.get_player_object(3).hand.cards)
 g.test_writing()
-g.dogma(g.get_player_object(0), g.get_card_object('Writing'))
-print(g.get_player_object(0).hand.cards)
-print(g.get_player_object(1).hand.cards)
-print(g.get_player_object(2).hand.cards)
-print(g.get_player_object(3).hand.cards)
-
-
+g.play_game()
