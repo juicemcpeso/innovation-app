@@ -604,7 +604,8 @@ class InnovationGame(Game):
 
         # Once everybody has selected their action, meld them all
         for combination in starting_actions:
-            self.execute_action(combination[0], combination[1])
+            self.active_player = combination[0]
+            self.execute_action(combination[1])
 
         # Determine who has the first card alphabetically and set each player's turn position
         alphabetical_order = sorted(starting_actions, key=lambda x: x[1][1].name)
@@ -795,10 +796,25 @@ class InnovationGame(Game):
 
     def execute_dogma(self, sharing_players):
         for effect in self.active_card.dogma:
-            for eligible_player in sharing_players:
-                # Print for testing
-                print('{p} activates {c} dogma'.format(p=eligible_player.name, c=self.active_card.name))
-                effect.activate()
+
+            if effect.demand:
+                # Demand effects
+                for eligible_player in self.turn_player.share_order:
+                    if eligible_player not in sharing_players:
+                        self.active_player = eligible_player
+                        # Print for testing
+                        print('{t} DEMANDS {p} resolve {c} dogma'.format(t=self.turn_player,
+                                                                         p=eligible_player.name,
+                                                                         c=self.active_card.name))
+                        effect.activate()
+
+            else:
+                # Standard effects
+                for eligible_player in sharing_players:
+                    self.active_player = eligible_player
+                    # Print for testing
+                    print('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.active_card.name))
+                    effect.activate()
 
     def determine_who_can_share(self):
         """Function to see who can share in an effect"""
@@ -811,11 +827,12 @@ class InnovationGame(Game):
 
         return sharing_players
 
-    
-
-
     def draw_if_opponents_shared(self, list_of_players):
-        if len(list_of_players) > 1:
+        non_demand_effects = False
+        for effect in self.active_card.dogma:
+            if not effect.demand:
+                non_demand_effects = True
+        if len(list_of_players) > 1 and non_demand_effects:
             # TODO - update this to make sure something in the game state changes
             # Print for testing
             print('{p} draws a card due to other players sharing effect'.format(p=self.turn_player))
@@ -861,7 +878,7 @@ class InnovationGame(Game):
 
         return selected_action
 
-    def execute_action(self, player, action):
+    def execute_action(self, action):
         """Function that takes an action pair ['action', card]"""
         self.active_card = action[1]
 
@@ -870,8 +887,6 @@ class InnovationGame(Game):
         elif action[0] == 'meld':
             self.action_meld()
         elif action[0] == 'achieve':
-            # Print for testing
-            print('{p} achieves {c}'.format(p=player.name, c=action[1]))
             # TODO - write function to achieve a card
             pass
         elif action[0] == 'dogma':
@@ -887,7 +902,7 @@ class InnovationGame(Game):
         self.active_player = player
         available_actions = self.available_actions(player)
         selected_action = self.select_action(player, available_actions)
-        self.execute_action(player, selected_action)
+        self.execute_action(selected_action)
 
     def eligible_achievements(self, player):
         """Returns list of achievements that can be taken by the player"""
@@ -927,80 +942,12 @@ class InnovationGame(Game):
         self.get_card_object('Writing').dogma.append(e)
 
 
-a = InnovationCard('Agriculture', 'yellow', '1', 'leaf', '', 'leaf', 'leaf', 'leaf','','','')
-b = InnovationCard('b', 'yellow', '2', 'leaf', 'leaf','','','clock','','','')
-c = InnovationCard('Clothing', 'green', '1', 'leaf', '', 'crown', 'leaf', 'leaf', '','','')
-
-p = InnovationStack('blue stack', 'blue', 18)
-q = InnovationStack('green stack', 'green', 18)
-r = InnovationStack('purple stack', 'purple', 18)
-s = InnovationStack('red stack', 'red', 18)
-t = InnovationStack('yellow stack', 'yellow', 18)
-
-# # p.add_card_to_top(a)
-# # q.add_card_to_top(b)
-# # r.add_card_to_top(c)
-#
-# player_1 = InnovationPlayer('1', 1, False, [], [], [], p, q, r, s, t)
-#
-#
-# print(player_1.blue_stack.cards)
-# print(player_1.green_stack.cards)
-# print(player_1.purple_stack.cards)
-#
-# # print(player.blue_stack.total_icons_in_stack())
-# print(player_1.total_icons_on_board())
-# print(player_1.count_icons_on_board(4))
-# print('---')
-#
-# print(g.get_player(0).yellow_stack.cards)
-# g.meld_card(a, g.get_player(0))
-# g.meld_card(b, g.get_player(0))
-# print(g.get_player(0).yellow_stack.cards)
-# print(g.get_pile('special achievements').cards)
-
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
-# g.available_actions(g.get_player(0))
-# g.eligible_achievements(g.get_player(0))
-# g.score_card(g.get_player(0), g.cards['A.I.'])
-# g.score_card(g.get_player(0), g.cards['A.I.'])
-# g.score_card(g.get_player(0), g.cards['Clothing'])
-# g.meld_card(g.get_player(0), g.cards['Domestication'])
-# g.eligible_achievements(g.get_player(0))
-# g.available_actions(g.get_player(0))
 
-# print(g.get_pile('10').cards)
-# print(g.get_player(0).score_pile.cards)
-# g.score_card(g.get_player(0), g.cards['A.I.'])
-# print(g.get_pile('10').cards)
-# print(g.get_player(0).score_pile.cards)
-# print(g.get_player(0).hand.cards)
-# print(g.get_player(0).score_pile.cards)
-# print(g.get_pile('10').cards)
-# print('---')
-# g.add_card_to_hand(g.get_player(0), g.cards['A.I.'])
-# print(g.get_player(0).hand.cards)
-# print(g.get_player(0).score_pile.cards)
-# print(g.get_pile('10').cards)
-# print('---')
-# g.add_card_to_achievement_pile(g.get_player(0), g.cards['A.I.'])
-# print(g.get_player(0).hand.cards)
-# print(g.get_player(0).score_pile.cards)
-# print(g.get_pile('10').cards)
-# print('---')
-
-
-# print(g.get_player_object(0).hand.cards)
-# print(g.get_player_object(1).hand.cards)
-# print(g.get_player_object(2).hand.cards)
-# print(g.get_player_object(3).hand.cards)
-# g.meld_card(g.get_player_object(1), g.get_card_object('Astronomy'))
-# g.meld_card(g.get_player_object(0), g.get_card_object('Archery'))
-# g.test_writing()
-# g.dogma(g.get_player_object(0), g.get_card_object('Writing'))
-# print(g.get_player_object(0).hand.cards)
-# print(g.get_player_object(1).hand.cards)
-# print(g.get_player_object(2).hand.cards)
-# print(g.get_player_object(3).hand.cards)
 g.test_writing()
 g.play_game()
+g.turn_player = g.get_player_object(0)
+g.active_player = g.get_player_object(0)
+g.meld_card(g.get_card_object('A.I.'))
+g.active_card = g.get_card_object('Writing')
+g.action_dogma()
