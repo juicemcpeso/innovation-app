@@ -143,8 +143,8 @@ class Effect:
 
         self.function = f
 
-    def activate(self, player):
-        self.function(player)
+    def activate(self):
+        self.function()
 
     def __repr__(self):
         return "<Card: %s>" % self.name
@@ -466,6 +466,7 @@ class InnovationGame(Game):
 
         self.active_player = None
         self.turn_player = None
+        self.active_card = None
 
         self.ordered_players = []
 
@@ -585,8 +586,9 @@ class InnovationGame(Game):
         starting_melds = []
         # Give each player two cards
         for player in self.players:
-            self.draw_to_hand(player, 1)
-            self.draw_to_hand(player, 1)
+            self.active_player = player
+            self.draw_to_hand(1)
+            self.draw_to_hand(1)
 
             # Create a list of the possible actions (meld either of the cards)
             action_options = []
@@ -648,6 +650,7 @@ class InnovationGame(Game):
         self.round += 1
 
         for player in self.ordered_players:
+            self.turn_player = player
             # Print for testing
             print('---')
             print("Round {r} - {n}'s Turn".format(r=self.round, n=player.name))
@@ -672,6 +675,7 @@ class InnovationGame(Game):
         """Normal round of Innovation where everybody gets two actions"""
         self.round += 1
         for player in self.ordered_players:
+            self.turn_player = player
             # Print for testing
             print('---')
             print("Round {r} - {n}'s Turn".format(r=self.round, n=player.name))
@@ -706,7 +710,7 @@ class InnovationGame(Game):
                 self.game_end()
 
     # Base functions
-    def draw_card(self, draw_value):
+    def base_draw(self, draw_value):
         """Base function to draw a card of a specified value"""
         for value in range(draw_value, 11):
             pile = self.get_pile_object(str(value))
@@ -716,11 +720,11 @@ class InnovationGame(Game):
 
         self.game_end()
 
-    def meld_card(self, player, card):
+    def base_meld(self, card):
         """Base function to meld a card"""
-        player.stacks[card.color].add_card_to_top(card)
+        self.active_player.stacks[card.color].add_card_to_top(card)
         # Print for testing
-        print('{p} melds {c}'.format(p=player.name, c=card.name))
+        print('{p} melds {c}'.format(p=self.active_player.name, c=card.name))
 
     def return_card(self, card):
         """Base function to return a card"""
@@ -754,26 +758,72 @@ class InnovationGame(Game):
         player.achievement_pile.add_card_to_bottom(card)
         self.check_game_end()
 
-    def add_card_to_hand(self, player, card):
-        """Moves selected card to hand"""
+    def add_card_to_hand(self, card):
+        """Moves selected card to active player's hand"""
         self.find_and_remove_card(card)
-        player.hand.add_card_to_bottom(card)
+        self.active_player.hand.add_card_to_bottom(card)
 
     def add_card_to_score_pile(self, player, card):
         """Moves selected card to the score pile"""
         self.find_and_remove_card(card)
         self.score_card(player, card)
 
-    def draw_to_hand(self, player, draw_value):
+    def draw_to_hand(self, draw_value):
         """Draws a card to a players hand of a specified draw value"""
-        card = self.draw_card(draw_value)
-        self.add_card_to_hand(player, card)
+        card = self.base_draw(draw_value)
+        self.add_card_to_hand(card)
         # Print for testing
-        print('{p} draws {c}'.format(p=player, c=card.name))
+        print('{p} draws {c}'.format(p=self.active_player, c=card.name))
+
+    def meld_card(self, card):
+        self.find_and_remove_card(card)
+        self.base_meld(card)
+
+    # Actions
+    def action_draw(self):
+        self.draw_to_hand(1)
+
+    def action_meld(self):
+        self.meld_card(self.active_card)
+
+    def action_dogma(self):
+        """Function to execute the dogma effects"""
+        sharing_players = self.determine_who_can_share()
+        self.execute_dogma(sharing_players)
+
+        self.draw_if_opponents_shared(sharing_players)
+
+    def execute_dogma(self, sharing_players):
+        for effect in self.active_card.dogma:
+            for eligible_player in sharing_players:
+                # Print for testing
+                print('{p} activates {c} dogma'.format(p=eligible_player.name, c=self.active_card.name))
+                effect.activate()
+
+    def determine_who_can_share(self):
+        """Function to see who can share in an effect"""
+        sharing_players = []
+        for opponent in self.turn_player.share_order:
+            if opponent == self.turn_player:
+                sharing_players.append(self.turn_player)
+            elif opponent.count_icons_on_board(self.active_card.effect_type) >= self.turn_player.count_icons_on_board(self.active_card.effect_type):
+                sharing_players.append(opponent)
+
+        return sharing_players
+
+    
+
+
+    def draw_if_opponents_shared(self, list_of_players):
+        if len(list_of_players) > 1:
+            # TODO - update this to make sure something in the game state changes
+            # Print for testing
+            print('{p} draws a card due to other players sharing effect'.format(p=self.turn_player))
+            self.action_draw()
 
     # Functions to select and simulate actions
     def available_actions(self, player):
-        options = [['draw']]
+        options = [['draw', None]]
 
         # Check to see if a player is eligible to claim any achievements, add them to the available options
         eligible_achievements = self.eligible_achievements(player)
@@ -804,23 +854,28 @@ class InnovationGame(Game):
             selected_action = action_list[0]
 
         # Print for testing
-        print('{a}'.format(a=selected_action[0].upper()))
+        if selected_action[0] == 'draw':
+            print('{a}'.format(a=selected_action[0].upper()))
+        else:
+            print('{a} - {c}'.format(a=selected_action[0].upper(), c=selected_action[1]))
 
         return selected_action
 
     def execute_action(self, player, action):
         """Function that takes an action pair ['action', card]"""
+        self.active_card = action[1]
+
         if action[0] == 'draw':
-            self.draw_to_hand(player, 1)
+            self.action_draw()
         elif action[0] == 'meld':
-            self.meld_card(player, action[1])
+            self.action_meld()
         elif action[0] == 'achieve':
             # Print for testing
             print('{p} achieves {c}'.format(p=player.name, c=action[1]))
             # TODO - write function to achieve a card
             pass
         elif action[0] == 'dogma':
-            self.dogma(player, action[1])
+            self.action_dogma()
 
     def ai_select_action_random(self, player, action_list):
         """Baseline AI to determine which action to select by random selection"""
@@ -829,14 +884,10 @@ class InnovationGame(Game):
 
     def take_action(self, player):
         """Function to take an action"""
+        self.active_player = player
         available_actions = self.available_actions(player)
         selected_action = self.select_action(player, available_actions)
         self.execute_action(player, selected_action)
-
-    # # Does this actually provide any value? Or should I just use this statement in the available actions?
-    # def check_achievement(self, player):
-    #     """Checks to see if a player is eligible to take an achievement"""
-    #     return True if len(self.eligible_achievements(player)) > 0 else False
 
     def eligible_achievements(self, player):
         """Returns list of achievements that can be taken by the player"""
@@ -854,48 +905,18 @@ class InnovationGame(Game):
 
         return eligible_achievements
 
-    def dogma(self, player, card):
-        """Function to execute the dogma effects"""
-        sharing_players = self.determine_who_can_share(player, card)
-        for effect in card.dogma:
-            for eligible_player in sharing_players:
-                # Print for testing
-                print('{p} activates {c} dogma'.format(p=player.name, c=card.name))
-                effect.activate(eligible_player)
-
-        # Take a draw action if others shared
-        self.draw_if_opponents_shared(sharing_players)
-
-    def determine_who_can_share(self, player, card):
-        """Function to see who can share in an effect"""
-        sharing_players = []
-        for opponent in player.share_order:
-            if opponent == player:
-                sharing_players.append(player)
-            elif opponent.count_icons_on_board(card.effect_type) >= player.count_icons_on_board(card.effect_type):
-                sharing_players.append(opponent)
-
-        return sharing_players
-
-    def draw_if_opponents_shared(self, list_of_players):
-        if len(list_of_players) > 1:
-            # TODO - update this to make sure something in the game state changes
-            # Print for testing
-            print('{p} draws a card due to other players sharing effect'.format(p=self.turn_player))
-            self.draw_to_hand(self.turn_player, 1)
-
     # Effects
     # [Card name, effect number, effect type (str), demand_flag, function]
     effects_list = ['The Wheel', 0, 'castle', False]
 
     # The Wheel
-    def the_wheel_effect_0(self, player):
-        self.draw_to_hand(player, 1)
-        self.draw_to_hand(player, 1)
+    def the_wheel_effect_0(self):
+        self.draw_to_hand(1)
+        self.draw_to_hand(1)
 
     # Writing
-    def writing_effect_0(self, player):
-        self.draw_to_hand(player, 2)
+    def writing_effect_0(self):
+        self.draw_to_hand(2)
 
     def test_effects(self):
         e = Effect('The Wheel', 0, 'castle', False, self.the_wheel_effect_0)
