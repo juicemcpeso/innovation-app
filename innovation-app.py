@@ -608,10 +608,6 @@ class InnovationGame(Game):
         alphabetical_order = sorted(starting_actions, key=lambda x: x[1][1].name)
         self.set_table_positions(alphabetical_order[0][0])
 
-        # Print for testing
-        # for player in self.players:
-        #     print("{num} {p} {n} {so}".format(num=player.number, p=player.table_position, n=player.name, so=player.share_order))
-
     def set_table_positions(self, first_player):
         """Given the first player, sets the table positions for each player"""
         position = 0
@@ -795,9 +791,6 @@ class InnovationGame(Game):
             if len(stack.cards) > 0:
                 options.append(['dogma', stack.cards[0]])
 
-        # Print for testing
-        # print('Action options:')
-        # print(options)
         return options
 
     def select_action(self, player, action_list):
@@ -863,7 +856,7 @@ class InnovationGame(Game):
 
     def dogma(self, player, card):
         """Function to execute the dogma effects"""
-        sharing_players = self.check_sharing(player, card)
+        sharing_players = self.determine_who_can_share(player, card)
         for effect in card.dogma:
             for eligible_player in sharing_players:
                 # Print for testing
@@ -871,13 +864,9 @@ class InnovationGame(Game):
                 effect.activate(eligible_player)
 
         # Take a draw action if others shared
-        # TODO - update this to make sure something in the game state changes
-        if len(sharing_players) > 1:
-            # Print for testing
-            print('{p} draws a card due to other players sharing effect'.format(p=player))
-            self.draw_to_hand(player, 1)
+        self.draw_if_opponents_shared(sharing_players)
 
-    def check_sharing(self, player, card):
+    def determine_who_can_share(self, player, card):
         """Function to see who can share in an effect"""
         sharing_players = []
         for opponent in player.share_order:
@@ -887,6 +876,13 @@ class InnovationGame(Game):
                 sharing_players.append(opponent)
 
         return sharing_players
+
+    def draw_if_opponents_shared(self, list_of_players):
+        if len(list_of_players) > 1:
+            # TODO - update this to make sure something in the game state changes
+            # Print for testing
+            print('{p} draws a card due to other players sharing effect'.format(p=self.turn_player))
+            self.draw_to_hand(self.turn_player, 1)
 
     # Effects
     # [Card name, effect number, effect type (str), demand_flag, function]
