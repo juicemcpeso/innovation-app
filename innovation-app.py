@@ -107,6 +107,15 @@ class InnovationCard(Card):
 
         return total_icons
 
+    def contains_icon(self, icon_type):
+        contains_icon = False
+        for icon in self.icons:
+            if icon == icon_type:
+                contains_icon = True
+                break
+
+        return contains_icon
+
 
 class SpecialAchievementCard(Card):
     """Class of special achievement cards for the game Innovation"""
@@ -379,6 +388,7 @@ class Game:
         self.piles = []
         self.players = []
         self.cards = []
+        self.effects = []
         self.game_over = False
         self.round = 0
 
@@ -438,6 +448,12 @@ class Game:
             card = card_list.pop()
         return card
 
+    def add_effect_to_game(self, e):
+        if isinstance(e, Effect):
+            self.effects.append(e)
+        else:
+            raise ValueError("Could not add effect " + str(e) + " to card game " + str(self.name) + ".")
+
     def __repr__(self):
         string = "<Game: %s on %s>" % (self.name, self.date)
         for pile in self.piles:
@@ -470,6 +486,14 @@ class InnovationGame(Game):
 
         self.ordered_players = []
 
+        # Variables for each of the icon types
+        self.crown = 0
+        self.leaf = 1
+        self.lightbulb = 2
+        self.castle = 3
+        self.factory = 4
+        self.clock = 5
+
         for i in range(self.number_of_players):
             self.player_names.append(possible_player_names[i])
             self.ai_players.append(possible_ai_players[i])
@@ -493,6 +517,7 @@ class InnovationGame(Game):
         self.__create_cards()
         self.__create_special_achievements()
         self.__create_players()
+        self.__create_effects()
 
         # Play a game
         # self.play_game()
@@ -565,6 +590,18 @@ class InnovationGame(Game):
         for player in self.players:
             # Create a player's share order
             self.set_share_order(player)
+
+    def __create_effects(self):
+        # [Card name, effect number, effect type (str), demand_flag, function]
+        effects_list = [['Metalworking', 0, 'castle', False, self.metalworking_effect_0],
+                        ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
+                        ['Writing', 0, 'lightbulb', False, self.writing_effect_0]]
+
+        for effect_to_add in effects_list:
+            effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
+            self.add_effect_to_game(effect)
+            associated_card = self.get_card_object(effect.card_name)
+            associated_card.dogma.append(effect)
 
     def set_up_game(self):
         """Sets up the game to be played"""
@@ -763,11 +800,21 @@ class InnovationGame(Game):
         """Moves selected card to active player's hand"""
         self.find_and_remove_card(card)
         self.active_player.hand.add_card_to_bottom(card)
+        # Print for testing
+        print('{p} adds {c} to hand'.format(p=self.active_player, c=card.name))
 
-    def add_card_to_score_pile(self, player, card):
+    def add_card_to_score_pile(self, card):
         """Moves selected card to the score pile"""
         self.find_and_remove_card(card)
-        self.score_card(player, card)
+        self.score_card(self.active_player, card)
+        # Print for testing
+        print('{p} adds {c} to score pile'.format(p=self.active_player, c=card.name))
+
+    def draw_and_reveal(self, draw_value):
+        card = self.base_draw(draw_value)
+        # TODO - update to inform card counting module, remove printing
+        print('{p} draws and reveals {c}'.format(p=self.active_player, c=card.name))
+        return card
 
     def draw_to_hand(self, draw_value):
         """Draws a card to a players hand of a specified draw value"""
@@ -941,8 +988,15 @@ class InnovationGame(Game):
         return action_list[selection]
 
     # Effects
-    # [Card name, effect number, effect type (str), demand_flag, function]
-    effects_list = ['The Wheel', 0, 'castle', False]
+    # Metalworking
+    def metalworking_effect_0(self):
+        while True:
+            card = self.draw_and_reveal(1)
+            if card.contains_icon(self.castle):
+                self.add_card_to_score_pile(card)
+            else:
+                self.add_card_to_hand(card)
+                break
 
     # The Wheel
     def the_wheel_effect_0(self):
@@ -953,20 +1007,10 @@ class InnovationGame(Game):
     def writing_effect_0(self):
         self.draw_to_hand(2)
 
-    def test_effects(self):
-        e = Effect('The Wheel', 0, 'castle', False, self.the_wheel_effect_0)
-        e.activate(self.get_player_object(0))
-
-    def test_writing(self):
-        e = Effect('Writing', 0, 'lightbulb', False, self.writing_effect_0)
-        self.get_card_object('Writing').dogma.append(e)
-
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
-g.test_writing()
+g.turn_player = g.get_player_object(0)
 g.active_player = g.get_player_object(0)
-g.meld_card(g.get_card_object('A.I.'))
-g.score_card(g.get_player_object(0), g.get_card_object('A.I.'))
-g.play_game()
-
+g.active_card = g.get_card_object('Metalworking')
+g.action_dogma()
