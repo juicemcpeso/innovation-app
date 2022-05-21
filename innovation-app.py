@@ -361,7 +361,7 @@ class InnovationPlayer(Player):
 
         return total_icons
 
-    def score(self):
+    def get_score(self):
         """Returns the total value of cards in a players score pile"""
         total_score = 0
         for card in self.score_pile.cards:
@@ -706,7 +706,7 @@ class InnovationGame(Game):
     def check_game_end(self):
         """Runs when a card is added to an achievement pile. Checks to see if anybody has met goal."""
         for player in self.players:
-            print(player.achievement_pile.get_pile_size())
+            print('{p} has {a} achievements'.format(p=player.name, a=player.achievement_pile.get_pile_size()))
             if player.achievement_pile.get_pile_size() >= self.achievement_goal:
                 self.game_end()
 
@@ -753,10 +753,10 @@ class InnovationGame(Game):
         to_location.add_card_to_top(card)
 
     # Combination functions used as card actions
-    def add_card_to_achievement_pile(self, player, card):
+    def add_card_to_achievement_pile(self, card):
         """Moves selected card to a player's achievement pile"""
         self.find_and_remove_card(card)
-        player.achievement_pile.add_card_to_bottom(card)
+        self.active_player.achievement_pile.add_card_to_bottom(card)
         self.check_game_end()
 
     def add_card_to_hand(self, card):
@@ -786,6 +786,25 @@ class InnovationGame(Game):
 
     def action_meld(self):
         self.meld_card(self.active_card)
+
+    def action_achieve(self):
+        self.add_card_to_achievement_pile(self.active_card)
+
+    def eligible_achievements(self, player):
+        """Returns list of achievements that can be taken by the player"""
+        score = player.get_score()
+        highest_melded = 0
+        eligible_achievements = []
+        for stack in player.stacks:
+            if len(stack.cards) > 0:
+                if stack.cards[0].age > highest_melded:
+                    highest_melded = stack.cards[0].age
+
+        for achievement in self.get_pile_object('achievements').cards:
+            if highest_melded >= achievement.age and (score >= (achievement.age * 5)):
+                eligible_achievements.append(achievement)
+
+        return eligible_achievements
 
     def action_dogma(self):
         """Function to execute the dogma effects"""
@@ -839,6 +858,13 @@ class InnovationGame(Game):
             self.action_draw()
 
     # Functions to select and simulate actions
+    def take_action(self, player):
+        """Function to take an action"""
+        self.active_player = player
+        available_actions = self.available_actions(player)
+        selected_action = self.select_action(player, available_actions)
+        self.execute_action(selected_action)
+
     def available_actions(self, player):
         options = [['draw', None]]
 
@@ -865,7 +891,7 @@ class InnovationGame(Game):
         based off input, AI via algorithm."""
         if player.ai_flag:
             # TODO - write function for AI to select an action
-            selected_action = self.ai_select_action_random(player, action_list)
+            selected_action = self.ai_select_action_random_always_achieve(action_list)
         else:
             # TODO - write function for a human to select an action
             selected_action = action_list[0]
@@ -887,38 +913,32 @@ class InnovationGame(Game):
         elif action[0] == 'meld':
             self.action_meld()
         elif action[0] == 'achieve':
-            # TODO - write function to achieve a card
-            pass
+            self.action_achieve()
         elif action[0] == 'dogma':
             self.action_dogma()
 
-    def ai_select_action_random(self, player, action_list):
+    # AIs
+    def ai_select_action_random(self, action_list):
         """Baseline AI to determine which action to select by random selection"""
         index = random.randrange(len(action_list))
         return action_list[index]
 
-    def take_action(self, player):
-        """Function to take an action"""
-        self.active_player = player
-        available_actions = self.available_actions(player)
-        selected_action = self.select_action(player, available_actions)
-        self.execute_action(selected_action)
+    def ai_select_action_random_always_achieve(self, action_list):
+        """If this AI can select an achievement it does, otherwise it picks randomly.
+        If it can pick multiple, it picks the lowest available achievement."""
+        selection = None
 
-    def eligible_achievements(self, player):
-        """Returns list of achievements that can be taken by the player"""
-        score = player.score()
-        highest_melded = 0
-        eligible_achievements = []
-        for stack in player.stacks:
-            if len(stack.cards) > 0:
-                if stack.cards[0].age > highest_melded:
-                    highest_melded = stack.cards[0].age
+        i = 0
+        for option in action_list:
+            if option[0] == 'achieve':
+                selection = i
+                break
+            i += 1
 
-        for achievement in self.get_pile_object('achievements').cards:
-            if highest_melded >= achievement.age and score > (achievement.age * 5):
-                eligible_achievements.append(achievement)
+        if not selection:
+            selection = random.randrange(len(action_list))
 
-        return eligible_achievements
+        return action_list[selection]
 
     # Effects
     # [Card name, effect number, effect type (str), demand_flag, function]
@@ -945,9 +965,8 @@ class InnovationGame(Game):
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
 g.test_writing()
-g.play_game()
-g.turn_player = g.get_player_object(0)
 g.active_player = g.get_player_object(0)
 g.meld_card(g.get_card_object('A.I.'))
-g.active_card = g.get_card_object('Writing')
-g.action_dogma()
+g.score_card(g.get_player_object(0), g.get_card_object('A.I.'))
+g.play_game()
+
