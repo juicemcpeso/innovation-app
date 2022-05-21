@@ -378,6 +378,13 @@ class InnovationPlayer(Player):
 
         return total_score
 
+    def get_colors_on_board(self):
+        current_colors = []
+        for stack in self.stacks:
+            if stack.get_pile_size() > 0:
+                current_colors.append(stack.color)
+        return current_colors
+
 
 class Game:
     """Base class for a collection of Pile objects and players"""
@@ -594,6 +601,7 @@ class InnovationGame(Game):
     def __create_effects(self):
         # [Card name, effect number, effect type (str), demand_flag, function]
         effects_list = [['Metalworking', 0, 'castle', False, self.metalworking_effect_0],
+                        ['Mysticism', 0, 'castle', False, self.mysticism_effect_0],
                         ['Sailing', 0, 'crown', False, self.sailing_effect_0],
                         ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
                         ['Writing', 0, 'lightbulb', False, self.writing_effect_0]]
@@ -995,7 +1003,7 @@ class InnovationGame(Game):
 
         return action_list[selection]
 
-    # Effects
+    # Age 1 Effects
     def metalworking_effect_0(self):
         while True:
             card = self.draw_and_reveal(1)
@@ -1004,6 +1012,15 @@ class InnovationGame(Game):
             else:
                 self.add_card_to_hand(card)
                 break
+
+    def mysticism_effect_0(self):
+        card = self.draw_and_reveal(1)
+
+        if card.color in self.active_player.get_colors_on_board():
+            self.meld_card(card)
+            self.draw_to_hand(1)
+        else:
+            self.add_card_to_hand(card)
 
     def sailing_effect_0(self):
         self.draw_and_meld(1)
@@ -1019,7 +1036,10 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
+
 g.turn_player = g.get_player_object(0)
 g.active_player = g.get_player_object(0)
-g.active_card = g.get_card_object('Sailing')
+g.meld_card(g.get_card_object('A.I.'))
+g.meld_card(g.get_card_object('Domestication'))
+g.active_card = g.get_card_object('Mysticism')
 g.action_dogma()
