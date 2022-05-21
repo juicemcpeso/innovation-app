@@ -598,20 +598,6 @@ class InnovationGame(Game):
             # Create a player's share order
             self.set_share_order(player)
 
-    def __create_effects(self):
-        # [Card name, effect number, effect type (str), demand_flag, function]
-        effects_list = [['Metalworking', 0, 'castle', False, self.metalworking_effect_0],
-                        ['Mysticism', 0, 'castle', False, self.mysticism_effect_0],
-                        ['Sailing', 0, 'crown', False, self.sailing_effect_0],
-                        ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
-                        ['Writing', 0, 'lightbulb', False, self.writing_effect_0]]
-
-        for effect_to_add in effects_list:
-            effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
-            self.add_effect_to_game(effect)
-            associated_card = self.get_card_object(effect.card_name)
-            associated_card.dogma.append(effect)
-
     def set_up_game(self):
         """Sets up the game to be played"""
         # Shuffle all the piles
@@ -1003,6 +989,22 @@ class InnovationGame(Game):
 
         return action_list[selection]
 
+    # Effects
+    def __create_effects(self):
+        # [Card name, effect number, effect type (str), demand_flag, function]
+        effects_list = [['Metalworking', 0, 'castle', False, self.metalworking_effect_0],
+                        ['Mysticism', 0, 'castle', False, self.mysticism_effect_0],
+                        ['Sailing', 0, 'crown', False, self.sailing_effect_0],
+                        ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
+                        ['Writing', 0, 'lightbulb', False, self.writing_effect_0],
+                        ['Calendar', 0, 'leaf', False, self.calendar_effect_0]]
+
+        for effect_to_add in effects_list:
+            effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
+            self.add_effect_to_game(effect)
+            associated_card = self.get_card_object(effect.card_name)
+            associated_card.dogma.append(effect)
+
     # Age 1 Effects
     def metalworking_effect_0(self):
         while True:
@@ -1029,17 +1031,22 @@ class InnovationGame(Game):
         self.draw_to_hand(1)
         self.draw_to_hand(1)
 
-    # Writing
     def writing_effect_0(self):
         self.draw_to_hand(2)
+
+    # Age 2 effects
+    def calendar_effect_0(self):
+        if self.active_player.score_pile.get_pile_size() > self.active_player.hand.get_pile_size():
+            self.draw_to_hand(3)
+            self.draw_to_hand(3)
 
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
-
+print(g.get_player_object(0).hand.get_pile_size())
 g.turn_player = g.get_player_object(0)
 g.active_player = g.get_player_object(0)
-g.meld_card(g.get_card_object('A.I.'))
+g.add_card_to_score_pile(g.get_card_object('A.I.'))
 g.meld_card(g.get_card_object('Domestication'))
-g.active_card = g.get_card_object('Mysticism')
+g.active_card = g.get_card_object('Calendar')
 g.action_dogma()
