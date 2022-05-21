@@ -594,6 +594,7 @@ class InnovationGame(Game):
     def __create_effects(self):
         # [Card name, effect number, effect type (str), demand_flag, function]
         effects_list = [['Metalworking', 0, 'castle', False, self.metalworking_effect_0],
+                        ['Sailing', 0, 'crown', False, self.sailing_effect_0],
                         ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
                         ['Writing', 0, 'lightbulb', False, self.writing_effect_0]]
 
@@ -761,8 +762,6 @@ class InnovationGame(Game):
     def base_meld(self, card):
         """Base function to meld a card"""
         self.active_player.stacks[card.color].add_card_to_top(card)
-        # Print for testing
-        print('{p} melds {c}'.format(p=self.active_player.name, c=card.name))
 
     def return_card(self, card):
         """Base function to return a card"""
@@ -819,13 +818,22 @@ class InnovationGame(Game):
     def draw_to_hand(self, draw_value):
         """Draws a card to a players hand of a specified draw value"""
         card = self.base_draw(draw_value)
-        self.add_card_to_hand(card)
         # Print for testing
         print('{p} draws {c}'.format(p=self.active_player, c=card.name))
+        self.add_card_to_hand(card)
+
+    def draw_and_meld(self, draw_value):
+        card = self.base_draw(draw_value)
+        self.find_and_remove_card(card)
+        self.base_meld(card)
+        # Print for testing
+        print('{p} draws and melds {c}'.format(p=self.active_player, c=card.name))
 
     def meld_card(self, card):
         self.find_and_remove_card(card)
         self.base_meld(card)
+        # Print for testing
+        print('{p} melds {c}'.format(p=self.active_player.name, c=card.name))
 
     # Actions
     def action_draw(self):
@@ -988,7 +996,6 @@ class InnovationGame(Game):
         return action_list[selection]
 
     # Effects
-    # Metalworking
     def metalworking_effect_0(self):
         while True:
             card = self.draw_and_reveal(1)
@@ -998,7 +1005,9 @@ class InnovationGame(Game):
                 self.add_card_to_hand(card)
                 break
 
-    # The Wheel
+    def sailing_effect_0(self):
+        self.draw_and_meld(1)
+
     def the_wheel_effect_0(self):
         self.draw_to_hand(1)
         self.draw_to_hand(1)
@@ -1012,5 +1021,5 @@ g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", Tr
 
 g.turn_player = g.get_player_object(0)
 g.active_player = g.get_player_object(0)
-g.active_card = g.get_card_object('Metalworking')
+g.active_card = g.get_card_object('Sailing')
 g.action_dogma()
