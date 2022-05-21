@@ -12,6 +12,7 @@ Sailing|green|1|crown|crown|crown||leaf|Draw and meld a 1||
 The Wheel|green|1|castle||castle|castle|castle|Draw two 1.||
 Writing|blue|1|lightbulb||lightbulb|lightbulb|crown|Draw a 2||
 Calendar|blue|2|leaf||leaf|leaf|lightbulb|If you have more cards in your score pile than in your hand, draw two 3.||
+Fermentation|yellow|2|leaf|leaf|leaf||castle|Draw a 2 for every color on your board with one or more [Leaf].||
 Alchemy|blue|3|castle||leaf|castle|castle|Draw and reveal a 4 for every three [Castle] icons on your board. If any of the drawn cards are red, return the cards drawn and all cards in your hand. Otherwise, keep them.|Meld a card from your hand, then score a card from your hand.|
 Anatomy|yellow|4|leaf||leaf|leaf|leaf|I DEMAND you return a card from your score pile! If you do, return a top card of equal value from your board!||
 Astronomy|purple|5|lightbulb|crown|lightbulb|lightbulb||Draw and reveal a 6. If the card is green or blue, meld it and repeat this dogma effect.|If all non-purple top cards on your board are value 6 or higher, claim the Universe achievement.|

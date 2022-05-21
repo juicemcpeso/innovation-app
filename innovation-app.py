@@ -997,7 +997,8 @@ class InnovationGame(Game):
                         ['Sailing', 0, 'crown', False, self.sailing_effect_0],
                         ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
                         ['Writing', 0, 'lightbulb', False, self.writing_effect_0],
-                        ['Calendar', 0, 'leaf', False, self.calendar_effect_0]]
+                        ['Calendar', 0, 'leaf', False, self.calendar_effect_0],
+                        ['Fermentation', 0, 'leaf', False, self.fermentation_effect_0]]
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1040,13 +1041,24 @@ class InnovationGame(Game):
             self.draw_to_hand(3)
             self.draw_to_hand(3)
 
+    def fermentation_effect_0(self):
+        stacks_with_leaves = 0
+        for stack in self.active_player.stacks:
+            if stack.count_icons_in_stack(self.leaf) > 0:
+                stacks_with_leaves += 1
+
+        i = 0
+        while i < stacks_with_leaves:
+            self.draw_to_hand(2)
+            i += 1
+
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
 print(g.get_player_object(0).hand.get_pile_size())
 g.turn_player = g.get_player_object(0)
 g.active_player = g.get_player_object(0)
-g.add_card_to_score_pile(g.get_card_object('A.I.'))
-g.meld_card(g.get_card_object('Domestication'))
-g.active_card = g.get_card_object('Calendar')
+g.meld_card(g.get_card_object('Calendar'))
+g.meld_card(g.get_card_object('Fermentation'))
+g.active_card = g.get_card_object('Fermentation')
 g.action_dogma()
