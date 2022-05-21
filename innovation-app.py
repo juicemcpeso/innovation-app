@@ -600,9 +600,7 @@ class InnovationGame(Game):
 
     def set_up_game(self):
         """Sets up the game to be played"""
-        # Shuffle all the piles
-        for pile in self.draw_piles.values():
-            pile.shuffle_pile()
+        self.shuffle_piles()
 
         # Pick a card from each of the piles 1-9 to use as an achievement. Change the name of the card to achievement.
         for i in range(1, 10):
@@ -610,6 +608,10 @@ class InnovationGame(Game):
             self.get_pile_object('achievements').add_card_to_bottom(card)
             card.name = "Achievement {n}".format(n=i)
             self.achievements.update({card.age: card})
+
+    def shuffle_piles(self):
+        for pile in self.draw_piles.values():
+            pile.shuffle_pile()
 
     def starting_play(self):
         """Give everybody two cards, AI evaluates which one to play. Save the selection. Once all picked, execute"""
@@ -765,9 +767,9 @@ class InnovationGame(Game):
         """Base function to score a card"""
         player.score_pile.add_card_to_bottom(card)
 
-    def tuck_card(self, player, card):
+    def base_tuck(self, card):
         """Base function to tuck a card in a stack"""
-        player.stacks[card.color].add_card_to_bottom(card)
+        self.active_player.stacks[card.color].add_card_to_bottom(card)
 
     def find_and_remove_card(self, card):
         """Finds pile where card is located and removes it from that pile"""
@@ -803,12 +805,6 @@ class InnovationGame(Game):
         # Print for testing
         print('{p} adds {c} to score pile'.format(p=self.active_player, c=card.name))
 
-    def draw_and_reveal(self, draw_value):
-        card = self.base_draw(draw_value)
-        # TODO - update to inform card counting module, remove printing
-        print('{p} draws and reveals {c}'.format(p=self.active_player, c=card.name))
-        return card
-
     def draw_to_hand(self, draw_value):
         """Draws a card to a players hand of a specified draw value"""
         card = self.base_draw(draw_value)
@@ -823,11 +819,23 @@ class InnovationGame(Game):
         # Print for testing
         print('{p} draws and melds {c}'.format(p=self.active_player, c=card.name))
 
+    def draw_and_reveal(self, draw_value):
+        card = self.base_draw(draw_value)
+        # TODO - update to inform card counting module, remove printing
+        print('{p} draws and reveals {c}'.format(p=self.active_player, c=card.name))
+        return card
+
     def meld_card(self, card):
         self.find_and_remove_card(card)
         self.base_meld(card)
         # Print for testing
         print('{p} melds {c}'.format(p=self.active_player.name, c=card.name))
+
+    def tuck_card(self, card):
+        self.find_and_remove_card(card)
+        self.base_tuck(card)
+        # Print for testing
+        print('{p} tucks {c}'.format(p=self.active_player.name, c=card.name))
 
     # Actions
     def action_draw(self):
@@ -998,7 +1006,8 @@ class InnovationGame(Game):
                         ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
                         ['Writing', 0, 'lightbulb', False, self.writing_effect_0],
                         ['Calendar', 0, 'leaf', False, self.calendar_effect_0],
-                        ['Fermentation', 0, 'leaf', False, self.fermentation_effect_0]]
+                        ['Fermentation', 0, 'leaf', False, self.fermentation_effect_0],
+                        ['Colonialism', 0, 'factory', False, self.colonialism_effect_0]]
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1052,13 +1061,25 @@ class InnovationGame(Game):
             self.draw_to_hand(2)
             i += 1
 
+    # Age 4 effects
+    def colonialism_effect_0(self):
+        while True:
+            card = self.draw_and_reveal(3)
+            self.tuck_card(card)
+            if not card.contains_icon(self.crown):
+                break
+
+    # Tests
+    def test_colonialism(self):
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        self.active_card = self.get_card_object('Colonialism')
+        self.meld_card(self.active_card)
+        self.action_dogma()
+
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
-print(g.get_player_object(0).hand.get_pile_size())
-g.turn_player = g.get_player_object(0)
-g.active_player = g.get_player_object(0)
-g.meld_card(g.get_card_object('Calendar'))
-g.meld_card(g.get_card_object('Fermentation'))
-g.active_card = g.get_card_object('Fermentation')
-g.action_dogma()
+g.test_colonialism()
+
