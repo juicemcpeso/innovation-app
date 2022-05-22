@@ -207,6 +207,10 @@ class Pile:
             card = self.cards.pop(0)
             return card
 
+    def see_top_card(self):
+        if len(self.cards) > 0:
+            return self.cards[0]
+
     def shuffle_pile(self):
         random.seed(self.seed)
         random.shuffle(self.cards)
@@ -501,6 +505,13 @@ class InnovationGame(Game):
         self.factory = 4
         self.clock = 5
 
+        # Variables for each of the colors
+        self.blue = 0
+        self.green = 1
+        self.purple = 2
+        self.red = 3
+        self.yellow = 4
+
         for i in range(self.number_of_players):
             self.player_names.append(possible_player_names[i])
             self.ai_players.append(possible_ai_players[i])
@@ -789,6 +800,8 @@ class InnovationGame(Game):
         """Moves selected card to a player's achievement pile"""
         self.find_and_remove_card(card)
         self.active_player.achievement_pile.add_card_to_bottom(card)
+        # Print for testing
+        print('{p} claims achievement: {c}'.format(p=self.active_player, c=card.name))
         self.check_game_end()
 
     def add_card_to_hand(self, card):
@@ -1008,7 +1021,9 @@ class InnovationGame(Game):
                         ['Calendar', 0, 'leaf', False, self.calendar_effect_0],
                         ['Fermentation', 0, 'leaf', False, self.fermentation_effect_0],
                         ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],
-                        ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0]]
+                        ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
+                        ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],
+                        ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1]]
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1073,6 +1088,31 @@ class InnovationGame(Game):
     def experimentation_effect_0(self):
         self.draw_and_meld(5)
 
+    # Age 5 effects
+    def astronomy_effect_0(self):
+        while True:
+            card = self.draw_and_reveal(6)
+            if card.color == self.green or card.color == self.blue:
+                self.meld_card(card)
+            else:
+                break
+
+    def astronomy_effect_1(self):
+        do_cards_meet_criteria = []
+        for stack in self.active_player.stacks:
+            if stack.color != self.purple:
+                if stack.cards:
+                    top_card = stack.see_top_card()
+                    if top_card.age >= 6:
+                        do_cards_meet_criteria.append(True)
+                    else:
+                        do_cards_meet_criteria.append(False)
+                else:
+                    do_cards_meet_criteria.append(False)
+
+        if all(do_cards_meet_criteria):
+            self.add_card_to_achievement_pile(self.get_card_object('Universe'))
+
     # Tests
     def test_colonialism(self):
         self.shuffle_piles()
@@ -1090,8 +1130,23 @@ class InnovationGame(Game):
         self.meld_card(self.active_card)
         self.action_dogma()
 
+    def test_astronomy(self):
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        # Red
+        self.meld_card(g.get_card_object('Machine Tools'))
+        # Green
+        self.meld_card(g.get_card_object('Bicycle'))
+        # Yellow
+        self.meld_card(g.get_card_object('Antibiotics'))
+        # Blue
+        self.meld_card(g.get_card_object('Atomic Theory'))
+        self.active_card = self.get_card_object('Astronomy')
+        self.meld_card(self.active_card)
+        self.action_dogma()
+
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
-g.test_experimentation()
-
+g.test_astronomy()
