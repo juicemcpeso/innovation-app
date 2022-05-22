@@ -404,6 +404,30 @@ class InnovationPlayer(Player):
         return current_colors
 
 
+class Action:
+    def __init__(self, t, p, c=None):
+        action_type_options = ['draw', 'meld', 'achieve', 'dogma']
+        if t not in action_type_options:
+            raise ValueError("Error creating Innovation Action. "
+                             "Effect type must be draw, meld, achieve, or dogma.")
+        self.type = t
+
+        self.player = p
+
+        self.card = c
+
+        if self.card:
+            self.name = "{p}'s action: {t} - {c}".format(p=self.player.name, t=self.type.upper(), c=self.card.name)
+        else:
+            self.name = "{p}'s action: {t}".format(p=self.player.name, t=self.type.upper())
+
+    def __repr__(self):
+        return "<%s>" % self.name
+
+    def __str__(self):
+        return self.name
+
+
 class Game:
     """Base class for a collection of Pile objects and players"""
 
@@ -506,8 +530,9 @@ class InnovationGame(Game):
         self.ai_players = []
 
         self.active_player = None
-        self.turn_player = None
         self.active_card = None
+        self.turn_player = None
+        self.turn_card = None
 
         self.ordered_players = []
 
@@ -552,7 +577,7 @@ class InnovationGame(Game):
         self.__create_effects()
 
         # Play a game
-        # self.play_game()
+        self.play_game()
 
     def __create_cards(self):
         with open('cards/card_list.csv', 'r') as handle:
@@ -646,29 +671,30 @@ class InnovationGame(Game):
         # Give each player two cards
         for player in self.players:
             self.active_player = player
+            self.turn_player = player
             self.draw_to_hand(1)
             self.draw_to_hand(1)
 
             # Create a list of the possible actions (meld either of the cards)
             action_options = []
             for card in player.hand.cards:
-                action_options.append(['meld', card])
+                meld_action = Action('meld', player, card)
+                action_options.append(meld_action)
 
             # Select one of the cards to meld
-            selected_action = self.select_action(player, action_options)
+            selected_action = self.select_action(action_options)
 
             # Add the player and their selected card to meld to the list of all the melds.
-            starting_actions.append([player, selected_action])
-            starting_melds.append([player, selected_action[1]])
+            starting_actions.append(selected_action)
 
         # Once everybody has selected their action, meld them all
-        for combination in starting_actions:
-            self.active_player = combination[0]
-            self.execute_action(combination[1])
+        for action in starting_actions:
+            self.turn_player = action.player
+            self.execute_action(action)
 
         # Determine who has the first card alphabetically and set each player's turn position
-        alphabetical_order = sorted(starting_actions, key=lambda x: x[1][1].name)
-        self.set_table_positions(alphabetical_order[0][0])
+        alphabetical_order = sorted(starting_actions, key=lambda x: x.card.name)
+        self.set_table_positions(alphabetical_order[0].player)
 
     def set_table_positions(self, first_player):
         """Given the first player, sets the table positions for each player"""
@@ -717,19 +743,19 @@ class InnovationGame(Game):
             if self.number_of_players < 4 and player.table_position == 0:
                 # Print for testing
                 print("{n}'s first action:".format(n=player.name))
-                self.take_action(player)
+                self.take_action()
             elif self.number_of_players == 4 and (player.table_position == 0 or player.table_position == 1):
                 # Print for testing
                 print("{n}'s first action:".format(n=player.name))
-                self.take_action(player)
+                self.take_action()
             else:
                 # Print for testing
                 print("{n}'s first action:".format(n=player.name))
-                self.take_action(player)
+                self.take_action()
 
                 # Print for testing
                 print("\n{n}'s second action:".format(n=player.name))
-                self.take_action(player)
+                self.take_action()
 
     def play_round(self):
         """Normal round of Innovation where everybody gets two actions"""
@@ -740,11 +766,11 @@ class InnovationGame(Game):
             print('---')
             print("Round {r} - {n}'s Turn".format(r=self.round, n=player.name))
             print("{n}'s first action:".format(n=player.name))
-            self.take_action(player)
+            self.take_action()
 
             # Print for testing
             print("\n{n}'s second action:".format(n=player.name))
-            self.take_action(player)
+            self.take_action()
 
     def play_game(self):
         """Play a game of Innovation"""
@@ -890,10 +916,10 @@ class InnovationGame(Game):
         self.draw_to_hand(1)
 
     def action_meld(self):
-        self.meld_card(self.active_card)
+        self.meld_card(self.turn_card)
 
     def action_achieve(self):
-        self.add_card_to_achievement_pile(self.active_card)
+        self.add_card_to_achievement_pile(self.turn_card)
 
     def eligible_achievements(self, player):
         """Returns list of achievements that can be taken by the player"""
@@ -901,7 +927,7 @@ class InnovationGame(Game):
         highest_melded = 0
         eligible_achievements = []
         for stack in player.stacks:
-            if len(stack.cards) > 0:
+            if stack.cards:
                 if stack.cards[0].age > highest_melded:
                     highest_melded = stack.cards[0].age
 
@@ -919,7 +945,7 @@ class InnovationGame(Game):
         self.draw_if_opponents_shared(sharing_players)
 
     def execute_dogma(self, sharing_players):
-        for effect in self.active_card.dogma:
+        for effect in self.turn_card.dogma:
 
             if effect.demand:
                 # Demand effects
@@ -929,7 +955,7 @@ class InnovationGame(Game):
                         # Print for testing
                         print('{t} DEMANDS {p} resolve {c} dogma'.format(t=self.turn_player,
                                                                          p=eligible_player.name,
-                                                                         c=self.active_card.name))
+                                                                         c=self.turn_card.name))
                         effect.activate()
 
             else:
@@ -937,7 +963,7 @@ class InnovationGame(Game):
                 for eligible_player in sharing_players:
                     self.active_player = eligible_player
                     # Print for testing
-                    print('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.active_card.name))
+                    print('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
                     effect.activate()
 
     def determine_who_can_share(self):
@@ -963,63 +989,67 @@ class InnovationGame(Game):
             self.action_draw()
 
     # Functions to select and simulate actions
-    def take_action(self, player):
+    def take_action(self):
         """Function to take an action"""
-        self.active_player = player
-        available_actions = self.available_actions(player)
-        selected_action = self.select_action(player, available_actions)
+        self.active_player = self.turn_player
+        available_actions = self.available_actions()
+        selected_action = self.select_action(available_actions)
         self.execute_action(selected_action)
 
-    def available_actions(self, player):
-        options = [['draw', None]]
+    def available_actions(self):
+        draw_action = Action('draw', self.turn_player, None)
+        options = [draw_action]
 
         # Check to see if a player is eligible to claim any achievements, add them to the available options
-        eligible_achievements = self.eligible_achievements(player)
+        eligible_achievements = self.eligible_achievements(self.turn_player)
         if len(eligible_achievements) > 0:
             for achievement in eligible_achievements:
-                options.append(['achieve', achievement])
+                achievement_action = Action('achieve', self.turn_player, achievement)
+                options.append(achievement_action)
 
         # Check to see if the player has any cards in hand, add the ability to meld them to the available options
-        if len(player.hand.cards) > 0:
-            for card in player.hand.cards:
-                options.append(['meld', card])
+        if self.turn_player.hand.cards:
+            for card in self.turn_player.hand.cards:
+                meld_action = Action('meld', self.turn_player, card)
+                options.append(meld_action)
 
         # Check to see if the player has any dogma effects that can be activated
-        for stack in player.stacks:
-            if len(stack.cards) > 0:
-                options.append(['dogma', stack.cards[0]])
+        for stack in self.turn_player.stacks:
+            if stack.cards:
+                dogma_action = Action('dogma', self.turn_player, stack.see_top_card())
+                options.append(dogma_action)
 
+        print(options)
         return options
 
-    def select_action(self, player, action_list):
+    def select_action(self, action_list):
         """Function that takes a list of possible actions and selects which one to execute. Human code will select
         based off input, AI via algorithm."""
-        if player.ai_flag:
+        if self.turn_player.ai_flag:
             # TODO - write function for AI to select an action
             selected_action = self.ai_select_action_random_always_achieve(action_list)
         else:
             # TODO - write function for a human to select an action
-            selected_action = action_list[0]
+            pass
 
         # Print for testing
-        if selected_action[0] == 'draw':
-            print('{a}'.format(a=selected_action[0].upper()))
-        else:
-            print('{a} - {c}'.format(a=selected_action[0].upper(), c=selected_action[1]))
+        print(selected_action.name)
 
         return selected_action
 
     def execute_action(self, action):
         """Function that takes an action pair ['action', card]"""
-        self.active_card = action[1]
+        self.active_card = action.card
+        self.turn_card = action.card
+        self.active_player = self.turn_player
 
-        if action[0] == 'draw':
+        if action.type == 'draw':
             self.action_draw()
-        elif action[0] == 'meld':
+        elif action.type == 'meld':
             self.action_meld()
-        elif action[0] == 'achieve':
+        elif action.type == 'achieve':
             self.action_achieve()
-        elif action[0] == 'dogma':
+        elif action.type == 'dogma':
             self.action_dogma()
 
     # AIs
@@ -1035,7 +1065,7 @@ class InnovationGame(Game):
 
         i = 0
         for option in action_list:
-            if option[0] == 'achieve':
+            if option.type == 'achieve':
                 selection = i
                 break
             i += 1
@@ -1244,4 +1274,3 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
-g.test_electricity()
