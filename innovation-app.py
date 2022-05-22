@@ -576,8 +576,8 @@ class InnovationGame(Game):
         self.__create_players()
         self.__create_effects()
 
-        # Play a game
-        self.play_game()
+        # Play a game (Play Ball!)
+        # self.play_game()
 
     def __create_cards(self):
         with open('cards/card_list.csv', 'r') as handle:
@@ -804,6 +804,7 @@ class InnovationGame(Game):
             pile = self.get_pile_object(str(value))
             if pile.get_pile_size() > 0:
                 card = pile.get_top_card()
+                self.active_card = card
                 return card
 
         self.game_end()
@@ -846,12 +847,12 @@ class InnovationGame(Game):
         print('{p} claims achievement: {c}'.format(p=self.active_player, c=card.name))
         self.check_game_end()
 
-    def add_card_to_hand(self, card):
+    def add_card_to_hand(self):
         """Moves selected card to active player's hand"""
-        self.find_and_remove_card(card)
-        self.active_player.hand.add_card_to_bottom(card)
+        self.find_and_remove_card(self.active_card)
+        self.active_player.hand.add_card_to_bottom(self.active_card)
         # Print for testing
-        print('{p} adds {c} to hand'.format(p=self.active_player, c=card.name))
+        print('{p} adds {c} to hand'.format(p=self.active_player, c=self.active_card.name))
 
     def add_card_to_score_pile(self, card):
         """Moves selected card to the score pile"""
@@ -862,10 +863,10 @@ class InnovationGame(Game):
 
     def draw_to_hand(self, draw_value):
         """Draws a card to a players hand of a specified draw value"""
-        card = self.base_draw(draw_value)
+        self.base_draw(draw_value)
         # Print for testing
-        print('{p} draws {c}'.format(p=self.active_player, c=card.name))
-        self.add_card_to_hand(card)
+        print('{p} draws {c}'.format(p=self.active_player, c=self.active_card.name))
+        self.add_card_to_hand()
 
     def draw_and_meld(self, draw_value):
         card = self.base_draw(draw_value)
@@ -875,10 +876,9 @@ class InnovationGame(Game):
         print('{p} draws and melds {c}'.format(p=self.active_player, c=card.name))
 
     def draw_and_reveal(self, draw_value):
-        card = self.base_draw(draw_value)
+        self.base_draw(draw_value)
         # TODO - update to inform card counting module, remove printing
-        print('{p} draws and reveals {c}'.format(p=self.active_player, c=card.name))
-        return card
+        print('{p} draws and reveals {c}'.format(p=self.active_player, c=self.active_card.name))
 
     def draw_and_score(self, draw_value):
         card = self.base_draw(draw_value)
@@ -972,7 +972,7 @@ class InnovationGame(Game):
         for opponent in self.turn_player.share_order:
             if opponent == self.turn_player:
                 sharing_players.append(self.turn_player)
-            elif opponent.count_icons_on_board(self.active_card.effect_type) >= self.turn_player.count_icons_on_board(self.active_card.effect_type):
+            elif opponent.count_icons_on_board(self.turn_card.effect_type) >= self.turn_player.count_icons_on_board(self.turn_card.effect_type):
                 sharing_players.append(opponent)
 
         return sharing_players
@@ -1019,7 +1019,6 @@ class InnovationGame(Game):
                 dogma_action = Action('dogma', self.turn_player, stack.see_top_card())
                 options.append(dogma_action)
 
-        print(options)
         return options
 
     def select_action(self, action_list):
@@ -1102,21 +1101,21 @@ class InnovationGame(Game):
     # Age 1 Effects
     def metalworking_effect_0(self):
         while True:
-            card = self.draw_and_reveal(1)
-            if card.contains_icon(self.castle):
-                self.add_card_to_score_pile(card)
+            self.draw_and_reveal(1)
+            if self.active_card.contains_icon(self.castle):
+                self.add_card_to_score_pile(self.active_card)
             else:
-                self.add_card_to_hand(card)
+                self.add_card_to_hand()
                 break
 
     def mysticism_effect_0(self):
-        card = self.draw_and_reveal(1)
+        self.draw_and_reveal(1)
 
-        if card.color in self.active_player.get_colors_on_board():
-            self.meld_card(card)
+        if self.active_card.color in self.active_player.get_colors_on_board():
+            self.meld_card(self.active_card)
             self.draw_to_hand(1)
         else:
-            self.add_card_to_hand(card)
+            self.add_card_to_hand()
 
     def sailing_effect_0(self):
         self.draw_and_meld(1)
@@ -1209,15 +1208,51 @@ class InnovationGame(Game):
             i += 1
 
     # Tests
+    def test_suite(self):
+        tests = [[self.test_metalworking, False],       # Age 1
+                 [self.test_mysticism, False],
+                 [self.test_colonialism, False],        # Age 4
+                 [self.test_experimentation, False],
+                 [self.test_astronomy, False],          # Age 5
+                 [self.test_steam_engine, False],
+                 [self.test_machine_tools, False],      # Age 6
+                 [self.test_electricity, False]]        # Age 7
+
+        for test in tests:
+            if test[1]:
+                test[0]()
+
+    # Age 1 - tests
+    def test_metalworking(self):
+        print('-- Test: Metalworking --')
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        self.turn_card = self.get_card_object('Metalworking')
+        self.meld_card(self.turn_card)
+        self.action_dogma()
+
+    def test_mysticism(self):
+        print('-- Test: Mysticism --')
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        self.turn_card = self.get_card_object('Mysticism')
+        self.meld_card(self.turn_card)
+        self.action_dogma()
+
     def test_colonialism(self):
+        print('-- Test: Colonialism --')
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
         self.active_card = self.get_card_object('Colonialism')
+        self.turn_card = self.active_card
         self.meld_card(self.active_card)
         self.action_dogma()
 
     def test_experimentation(self):
+        print('-- Test: Experimentation --')
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1226,6 +1261,7 @@ class InnovationGame(Game):
         self.action_dogma()
 
     def test_astronomy(self):
+        print('-- Test: Astronomy --')
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1242,6 +1278,7 @@ class InnovationGame(Game):
         self.action_dogma()
 
     def test_steam_engine(self):
+        print('-- Test: Steam Engine --')
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(1)
@@ -1252,6 +1289,7 @@ class InnovationGame(Game):
         self.action_dogma()
 
     def test_machine_tools(self):
+        print('-- Test: Machine Tools --')
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1261,6 +1299,7 @@ class InnovationGame(Game):
         self.action_dogma()
 
     def test_electricity(self):
+        print('-- Test: Electricity --')
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1272,5 +1311,6 @@ class InnovationGame(Game):
         self.action_dogma()
 
 
-g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
+g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
+g.test_suite()
