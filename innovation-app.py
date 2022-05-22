@@ -207,9 +207,27 @@ class Pile:
             card = self.cards.pop(0)
             return card
 
+    def get_bottom_card(self):
+        if len(self.cards):
+            card = self.cards.pop(-1)
+            return card
+
+    def see_top_card(self):
+        if len(self.cards) > 0:
+            return self.cards[0]
+
     def shuffle_pile(self):
         random.seed(self.seed)
         random.shuffle(self.cards)
+
+    def highest_card_value(self):
+        highest_value = 0
+        if self.cards:
+            for card in self.cards:
+                if card.age > highest_value:
+                    highest_value = card.age
+
+        return highest_value
 
     def __repr__(self):
         string = "<CardPile: %s>\n" % self.name
@@ -378,6 +396,13 @@ class InnovationPlayer(Player):
 
         return total_score
 
+    def get_colors_on_board(self):
+        current_colors = []
+        for stack in self.stacks:
+            if stack.get_pile_size() > 0:
+                current_colors.append(stack.color)
+        return current_colors
+
 
 class Game:
     """Base class for a collection of Pile objects and players"""
@@ -494,6 +519,13 @@ class InnovationGame(Game):
         self.factory = 4
         self.clock = 5
 
+        # Variables for each of the colors
+        self.blue = 0
+        self.green = 1
+        self.purple = 2
+        self.red = 3
+        self.yellow = 4
+
         for i in range(self.number_of_players):
             self.player_names.append(possible_player_names[i])
             self.ai_players.append(possible_ai_players[i])
@@ -591,23 +623,9 @@ class InnovationGame(Game):
             # Create a player's share order
             self.set_share_order(player)
 
-    def __create_effects(self):
-        # [Card name, effect number, effect type (str), demand_flag, function]
-        effects_list = [['Metalworking', 0, 'castle', False, self.metalworking_effect_0],
-                        ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
-                        ['Writing', 0, 'lightbulb', False, self.writing_effect_0]]
-
-        for effect_to_add in effects_list:
-            effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
-            self.add_effect_to_game(effect)
-            associated_card = self.get_card_object(effect.card_name)
-            associated_card.dogma.append(effect)
-
     def set_up_game(self):
         """Sets up the game to be played"""
-        # Shuffle all the piles
-        for pile in self.draw_piles.values():
-            pile.shuffle_pile()
+        self.shuffle_piles()
 
         # Pick a card from each of the piles 1-9 to use as an achievement. Change the name of the card to achievement.
         for i in range(1, 10):
@@ -615,6 +633,10 @@ class InnovationGame(Game):
             self.get_pile_object('achievements').add_card_to_bottom(card)
             card.name = "Achievement {n}".format(n=i)
             self.achievements.update({card.age: card})
+
+    def shuffle_piles(self):
+        for pile in self.draw_piles.values():
+            pile.shuffle_pile()
 
     def starting_play(self):
         """Give everybody two cards, AI evaluates which one to play. Save the selection. Once all picked, execute"""
@@ -750,6 +772,8 @@ class InnovationGame(Game):
     # Base functions
     def base_draw(self, draw_value):
         """Base function to draw a card of a specified value"""
+        if draw_value == 0:
+            draw_value = 1
         for value in range(draw_value, 11):
             pile = self.get_pile_object(str(value))
             if pile.get_pile_size() > 0:
@@ -761,10 +785,8 @@ class InnovationGame(Game):
     def base_meld(self, card):
         """Base function to meld a card"""
         self.active_player.stacks[card.color].add_card_to_top(card)
-        # Print for testing
-        print('{p} melds {c}'.format(p=self.active_player.name, c=card.name))
 
-    def return_card(self, card):
+    def base_return(self, card):
         """Base function to return a card"""
         self.draw_piles[card.age].add_card_to_bottom(card)
 
@@ -772,9 +794,9 @@ class InnovationGame(Game):
         """Base function to score a card"""
         player.score_pile.add_card_to_bottom(card)
 
-    def tuck_card(self, player, card):
+    def base_tuck(self, card):
         """Base function to tuck a card in a stack"""
-        player.stacks[card.color].add_card_to_bottom(card)
+        self.active_player.stacks[card.color].add_card_to_bottom(card)
 
     def find_and_remove_card(self, card):
         """Finds pile where card is located and removes it from that pile"""
@@ -794,6 +816,8 @@ class InnovationGame(Game):
         """Moves selected card to a player's achievement pile"""
         self.find_and_remove_card(card)
         self.active_player.achievement_pile.add_card_to_bottom(card)
+        # Print for testing
+        print('{p} claims achievement: {c}'.format(p=self.active_player, c=card.name))
         self.check_game_end()
 
     def add_card_to_hand(self, card):
@@ -810,22 +834,56 @@ class InnovationGame(Game):
         # Print for testing
         print('{p} adds {c} to score pile'.format(p=self.active_player, c=card.name))
 
+    def draw_to_hand(self, draw_value):
+        """Draws a card to a players hand of a specified draw value"""
+        card = self.base_draw(draw_value)
+        # Print for testing
+        print('{p} draws {c}'.format(p=self.active_player, c=card.name))
+        self.add_card_to_hand(card)
+
+    def draw_and_meld(self, draw_value):
+        card = self.base_draw(draw_value)
+        self.find_and_remove_card(card)
+        self.base_meld(card)
+        # Print for testing
+        print('{p} draws and melds {c}'.format(p=self.active_player, c=card.name))
+
     def draw_and_reveal(self, draw_value):
         card = self.base_draw(draw_value)
         # TODO - update to inform card counting module, remove printing
         print('{p} draws and reveals {c}'.format(p=self.active_player, c=card.name))
         return card
 
-    def draw_to_hand(self, draw_value):
-        """Draws a card to a players hand of a specified draw value"""
+    def draw_and_score(self, draw_value):
         card = self.base_draw(draw_value)
-        self.add_card_to_hand(card)
         # Print for testing
-        print('{p} draws {c}'.format(p=self.active_player, c=card.name))
+        print('{p} draws and scores an age {c} card'.format(p=self.active_player, c=card.age))
+        self.add_card_to_score_pile(card)
+
+    def draw_and_tuck(self, draw_value):
+        card = self.base_draw(draw_value)
+        self.find_and_remove_card(card)
+        self.base_tuck(card)
+        # TODO - update to inform card counting module, remove printing
+        print('{p} draws and tucks {c}'.format(p=self.active_player, c=card.name))
+
+    def return_card(self, card):
+        self.find_and_remove_card(card)
+        self.base_return(card)
+        # Print for testing
+        print('{p} returns {c}'.format(p=self.active_player.name, c=card.name))
 
     def meld_card(self, card):
         self.find_and_remove_card(card)
         self.base_meld(card)
+        # Print for testing
+        print('{p} melds {c}'.format(p=self.active_player.name, c=card.name))
+
+    def tuck_card(self, card):
+        self.find_and_remove_card(card)
+        self.base_tuck(card)
+        # Print for testing
+        print('{p} tucks {c}'.format(p=self.active_player.name, c=card.name))
 
     # Actions
     def action_draw(self):
@@ -988,7 +1046,30 @@ class InnovationGame(Game):
         return action_list[selection]
 
     # Effects
-    # Metalworking
+    def __create_effects(self):
+        # [Card name, effect number, effect type (str), demand_flag, function]
+        effects_list = [['Metalworking', 0, 'castle', False, self.metalworking_effect_0],           # Age 1
+                        ['Mysticism', 0, 'castle', False, self.mysticism_effect_0],
+                        ['Sailing', 0, 'crown', False, self.sailing_effect_0],
+                        ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
+                        ['Writing', 0, 'lightbulb', False, self.writing_effect_0],
+                        ['Calendar', 0, 'leaf', False, self.calendar_effect_0],                     # Age 2
+                        ['Fermentation', 0, 'leaf', False, self.fermentation_effect_0],
+                        ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],            # Age 4
+                        ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
+                        ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],              # Age 5
+                        ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
+                        ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
+                        ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],        # Age 6
+                        ['Electricity', 0, 'factory', False, self.electricity_effect_0]]            # Age 7
+
+        for effect_to_add in effects_list:
+            effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
+            self.add_effect_to_game(effect)
+            associated_card = self.get_card_object(effect.card_name)
+            associated_card.dogma.append(effect)
+
+    # Age 1 Effects
     def metalworking_effect_0(self):
         while True:
             card = self.draw_and_reveal(1)
@@ -998,19 +1079,169 @@ class InnovationGame(Game):
                 self.add_card_to_hand(card)
                 break
 
-    # The Wheel
+    def mysticism_effect_0(self):
+        card = self.draw_and_reveal(1)
+
+        if card.color in self.active_player.get_colors_on_board():
+            self.meld_card(card)
+            self.draw_to_hand(1)
+        else:
+            self.add_card_to_hand(card)
+
+    def sailing_effect_0(self):
+        self.draw_and_meld(1)
+
     def the_wheel_effect_0(self):
         self.draw_to_hand(1)
         self.draw_to_hand(1)
 
-    # Writing
     def writing_effect_0(self):
         self.draw_to_hand(2)
+
+    # Age 2 effects
+    def calendar_effect_0(self):
+        if self.active_player.score_pile.get_pile_size() > self.active_player.hand.get_pile_size():
+            self.draw_to_hand(3)
+            self.draw_to_hand(3)
+
+    def fermentation_effect_0(self):
+        stacks_with_leaves = 0
+        for stack in self.active_player.stacks:
+            if stack.count_icons_in_stack(self.leaf) > 0:
+                stacks_with_leaves += 1
+
+        i = 0
+        while i < stacks_with_leaves:
+            self.draw_to_hand(2)
+            i += 1
+
+    # Age 4 effects
+    def colonialism_effect_0(self):
+        while True:
+            card = self.draw_and_reveal(3)
+            self.tuck_card(card)
+            if not card.contains_icon(self.crown):
+                break
+
+    def experimentation_effect_0(self):
+        self.draw_and_meld(5)
+
+    # Age 5 effects
+    def astronomy_effect_0(self):
+        while True:
+            card = self.draw_and_reveal(6)
+            if card.color == self.green or card.color == self.blue:
+                self.meld_card(card)
+            else:
+                break
+
+    def astronomy_effect_1(self):
+        do_cards_meet_criteria = []
+        for stack in self.active_player.stacks:
+            if stack.color != self.purple:
+                if stack.cards:
+                    top_card = stack.see_top_card()
+                    if top_card.age >= 6:
+                        do_cards_meet_criteria.append(True)
+                    else:
+                        do_cards_meet_criteria.append(False)
+                else:
+                    do_cards_meet_criteria.append(False)
+
+        if all(do_cards_meet_criteria):
+            self.add_card_to_achievement_pile(self.get_card_object('Universe'))
+
+    def steam_engine_effect_0(self):
+        self.draw_and_tuck(4)
+        self.draw_and_tuck(4)
+
+        if self.active_player.yellow_stack.cards:
+            self.add_card_to_score_pile(self.active_player.yellow_stack.get_bottom_card())
+
+    # Age 6 effects
+    def machine_tools_effect_0(self):
+        highest_value = self.active_player.score_pile.highest_card_value()
+        self.draw_and_score(highest_value)
+
+    # Age 7 effects
+    def electricity_effect_0(self):
+        number_of_cards_returned = 0
+        for stack in self.active_player.stacks:
+            if stack.cards:
+                card = stack.see_top_card()
+                if not card.contains_icon(self.factory):
+                    self.return_card(card)
+                    number_of_cards_returned += 1
+
+        i = 0
+        while i < number_of_cards_returned:
+            self.draw_to_hand(8)
+            i += 1
+
+    # Tests
+    def test_colonialism(self):
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        self.active_card = self.get_card_object('Colonialism')
+        self.meld_card(self.active_card)
+        self.action_dogma()
+
+    def test_experimentation(self):
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        self.active_card = self.get_card_object('Experimentation')
+        self.meld_card(self.active_card)
+        self.action_dogma()
+
+    def test_astronomy(self):
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        # Red
+        self.meld_card(g.get_card_object('Machine Tools'))
+        # Green
+        self.meld_card(g.get_card_object('Bicycle'))
+        # Yellow
+        self.meld_card(g.get_card_object('Antibiotics'))
+        # Blue
+        self.meld_card(g.get_card_object('Atomic Theory'))
+        self.active_card = self.get_card_object('Astronomy')
+        self.meld_card(self.active_card)
+        self.action_dogma()
+
+    def test_steam_engine(self):
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(1)
+        self.meld_card(g.get_card_object('Machine Tools'))
+        self.active_player = self.get_player_object(0)
+        self.active_card = self.get_card_object('Steam Engine')
+        self.meld_card(self.active_card)
+        self.action_dogma()
+
+    def test_machine_tools(self):
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        self.active_card = self.get_card_object('Machine Tools')
+        self.add_card_to_score_pile(g.get_card_object('Steam Engine'))
+        self.meld_card(self.active_card)
+        self.action_dogma()
+
+    def test_electricity(self):
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        self.meld_card(g.get_card_object('Astronomy'))
+        self.meld_card(g.get_card_object('Machine Tools'))
+        self.meld_card(g.get_card_object('Experimentation'))
+        self.active_card = self.get_card_object('Electricity')
+        self.meld_card(self.active_card)
+        self.action_dogma()
 
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
-g.turn_player = g.get_player_object(0)
-g.active_player = g.get_player_object(0)
-g.active_card = g.get_card_object('Metalworking')
-g.action_dogma()
+g.test_electricity()
