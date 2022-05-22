@@ -220,6 +220,15 @@ class Pile:
         random.seed(self.seed)
         random.shuffle(self.cards)
 
+    def highest_card_value(self):
+        highest_value = 0
+        if self.cards:
+            for card in self.cards:
+                if card.age > highest_value:
+                    highest_value = card.age
+
+        return highest_value
+
     def __repr__(self):
         string = "<CardPile: %s>\n" % self.name
         for card in self.cards:
@@ -763,6 +772,8 @@ class InnovationGame(Game):
     # Base functions
     def base_draw(self, draw_value):
         """Base function to draw a card of a specified value"""
+        if draw_value == 0:
+            draw_value = 1
         for value in range(draw_value, 11):
             pile = self.get_pile_object(str(value))
             if pile.get_pile_size() > 0:
@@ -842,6 +853,12 @@ class InnovationGame(Game):
         # TODO - update to inform card counting module, remove printing
         print('{p} draws and reveals {c}'.format(p=self.active_player, c=card.name))
         return card
+
+    def draw_and_score(self, draw_value):
+        card = self.base_draw(draw_value)
+        # Print for testing
+        print('{p} draws and scores an age {c} card'.format(p=self.active_player, c=card.age))
+        self.add_card_to_score_pile(card)
 
     def draw_and_tuck(self, draw_value):
         card = self.base_draw(draw_value)
@@ -1036,7 +1053,8 @@ class InnovationGame(Game):
                         ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
                         ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],
                         ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
-                        ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0]]
+                        ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
+                        ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0]]
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1133,6 +1151,11 @@ class InnovationGame(Game):
         if self.active_player.yellow_stack.cards:
             self.add_card_to_score_pile(self.active_player.yellow_stack.get_bottom_card())
 
+    # Age 6 effects
+    def machine_tools_effect_0(self):
+        highest_value = self.active_player.score_pile.highest_card_value()
+        self.draw_and_score(highest_value)
+
     # Tests
     def test_colonialism(self):
         self.shuffle_piles()
@@ -1176,7 +1199,16 @@ class InnovationGame(Game):
         self.meld_card(self.active_card)
         self.action_dogma()
 
+    def test_machine_tools(self):
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        self.active_card = self.get_card_object('Machine Tools')
+        self.add_card_to_score_pile(g.get_card_object('Steam Engine'))
+        self.meld_card(self.active_card)
+        self.action_dogma()
+
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
-g.test_steam_engine()
+g.test_machine_tools()
