@@ -207,6 +207,11 @@ class Pile:
             card = self.cards.pop(0)
             return card
 
+    def get_bottom_card(self):
+        if len(self.cards):
+            card = self.cards.pop(-1)
+            return card
+
     def see_top_card(self):
         if len(self.cards) > 0:
             return self.cards[0]
@@ -838,6 +843,13 @@ class InnovationGame(Game):
         print('{p} draws and reveals {c}'.format(p=self.active_player, c=card.name))
         return card
 
+    def draw_and_tuck(self, draw_value):
+        card = self.base_draw(draw_value)
+        self.find_and_remove_card(card)
+        self.base_tuck(card)
+        # TODO - update to inform card counting module, remove printing
+        print('{p} draws and tucks {c}'.format(p=self.active_player, c=card.name))
+
     def meld_card(self, card):
         self.find_and_remove_card(card)
         self.base_meld(card)
@@ -1023,7 +1035,8 @@ class InnovationGame(Game):
                         ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],
                         ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
                         ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],
-                        ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1]]
+                        ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
+                        ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0]]
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1113,6 +1126,13 @@ class InnovationGame(Game):
         if all(do_cards_meet_criteria):
             self.add_card_to_achievement_pile(self.get_card_object('Universe'))
 
+    def steam_engine_effect_0(self):
+        self.draw_and_tuck(4)
+        self.draw_and_tuck(4)
+
+        if self.active_player.yellow_stack.cards:
+            self.add_card_to_score_pile(self.active_player.yellow_stack.get_bottom_card())
+
     # Tests
     def test_colonialism(self):
         self.shuffle_piles()
@@ -1146,7 +1166,17 @@ class InnovationGame(Game):
         self.meld_card(self.active_card)
         self.action_dogma()
 
+    def test_steam_engine(self):
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(1)
+        self.meld_card(g.get_card_object('Machine Tools'))
+        self.active_player = self.get_player_object(0)
+        self.active_card = self.get_card_object('Steam Engine')
+        self.meld_card(self.active_card)
+        self.action_dogma()
+
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
-g.test_astronomy()
+g.test_steam_engine()
