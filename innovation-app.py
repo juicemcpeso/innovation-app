@@ -825,18 +825,18 @@ class InnovationGame(Game):
         """Base function to tuck a card in a stack"""
         self.active_player.stacks[card.color].add_card_to_bottom(card)
 
+    # Base functions to move cards around
+    def transfer_card(self, card, to_location, from_location):
+        """Base function to move a card from one pile to another. Do not use for stacks, use meld/tuck instead."""
+        from_location.remove_card(card)
+        to_location.add_card_to_top(card)
+
     def find_and_remove_card(self, card):
         """Finds pile where card is located and removes it from that pile"""
         for pile in self.piles:
             for c in pile.cards:
                 if c == card:
                     pile.remove_card(c)
-
-    # Base functions to move cards around
-    def transfer_card(self, card, to_location, from_location):
-        """Base function to move a card from one pile to another. Do not use for stacks, use meld/tuck instead."""
-        from_location.remove_card(card)
-        to_location.add_card_to_top(card)
 
     # Combination functions used as card actions
     def add_card_to_achievement_pile(self, card):
@@ -1221,7 +1221,7 @@ class InnovationGame(Game):
             if test[1]:
                 test[0]()
 
-    # Age 1 - tests
+    # Age 1 tests
     def test_metalworking(self):
         print('-- Test: Metalworking --')
         self.shuffle_piles()
@@ -1240,6 +1240,7 @@ class InnovationGame(Game):
         self.meld_card(self.turn_card)
         self.action_dogma()
 
+    # Age 4 tests
     def test_colonialism(self):
         print('-- Test: Colonialism --')
         self.shuffle_piles()
@@ -1259,6 +1260,7 @@ class InnovationGame(Game):
         self.meld_card(self.turn_card)
         self.action_dogma()
 
+    # Age 5 tests
     def test_astronomy(self):
         print('-- Test: Astronomy --')
         self.shuffle_piles()
@@ -1287,6 +1289,7 @@ class InnovationGame(Game):
         self.meld_card(self.turn_card)
         self.action_dogma()
 
+    # Age 6 tests
     def test_machine_tools(self):
         print('-- Test: Machine Tools --')
         self.shuffle_piles()
@@ -1297,6 +1300,7 @@ class InnovationGame(Game):
         self.meld_card(self.turn_card)
         self.action_dogma()
 
+    # Age 7 tests
     def test_electricity(self):
         print('-- Test: Electricity --')
         self.shuffle_piles()
