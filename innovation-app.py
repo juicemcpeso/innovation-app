@@ -887,11 +887,11 @@ class InnovationGame(Game):
         self.add_card_to_score_pile(card)
 
     def draw_and_tuck(self, draw_value):
-        card = self.base_draw(draw_value)
-        self.find_and_remove_card(card)
-        self.base_tuck(card)
+        self.base_draw(draw_value)
+        self.find_and_remove_card(self.active_card)
+        self.base_tuck(self.active_card)
         # TODO - update to inform card counting module, remove printing
-        print('{p} draws and tucks {c}'.format(p=self.active_player, c=card.name))
+        print('{p} draws and tucks {c}'.format(p=self.active_player, c=self.active_card.name))
 
     def return_card(self, card):
         self.find_and_remove_card(card)
@@ -1147,9 +1147,8 @@ class InnovationGame(Game):
     # Age 4 effects
     def colonialism_effect_0(self):
         while True:
-            card = self.draw_and_reveal(3)
-            self.tuck_card(card)
-            if not card.contains_icon(self.crown):
+            self.draw_and_tuck(3)
+            if not self.active_card.contains_icon(self.crown):
                 break
 
     def experimentation_effect_0(self):
@@ -1158,9 +1157,9 @@ class InnovationGame(Game):
     # Age 5 effects
     def astronomy_effect_0(self):
         while True:
-            card = self.draw_and_reveal(6)
-            if card.color == self.green or card.color == self.blue:
-                self.meld_card(card)
+            self.draw_and_reveal(6)
+            if self.active_card.color == self.green or self.active_card.color == self.blue:
+                self.meld_card(self.active_card)
             else:
                 break
 
@@ -1214,7 +1213,7 @@ class InnovationGame(Game):
                  [self.test_colonialism, False],        # Age 4
                  [self.test_experimentation, False],
                  [self.test_astronomy, False],          # Age 5
-                 [self.test_steam_engine, False],
+                 [self.test_steam_engine, True],
                  [self.test_machine_tools, False],      # Age 6
                  [self.test_electricity, False]]        # Age 7
 
@@ -1256,8 +1255,8 @@ class InnovationGame(Game):
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
-        self.active_card = self.get_card_object('Experimentation')
-        self.meld_card(self.active_card)
+        self.turn_card = self.get_card_object('Experimentation')
+        self.meld_card(self.turn_card)
         self.action_dogma()
 
     def test_astronomy(self):
@@ -1273,8 +1272,8 @@ class InnovationGame(Game):
         self.meld_card(g.get_card_object('Antibiotics'))
         # Blue
         self.meld_card(g.get_card_object('Atomic Theory'))
-        self.active_card = self.get_card_object('Astronomy')
-        self.meld_card(self.active_card)
+        self.turn_card = self.get_card_object('Astronomy')
+        self.meld_card(self.turn_card)
         self.action_dogma()
 
     def test_steam_engine(self):
@@ -1284,8 +1283,8 @@ class InnovationGame(Game):
         self.active_player = self.get_player_object(1)
         self.meld_card(g.get_card_object('Machine Tools'))
         self.active_player = self.get_player_object(0)
-        self.active_card = self.get_card_object('Steam Engine')
-        self.meld_card(self.active_card)
+        self.turn_card = self.get_card_object('Steam Engine')
+        self.meld_card(self.turn_card)
         self.action_dogma()
 
     def test_machine_tools(self):
@@ -1293,9 +1292,9 @@ class InnovationGame(Game):
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
-        self.active_card = self.get_card_object('Machine Tools')
+        self.turn_card = self.get_card_object('Machine Tools')
         self.add_card_to_score_pile(g.get_card_object('Steam Engine'))
-        self.meld_card(self.active_card)
+        self.meld_card(self.turn_card)
         self.action_dogma()
 
     def test_electricity(self):
@@ -1306,8 +1305,8 @@ class InnovationGame(Game):
         self.meld_card(g.get_card_object('Astronomy'))
         self.meld_card(g.get_card_object('Machine Tools'))
         self.meld_card(g.get_card_object('Experimentation'))
-        self.active_card = self.get_card_object('Electricity')
-        self.meld_card(self.active_card)
+        self.turn_card = self.get_card_object('Electricity')
+        self.meld_card(self.turn_card)
         self.action_dogma()
 
 
