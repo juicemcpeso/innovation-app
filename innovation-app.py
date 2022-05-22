@@ -786,7 +786,7 @@ class InnovationGame(Game):
         """Base function to meld a card"""
         self.active_player.stacks[card.color].add_card_to_top(card)
 
-    def return_card(self, card):
+    def base_return(self, card):
         """Base function to return a card"""
         self.draw_piles[card.age].add_card_to_bottom(card)
 
@@ -866,6 +866,12 @@ class InnovationGame(Game):
         self.base_tuck(card)
         # TODO - update to inform card counting module, remove printing
         print('{p} draws and tucks {c}'.format(p=self.active_player, c=card.name))
+
+    def return_card(self, card):
+        self.find_and_remove_card(card)
+        self.base_return(card)
+        # Print for testing
+        print('{p} returns {c}'.format(p=self.active_player.name, c=card.name))
 
     def meld_card(self, card):
         self.find_and_remove_card(card)
@@ -1042,19 +1048,20 @@ class InnovationGame(Game):
     # Effects
     def __create_effects(self):
         # [Card name, effect number, effect type (str), demand_flag, function]
-        effects_list = [['Metalworking', 0, 'castle', False, self.metalworking_effect_0],
+        effects_list = [['Metalworking', 0, 'castle', False, self.metalworking_effect_0],           # Age 1
                         ['Mysticism', 0, 'castle', False, self.mysticism_effect_0],
                         ['Sailing', 0, 'crown', False, self.sailing_effect_0],
                         ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
                         ['Writing', 0, 'lightbulb', False, self.writing_effect_0],
-                        ['Calendar', 0, 'leaf', False, self.calendar_effect_0],
+                        ['Calendar', 0, 'leaf', False, self.calendar_effect_0],                     # Age 2
                         ['Fermentation', 0, 'leaf', False, self.fermentation_effect_0],
-                        ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],
+                        ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],            # Age 4
                         ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
-                        ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],
+                        ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],              # Age 5
                         ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
                         ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
-                        ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0]]
+                        ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],        # Age 6
+                        ['Electricity', 0, 'factory', False, self.electricity_effect_0]]            # Age 7
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1156,6 +1163,21 @@ class InnovationGame(Game):
         highest_value = self.active_player.score_pile.highest_card_value()
         self.draw_and_score(highest_value)
 
+    # Age 7 effects
+    def electricity_effect_0(self):
+        number_of_cards_returned = 0
+        for stack in self.active_player.stacks:
+            if stack.cards:
+                card = stack.see_top_card()
+                if not card.contains_icon(self.factory):
+                    self.return_card(card)
+                    number_of_cards_returned += 1
+
+        i = 0
+        while i < number_of_cards_returned:
+            self.draw_to_hand(8)
+            i += 1
+
     # Tests
     def test_colonialism(self):
         self.shuffle_piles()
@@ -1208,7 +1230,18 @@ class InnovationGame(Game):
         self.meld_card(self.active_card)
         self.action_dogma()
 
+    def test_electricity(self):
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        self.meld_card(g.get_card_object('Astronomy'))
+        self.meld_card(g.get_card_object('Machine Tools'))
+        self.meld_card(g.get_card_object('Experimentation'))
+        self.active_card = self.get_card_object('Electricity')
+        self.meld_card(self.active_card)
+        self.action_dogma()
+
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
-g.test_machine_tools()
+g.test_electricity()
