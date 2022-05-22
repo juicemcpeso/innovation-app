@@ -1007,7 +1007,8 @@ class InnovationGame(Game):
                         ['Writing', 0, 'lightbulb', False, self.writing_effect_0],
                         ['Calendar', 0, 'leaf', False, self.calendar_effect_0],
                         ['Fermentation', 0, 'leaf', False, self.fermentation_effect_0],
-                        ['Colonialism', 0, 'factory', False, self.colonialism_effect_0]]
+                        ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],
+                        ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0]]
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1069,6 +1070,9 @@ class InnovationGame(Game):
             if not card.contains_icon(self.crown):
                 break
 
+    def experimentation_effect_0(self):
+        self.draw_and_meld(5)
+
     # Tests
     def test_colonialism(self):
         self.shuffle_piles()
@@ -1078,8 +1082,16 @@ class InnovationGame(Game):
         self.meld_card(self.active_card)
         self.action_dogma()
 
+    def test_experimentation(self):
+        self.shuffle_piles()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        self.active_card = self.get_card_object('Experimentation')
+        self.meld_card(self.active_card)
+        self.action_dogma()
+
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
-g.test_colonialism()
+g.test_experimentation()
 
