@@ -1084,7 +1084,7 @@ class InnovationGame(Game):
                         ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
                         ['Writing', 0, 'lightbulb', False, self.writing_effect_0],
                         ['Calendar', 0, 'leaf', False, self.calendar_effect_0],                     # Age 2
-                        ['Fermentation', 0, 'leaf', False, self.fermentation_effect_0],
+                        ['Fermenting', 0, 'leaf', False, self.fermenting_effect_0],
                         ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],            # Age 4
                         ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
                         ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],              # Age 5
@@ -1134,7 +1134,7 @@ class InnovationGame(Game):
             self.draw_to_hand(3)
             self.draw_to_hand(3)
 
-    def fermentation_effect_0(self):
+    def fermenting_effect_0(self):
         stacks_with_leaves = 0
         for stack in self.active_player.stacks:
             if stack.count_icons_in_stack(self.leaf) > 0:
