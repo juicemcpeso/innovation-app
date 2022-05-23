@@ -847,6 +847,18 @@ class InnovationGame(Game):
         print('{p} claims achievement: {c}'.format(p=self.active_player, c=self.active_card.name))
         self.check_game_end()
 
+    def claim_special_achievement(self, achievement_name):
+        card = g.get_card_object(achievement_name)
+        if card in self.get_pile_object('special achievements').cards:
+            self.find_and_remove_card(card)
+            self.active_player.achievement_pile.add_card_to_bottom(card)
+            # Print for testing
+            print('{p} claims special achievement: {c}'.format(p=self.active_player, c=card.name))
+            self.check_game_end()
+        else:
+            # Print for testing
+            print('Special achievement {c} already claimed'.format(c=card.name))
+
     def add_card_to_hand(self):
         """Moves selected card to active player's hand"""
         self.find_and_remove_card(self.active_card)
@@ -1178,7 +1190,7 @@ class InnovationGame(Game):
                     do_cards_meet_criteria.append(False)
 
         if all(do_cards_meet_criteria):
-            self.add_card_to_achievement_pile(self.get_card_object('Universe'))
+            self.claim_special_achievement('Universe')
 
     def steam_engine_effect_0(self):
         self.draw_and_tuck(4)
@@ -1214,8 +1226,8 @@ class InnovationGame(Game):
                  [self.test_mysticism, False],
                  [self.test_colonialism, False],        # Age 4
                  [self.test_experimentation, False],
-                 [self.test_astronomy, False],          # Age 5
-                 [self.test_steam_engine, True],
+                 [self.test_astronomy, True],           # Age 5
+                 [self.test_steam_engine, False],
                  [self.test_machine_tools, False],      # Age 6
                  [self.test_electricity, False]]        # Age 7
 
@@ -1268,6 +1280,21 @@ class InnovationGame(Game):
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
+        # Red
+        self.meld_card(g.get_card_object('Machine Tools'))
+        # Green
+        self.meld_card(g.get_card_object('Bicycle'))
+        # Yellow
+        self.meld_card(g.get_card_object('Antibiotics'))
+        # Blue
+        self.meld_card(g.get_card_object('Atomic Theory'))
+        self.turn_card = self.get_card_object('Astronomy')
+        self.meld_card(self.turn_card)
+        self.action_dogma()
+
+        self.turn_player = self.get_player_object(1)
+        self.active_player = self.get_player_object(1)
+        self.active_player = self.get_player_object(1)
         # Red
         self.meld_card(g.get_card_object('Machine Tools'))
         # Green
