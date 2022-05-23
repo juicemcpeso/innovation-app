@@ -839,12 +839,12 @@ class InnovationGame(Game):
                     pile.remove_card(c)
 
     # Combination functions used as card actions
-    def add_card_to_achievement_pile(self, card):
+    def add_card_to_achievement_pile(self):
         """Moves selected card to a player's achievement pile"""
-        self.find_and_remove_card(card)
-        self.active_player.achievement_pile.add_card_to_bottom(card)
+        self.find_and_remove_card(self.active_card)
+        self.active_player.achievement_pile.add_card_to_bottom(self.active_card)
         # Print for testing
-        print('{p} claims achievement: {c}'.format(p=self.active_player, c=card.name))
+        print('{p} claims achievement: {c}'.format(p=self.active_player, c=self.active_card.name))
         self.check_game_end()
 
     def add_card_to_hand(self):
@@ -919,7 +919,8 @@ class InnovationGame(Game):
         self.meld_card(self.turn_card)
 
     def action_achieve(self):
-        self.add_card_to_achievement_pile(self.turn_card)
+        self.active_card = self.turn_card
+        self.add_card_to_achievement_pile()
 
     def eligible_achievements(self, player):
         """Returns list of achievements that can be taken by the player"""
