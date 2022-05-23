@@ -817,9 +817,9 @@ class InnovationGame(Game):
         """Base function to return a card"""
         self.draw_piles[card.age].add_card_to_bottom(card)
 
-    def score_card(self, player, card):
+    def base_score(self, card):
         """Base function to score a card"""
-        player.score_pile.add_card_to_bottom(card)
+        self.active_player.score_pile.add_card_to_bottom(card)
 
     def base_tuck(self, card):
         """Base function to tuck a card in a stack"""
@@ -854,12 +854,12 @@ class InnovationGame(Game):
         # Print for testing
         print('{p} adds {c} to hand'.format(p=self.active_player, c=self.active_card.name))
 
-    def add_card_to_score_pile(self, card):
+    def add_card_to_score_pile(self):
         """Moves selected card to the score pile"""
-        self.find_and_remove_card(card)
-        self.score_card(self.active_player, card)
+        self.find_and_remove_card(self.active_card)
+        self.base_score(self.active_card)
         # Print for testing
-        print('{p} adds {c} to score pile'.format(p=self.active_player, c=card.name))
+        print('{p} adds {c} to score pile'.format(p=self.active_player, c=self.active_card.name))
 
     def draw_to_hand(self, draw_value):
         """Draws a card to a players hand of a specified draw value"""
@@ -869,9 +869,9 @@ class InnovationGame(Game):
         self.add_card_to_hand()
 
     def draw_and_meld(self, draw_value):
-        card = self.base_draw(draw_value)
-        self.find_and_remove_card(card)
-        self.base_meld(card)
+        self.base_draw(draw_value)
+        self.find_and_remove_card(self.active_card)
+        self.base_meld(self.active_card)
         # Print for testing
         print('{p} draws and melds {c}'.format(p=self.active_player, c=card.name))
 
@@ -881,10 +881,10 @@ class InnovationGame(Game):
         print('{p} draws and reveals {c}'.format(p=self.active_player, c=self.active_card.name))
 
     def draw_and_score(self, draw_value):
-        card = self.base_draw(draw_value)
+        self.base_draw(draw_value)
         # Print for testing
         print('{p} draws and scores an age {c} card'.format(p=self.active_player, c=card.age))
-        self.add_card_to_score_pile(card)
+        self.add_card_to_score_pile()
 
     def draw_and_tuck(self, draw_value):
         self.base_draw(draw_value)
@@ -1103,7 +1103,7 @@ class InnovationGame(Game):
         while True:
             self.draw_and_reveal(1)
             if self.active_card.contains_icon(self.castle):
-                self.add_card_to_score_pile(self.active_card)
+                self.add_card_to_score_pile()
             else:
                 self.add_card_to_hand()
                 break
@@ -1184,7 +1184,8 @@ class InnovationGame(Game):
         self.draw_and_tuck(4)
 
         if self.active_player.yellow_stack.cards:
-            self.add_card_to_score_pile(self.active_player.yellow_stack.get_bottom_card())
+            self.active_card = self.active_player.yellow_stack.get_bottom_card()
+            self.add_card_to_score_pile()
 
     # Age 6 effects
     def machine_tools_effect_0(self):
@@ -1296,7 +1297,6 @@ class InnovationGame(Game):
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
         self.turn_card = self.get_card_object('Machine Tools')
-        self.add_card_to_score_pile(g.get_card_object('Steam Engine'))
         self.meld_card(self.turn_card)
         self.action_dogma()
 
