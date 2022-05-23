@@ -905,11 +905,11 @@ class InnovationGame(Game):
         # TODO - update to inform card counting module, remove printing
         print('{p} draws and tucks {c}'.format(p=self.active_player, c=self.active_card.name))
 
-    def return_card(self, card):
-        self.find_and_remove_card(card)
-        self.base_return(card)
+    def return_card(self):
+        self.find_and_remove_card(self.active_card)
+        self.base_return(self.active_card)
         # Print for testing
-        print('{p} returns {c}'.format(p=self.active_player.name, c=card.name))
+        print('{p} returns {c}'.format(p=self.active_player.name, c=self.active_card.name))
 
     def meld_card(self, card):
         self.find_and_remove_card(card)
@@ -1212,7 +1212,8 @@ class InnovationGame(Game):
             if stack.cards:
                 card = stack.see_top_card()
                 if not card.contains_icon(self.factory):
-                    self.return_card(card)
+                    self.active_card = card
+                    self.return_card()
                     number_of_cards_returned += 1
 
         i = 0
@@ -1226,10 +1227,10 @@ class InnovationGame(Game):
                  [self.test_mysticism, False],
                  [self.test_colonialism, False],        # Age 4
                  [self.test_experimentation, False],
-                 [self.test_astronomy, True],           # Age 5
+                 [self.test_astronomy, False],           # Age 5
                  [self.test_steam_engine, False],
                  [self.test_machine_tools, False],      # Age 6
-                 [self.test_electricity, False]]        # Age 7
+                 [self.test_electricity, True]]        # Age 7
 
         for test in tests:
             if test[1]:
