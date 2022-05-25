@@ -833,12 +833,13 @@ class InnovationGame(Game):
 
     def write_current_card_locations(self):
         # TODO - update this function to write to a file
+        print("{a:16} {b:22} {c:2}".format(a='Card', b='Pile', c='Position'))
         current_locations = ''
         for card in self.cards:
             current_locations = current_locations + "{n},{l},{p}\n".format(n=card.name,
                                                                            l=card.current_pile,
                                                                            p=card.current_position)
-        print(current_locations)
+            print("{a:16} {b:22} {c:2}".format(a=card.name, b=card.current_pile.name, c=card.current_position))
 
     # Base functions
     def base_draw(self, draw_value):
