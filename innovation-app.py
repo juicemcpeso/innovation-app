@@ -917,11 +917,11 @@ class InnovationGame(Game):
         # Print for testing
         print('{p} melds {c}'.format(p=self.active_player.name, c=self.active_card.name))
 
-    def tuck_card(self, card):
-        self.find_and_remove_card(card)
-        self.base_tuck(card)
+    def tuck_card(self):
+        self.find_and_remove_card(self.active_card)
+        self.base_tuck(self.active_card)
         # Print for testing
-        print('{p} tucks {c}'.format(p=self.active_player.name, c=card.name))
+        print('{p} tucks {c}'.format(p=self.active_player.name, c=self.active_card.name))
 
     # Actions
     def action_draw(self):
