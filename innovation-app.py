@@ -584,7 +584,8 @@ class InnovationGame(Game):
         self.verbose = True
 
         # Play a game (Play Ball!)
-        # self.create_game()
+        self.create_game()
+        self.set_up_game()
         # self.play_game()
 
     def create_game(self):
@@ -792,7 +793,6 @@ class InnovationGame(Game):
 
     def play_game(self):
         """Play a game of Innovation"""
-        self.set_up_game()
         self.starting_play()
         self.play_first_round()
 
@@ -1542,8 +1542,6 @@ class InnovationGame(Game):
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
 # g.test_suite()
-
-g.create_game()
 # g.set_up_game()
 # g.shuffle_piles()
 g.set_current_card_location()
