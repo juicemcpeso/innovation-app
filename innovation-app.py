@@ -570,6 +570,7 @@ class InnovationGame(Game):
         self.draw_piles = {}
 
         # Create everything needed for the game
+        self.verbose = True
 
         # Play a game (Play Ball!)
         # self.__create_game()
@@ -743,24 +744,19 @@ class InnovationGame(Game):
 
         for player in self.ordered_players:
             self.turn_player = player
-            # Print for testing
-            print('---')
-            print("Round {r} - {n}'s Turn".format(r=self.round, n=player.name))
+            self.print_for_testing("---\nRound {r} - {n}'s Turn".format(r=self.round, n=player.name))
+
             if self.number_of_players < 4 and player.table_position == 0:
-                # Print for testing
-                print("{n}'s first action:".format(n=player.name))
+                self.print_for_testing("{n}'s first action:".format(n=player.name))
                 self.take_action()
             elif self.number_of_players == 4 and (player.table_position == 0 or player.table_position == 1):
-                # Print for testing
-                print("{n}'s first action:".format(n=player.name))
+                self.print_for_testing("{n}'s first action:".format(n=player.name))
                 self.take_action()
             else:
-                # Print for testing
-                print("{n}'s first action:".format(n=player.name))
+                self.print_for_testing("{n}'s first action:".format(n=player.name))
                 self.take_action()
 
-                # Print for testing
-                print("\n{n}'s second action:".format(n=player.name))
+                self.print_for_testing("\n{n}'s second action:".format(n=player.name))
                 self.take_action()
 
     def play_round(self):
@@ -1229,6 +1225,10 @@ class InnovationGame(Game):
             i += 1
 
     # Tests
+    def print_for_testing(self, string_to_print):
+        if self.verbose:
+            print(string_to_print)
+
     def test_suite(self):
         tests = [[self.test_metalworking, True],        # Age 1
                  [self.test_mysticism, True],
