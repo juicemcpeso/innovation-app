@@ -1233,7 +1233,8 @@ class InnovationGame(Game):
         tests = [[self.test_metalworking, True],        # Age 1
                  [self.test_mysticism, True],
                  [self.test_sailing, True],
-                 [self.test_caledar, True],             # Age 2
+                 [self.test_the_wheel, True],
+                 [self.test_calendar, True],             # Age 2
                  [self.test_colonialism, True],         # Age 4
                  [self.test_experimentation, True],
                  [self.test_astronomy, True],           # Age 5
@@ -1252,7 +1253,7 @@ class InnovationGame(Game):
 
     def set_up_test(self, card_name):
         self.__create_game()
-        self.set_up_game()
+        self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
         self.turn_card = self.get_card_object(card_name)
@@ -1264,7 +1265,7 @@ class InnovationGame(Game):
         print('-----------------------')
         print('-- Test: Metalworking --')
         self.__create_game()
-        self.set_up_game()
+        self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
         self.turn_card = self.get_card_object('Metalworking')
@@ -1285,6 +1286,8 @@ class InnovationGame(Game):
         self.action_dogma()
 
     def test_sailing(self):
+        print('-----------------------')
+        print('-- Test: Sailing --')
         self.set_up_test('Sailing')
         self.action_dogma()
         card_was_melded = False
@@ -1298,8 +1301,33 @@ class InnovationGame(Game):
         else:
             return False
 
+    def test_the_wheel(self):
+        print('-----------------------')
+        print('-- Test: The Wheel --')
+        self.set_up_test('The Wheel')
+        self.action_dogma()
+
+        all_cards_are_ones = True
+        correct_number_of_cards = True
+        if self.active_player.hand.get_pile_size() == 2:
+            for card in self.active_player.hand.cards:
+                if card.age != 1:
+                    print(card.age)
+                    all_cards_are_ones = False
+                    break
+        else:
+            correct_number_of_cards = False
+
+        print(all_cards_are_ones)
+        print(correct_number_of_cards)
+
+        if all_cards_are_ones and correct_number_of_cards:
+            return True
+        else:
+            return False
+
     # Age 2 tests
-    def test_caledar(self):
+    def test_calendar(self):
         self.set_up_test('Calendar')
         self.active_card = self.get_card_object('A.I.')
         self.add_card_to_score_pile()
@@ -1307,11 +1335,14 @@ class InnovationGame(Game):
         self.action_dogma()
 
         all_cards_are_threes = True
+        correct_number_of_cards = True
         if self.active_player.hand.get_pile_size == 2:
             for card in self.active_player.hand.cards:
                 if card.age != 3:
                     all_cards_are_threes = False
                     break
+        else:
+            correct_number_of_cards = False
 
         if all_cards_are_threes:
             return True
