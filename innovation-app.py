@@ -30,7 +30,7 @@ class InnovationCard(Card):
         self.current_position = 0
 
         # Set color to an int 0-4, alphabetically with options
-        color_options = ['blue', 'green', 'purple', 'red', 'yellow']
+        color_options = ['blue', 'green', 'purple', 'red', 'yellow','']
         if c not in color_options:
             raise ValueError("Error creating Innovation Card. Color must be blue, green, purple, red, or yellow.")
         for color in color_options:
@@ -43,7 +43,7 @@ class InnovationCard(Card):
         self.age = int(a)
 
         # Set effect type to an int 0-5, in specified order
-        effect_type_options = ['crown', 'leaf', 'lightbulb', 'castle', 'factory', 'clock']
+        effect_type_options = ['crown', 'leaf', 'lightbulb', 'castle', 'factory', 'clock','']
         if t not in effect_type_options:
             raise ValueError("Error creating Innovation Card. "
                              "Effect type must be crown, lead, lightbulb, castle, factory, or clock.")
@@ -577,8 +577,6 @@ class InnovationGame(Game):
             self.achievement_goal = 4
 
         # Create dictionaries to find objects
-        # self.cards = {}
-        self.achievements = {}
         self.special_achievements = {}
         self.draw_piles = {}
 
@@ -586,17 +584,18 @@ class InnovationGame(Game):
         self.verbose = True
 
         # Play a game (Play Ball!)
-        # self.__create_game()
+        # self.create_game()
         # self.play_game()
 
-    def __create_game(self):
-        self.__create_piles()
-        self.__create_cards()
-        self.__create_special_achievements()
-        self.__create_players()
-        self.__create_effects()
+    def create_game(self):
+        self.create_piles()
+        self.create_cards()
+        self.create_achievements()
+        self.create_special_achievements()
+        self.create_players()
+        self.create_effects()
 
-    def __create_cards(self):
+    def create_cards(self):
         with open('cards/card_list.csv', 'r') as handle:
             handle.readline()
             lines = handle.read().splitlines()
@@ -609,7 +608,13 @@ class InnovationGame(Game):
             start_pile.add_card_to_bottom(card)
             self.add_card_to_game(card)
 
-    def __create_special_achievements(self):
+    def create_achievements(self):
+        for i in range(1, 10):
+            card = InnovationCard("Achievement {n}".format(n=i), '', str(i), '', '', '', '', '', '', '', '')
+            self.get_pile_object('achievements').add_card_to_bottom(card)
+            self.add_card_to_game(card)
+
+    def create_special_achievements(self):
         """Makes the five special achievement cards"""
         with open('cards/special_achievement_list.csv', 'r') as handle:
             handle.readline()
@@ -623,7 +628,7 @@ class InnovationGame(Game):
             start_pile.add_card_to_bottom(card)
             self.add_card_to_game(card)
 
-    def __create_piles(self):
+    def create_piles(self):
         # Create the draw piles
         pile_list = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
         for pile in pile_list:
@@ -635,11 +640,12 @@ class InnovationGame(Game):
         self.add_pile(Pile('achievements', self.seed))
         self.add_pile(Pile('special achievements', self.seed))
 
-        # Create box and reveal piles
-        self.add_pile(Pile('reveal', self.seed))
+        # Create box, removed, and reveal piles
         self.add_pile(Pile('box', self.seed))
+        self.add_pile(Pile('removed', self.seed))
+        self.add_pile(Pile('reveal', self.seed))
 
-    def __create_players(self):
+    def create_players(self):
         for i in range(self.number_of_players):
             # Create an achievement pile, score_pile, and hand for each player, add to master list
             achievement_pile = Pile((self.player_names[i] + " achievement pile"), self.seed)
@@ -671,13 +677,13 @@ class InnovationGame(Game):
     def set_up_game(self):
         """Sets up the game to be played"""
         self.shuffle_piles()
+        self.remove_cards_used_as_achievements()
+        self.create_achievements()
 
-        # Pick a card from each of the piles 1-9 to use as an achievement. Change the name of the card to achievement.
+    def remove_cards_used_as_achievements(self):
         for i in range(1, 10):
             card = self.get_pile_object(str(i)).get_top_card()
-            self.get_pile_object('achievements').add_card_to_bottom(card)
-            card.name = "Achievement {n}".format(n=i)
-            self.achievements.update({card.age: card})
+            self.get_pile_object('removed').add_card_to_bottom(card)
 
     def shuffle_piles(self):
         for pile in self.draw_piles.values():
@@ -825,7 +831,7 @@ class InnovationGame(Game):
                 if c == card:
                     card.current_position = pile.get_card_position(card)
 
-    def write_current_piles(self):
+    def write_current_card_locations(self):
         # TODO - update this function to write to a file
         current_locations = ''
         for card in self.cards:
@@ -1113,7 +1119,7 @@ class InnovationGame(Game):
         return action_list[selection]
 
     # Effects
-    def __create_effects(self):
+    def create_effects(self):
         # [Card name, effect number, effect type (str), demand_flag, function]
         effects_list = [['Metalworking', 0, 'castle', False, self.metalworking_effect_0],           # Age 1
                         ['Mysticism', 0, 'castle', False, self.mysticism_effect_0],
@@ -1276,7 +1282,7 @@ class InnovationGame(Game):
     def set_up_test(self, card_name):
         print('-----------------------')
         print('-- Test: {t} --'.format(t=card_name))
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1418,7 +1424,7 @@ class InnovationGame(Game):
     def test_colonialism(self):
         print('-----------------------')
         print('-- Test: Colonialism --')
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1431,7 +1437,7 @@ class InnovationGame(Game):
     def test_experimentation(self):
         print('-----------------------')
         print('-- Test: Experimentation --')
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1444,7 +1450,7 @@ class InnovationGame(Game):
     def test_astronomy(self):
         print('-----------------------')
         print('-- Test: Astronomy --')
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1469,7 +1475,7 @@ class InnovationGame(Game):
     def test_steam_engine(self):
         print('-----------------------')
         print('-- Test: Steam Engine --')
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(1)
@@ -1485,7 +1491,7 @@ class InnovationGame(Game):
     def test_machine_tools(self):
         print('-----------------------')
         print('-- Test: Machine Tools --')
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1499,7 +1505,7 @@ class InnovationGame(Game):
         print('-----------------------')
         print('-- Test: Electricity --')
         # Setup
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1537,8 +1543,8 @@ g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", Tr
 
 # g.test_suite()
 
-g._InnovationGame__create_game()
+g.create_game()
 g.set_up_game()
 g.shuffle_piles()
 g.set_current_card_location()
-g.print_current_piles()
+g.write_current_card_locations()
