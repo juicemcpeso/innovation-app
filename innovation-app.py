@@ -1213,7 +1213,7 @@ class InnovationGame(Game):
 
     def test_suite(self):
         tests = [[self.test_metalworking, True],        # Age 1
-                 [self.test_mysticism_no_cards, True],
+                 [self.test_mysticism, True],
                  [self.test_sailing, True],
                  [self.test_the_wheel, True],
                  [self.test_calendar, True],             # Age 2
@@ -1280,9 +1280,16 @@ class InnovationGame(Game):
         else:
             return False
 
-    def test_mysticism_no_cards(self):
+    def test_mysticism(self):
         self.set_up_test('Mysticism')
         self.action_dogma()
+
+        card_was_melded_properly = False
+        if self.active_card.color == self.purple and self.active_card != self.get_card_object('Mysticism'):
+            if self.active_player.purple_stack.see_top_card() == self.active_card:
+                card_was_melded_properly = True
+        else:
+            card_was_melded_properly = True
 
         draw_a_one = False
         if self.active_player.hand.get_pile_size() == 1:
@@ -1290,12 +1297,10 @@ class InnovationGame(Game):
                 if card.age == 1:
                     draw_a_one = True
 
-        if draw_a_one:
+        if draw_a_one and card_was_melded_properly:
             return True
         else:
             return False
-
-
 
 
     def test_sailing(self):
