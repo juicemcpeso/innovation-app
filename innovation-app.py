@@ -1233,6 +1233,7 @@ class InnovationGame(Game):
         tests = [[self.test_metalworking, True],        # Age 1
                  [self.test_mysticism, True],
                  [self.test_sailing, True],
+                 [self.test_caledar, True],             # Age 2
                  [self.test_colonialism, True],         # Age 4
                  [self.test_experimentation, True],
                  [self.test_astronomy, True],           # Age 5
@@ -1257,7 +1258,6 @@ class InnovationGame(Game):
         self.turn_card = self.get_card_object(card_name)
         self.active_card = self.turn_card
         self.meld_card()
-        self.action_dogma()
 
     # Age 1 tests
     def test_metalworking(self):
@@ -1286,6 +1286,7 @@ class InnovationGame(Game):
 
     def test_sailing(self):
         self.set_up_test('Sailing')
+        self.action_dogma()
         card_was_melded = False
         for stack in self.active_player.stacks:
             card = stack.see_top_card()
@@ -1293,6 +1294,26 @@ class InnovationGame(Game):
                 card_was_melded = True
 
         if card_was_melded:
+            return True
+        else:
+            return False
+
+    # Age 2 tests
+    def test_caledar(self):
+        self.set_up_test('Calendar')
+        self.active_card = self.get_card_object('A.I.')
+        self.add_card_to_score_pile()
+        self.active_card = self.turn_card
+        self.action_dogma()
+
+        all_cards_are_threes = True
+        if self.active_player.hand.get_pile_size == 2:
+            for card in self.active_player.hand.cards:
+                if card.age != 3:
+                    all_cards_are_threes = False
+                    break
+
+        if all_cards_are_threes:
             return True
         else:
             return False
