@@ -1246,14 +1246,39 @@ class InnovationGame(Game):
 
     # Age 1 tests
     def test_metalworking(self):
-        self.__create_game()
-        self.shuffle_piles()
-        self.turn_player = self.get_player_object(0)
-        self.active_player = self.get_player_object(0)
-        self.turn_card = self.get_card_object('Metalworking')
-        self.active_card = self.turn_card
-        self.meld_card()
+        self.set_up_test('Metalworking')
         self.action_dogma()
+
+        cards_were_drawn = False
+        if self.active_player.hand.get_pile_size() == 1 or self.active_player.score_pile.get_pile_size() > 0:
+            cards_were_drawn = True
+
+        score_cards_have_castles = False
+        if self.active_player.score_pile.cards:
+            for card in self.active_player.score_pile.cards:
+                if card.contains_icon(self.castle):
+                    score_cards_have_castles = True
+                else:
+                    score_cards_have_castles = False
+                    break
+        else:
+            score_cards_have_castles = True
+
+        hand_cards_do_not_have_castles = False
+        if self.active_player.hand.cards:
+            for card in self.active_player.hand.cards:
+                if not card.contains_icon(self.castle):
+                    hand_cards_do_not_have_castles = True
+                else:
+                    hand_cards_do_not_have_castles = False
+                    break
+        else:
+            hand_cards_do_not_have_castles = True
+
+        if cards_were_drawn and score_cards_have_castles and hand_cards_do_not_have_castles:
+            return True
+        else:
+            return False
 
     def test_mysticism(self):
         self.__create_game()
@@ -1293,9 +1318,6 @@ class InnovationGame(Game):
                     break
         else:
             correct_number_of_cards = False
-
-        print(all_cards_are_ones)
-        print(correct_number_of_cards)
 
         if all_cards_are_ones and correct_number_of_cards:
             return True
