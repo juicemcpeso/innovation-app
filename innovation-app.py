@@ -764,14 +764,11 @@ class InnovationGame(Game):
         self.round += 1
         for player in self.ordered_players:
             self.turn_player = player
-            # Print for testing
-            print('---')
-            print("Round {r} - {n}'s Turn".format(r=self.round, n=player.name))
-            print("{n}'s first action:".format(n=player.name))
+            self.print_for_testing("---\nRound {r} - {n}'s Turn\n{n}'s first action:".format(r=self.round,
+                                                                                             n=player.name))
             self.take_action()
 
-            # Print for testing
-            print("\n{n}'s second action:".format(n=player.name))
+            self.print_for_testing("\n{n}'s second action:".format(n=player.name))
             self.take_action()
 
     def play_game(self):
@@ -845,8 +842,7 @@ class InnovationGame(Game):
         """Moves selected card to a player's achievement pile"""
         self.find_and_remove_card(self.active_card)
         self.active_player.achievement_pile.add_card_to_bottom(self.active_card)
-        # Print for testing
-        print('{p} claims achievement: {c}'.format(p=self.active_player, c=self.active_card.name))
+        self.print_for_testing('{p} claims achievement: {c}'.format(p=self.active_player, c=self.active_card.name))
         self.check_game_end()
 
     def claim_special_achievement(self, achievement_name):
@@ -854,76 +850,66 @@ class InnovationGame(Game):
         if card in self.get_pile_object('special achievements').cards:
             self.find_and_remove_card(card)
             self.active_player.achievement_pile.add_card_to_bottom(card)
-            # Print for testing
-            print('{p} claims special achievement: {c}'.format(p=self.active_player, c=card.name))
+            self.print_for_testing('{p} claims special achievement: {c}'.format(p=self.active_player, c=card.name))
             self.check_game_end()
         else:
-            # Print for testing
-            print('Special achievement {c} already claimed'.format(c=card.name))
+            self.print_for_testing('Special achievement {c} already claimed'.format(c=card.name))
 
     def add_card_to_hand(self):
         """Moves selected card to active player's hand"""
         self.find_and_remove_card(self.active_card)
         self.active_player.hand.add_card_to_bottom(self.active_card)
-        # Print for testing
-        print('{p} adds {c} to hand'.format(p=self.active_player, c=self.active_card.name))
+        self.print_for_testing('{p} adds {c} to hand'.format(p=self.active_player, c=self.active_card.name))
 
     def add_card_to_score_pile(self):
         """Moves selected card to the score pile"""
         self.find_and_remove_card(self.active_card)
         self.base_score(self.active_card)
-        # Print for testing
-        print('{p} adds {c} to score pile'.format(p=self.active_player, c=self.active_card.name))
+        self.print_for_testing('{p} adds {c} to score pile'.format(p=self.active_player, c=self.active_card.name))
 
     def draw_to_hand(self, draw_value):
         """Draws a card to a players hand of a specified draw value"""
         self.base_draw(draw_value)
-        # Print for testing
-        print('{p} draws {c}'.format(p=self.active_player, c=self.active_card.name))
+        self.print_for_testing('{p} draws {c}'.format(p=self.active_player, c=self.active_card.name))
         self.add_card_to_hand()
 
     def draw_and_meld(self, draw_value):
         self.base_draw(draw_value)
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
-        # Print for testing
-        print('{p} draws and melds {c}'.format(p=self.active_player, c=self.active_card.name))
+        self.print_for_testing('{p} draws and melds {c}'.format(p=self.active_player, c=self.active_card.name))
 
     def draw_and_reveal(self, draw_value):
         self.base_draw(draw_value)
         # TODO - update to inform card counting module, remove printing
-        print('{p} draws and reveals {c}'.format(p=self.active_player, c=self.active_card.name))
+        self.print_for_testing('{p} draws and reveals {c}'.format(p=self.active_player, c=self.active_card.name))
 
     def draw_and_score(self, draw_value):
         self.base_draw(draw_value)
-        # Print for testing
-        print('{p} draws and scores an age {c} card'.format(p=self.active_player, c=self.active_card.age))
+        self.print_for_testing('{p} draws and scores an age {c} card'.format(p=self.active_player, c=self.active_card.age))
         self.add_card_to_score_pile()
 
     def draw_and_tuck(self, draw_value):
         self.base_draw(draw_value)
         self.find_and_remove_card(self.active_card)
         self.base_tuck(self.active_card)
-        # TODO - update to inform card counting module, remove printing
-        print('{p} draws and tucks {c}'.format(p=self.active_player, c=self.active_card.name))
+        # TODO - update to inform card counting module
+        self.print_for_testing('{p} draws and tucks {c}'.format(p=self.active_player, c=self.active_card.name))
 
     def return_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_return(self.active_card)
-        # Print for testing
-        print('{p} returns {c}'.format(p=self.active_player.name, c=self.active_card.name))
+        self.print_for_testing('{p} returns {c}'.format(p=self.active_player.name, c=self.active_card.name))
 
     def meld_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
-        # Print for testing
-        print('{p} melds {c}'.format(p=self.active_player.name, c=self.active_card.name))
+        self.print_for_testing('{p} melds {c}'.format(p=self.active_player.name, c=self.active_card.name))
 
     def tuck_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_tuck(self.active_card)
-        # Print for testing
-        print('{p} tucks {c}'.format(p=self.active_player.name, c=self.active_card.name))
+        self.print_for_testing('{p} tucks {c}'.format(p=self.active_player.name, c=self.active_card.name))
 
     # Actions
     def action_draw(self):
@@ -968,18 +954,16 @@ class InnovationGame(Game):
                 for eligible_player in self.turn_player.share_order:
                     if eligible_player not in sharing_players:
                         self.active_player = eligible_player
-                        # Print for testing
-                        print('{t} DEMANDS {p} resolve {c} dogma'.format(t=self.turn_player,
-                                                                         p=eligible_player.name,
-                                                                         c=self.turn_card.name))
+                        self.print_for_testing('{t} DEMANDS {p} resolve {c} dogma'.format(t=self.turn_player,
+                                                                                          p=eligible_player.name,
+                                                                                          c=self.turn_card.name))
                         effect.activate()
 
             else:
                 # Standard effects
                 for eligible_player in sharing_players:
                     self.active_player = eligible_player
-                    # Print for testing
-                    print('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
+                    self.print_for_testing('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
                     effect.activate()
 
     def determine_who_can_share(self):
@@ -1000,8 +984,7 @@ class InnovationGame(Game):
                 non_demand_effects = True
         if len(list_of_players) > 1 and non_demand_effects:
             # TODO - update this to make sure something in the game state changes
-            # Print for testing
-            print('{p} draws a card due to other players sharing effect'.format(p=self.turn_player))
+            self.print_for_testing('{p} draws a card due to other players sharing effect'.format(p=self.turn_player))
             self.action_draw()
 
     # Functions to select and simulate actions
@@ -1047,8 +1030,7 @@ class InnovationGame(Game):
             # TODO - write function for a human to select an action
             pass
 
-        # Print for testing
-        print(selected_action.name)
+        self.print_for_testing(selected_action.name)
 
         return selected_action
 
@@ -1252,6 +1234,8 @@ class InnovationGame(Game):
             print('All Tests Pass')
 
     def set_up_test(self, card_name):
+        print('-----------------------')
+        print('-- Test: {t} --'.format(t=card_name))
         self.__create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
@@ -1262,8 +1246,6 @@ class InnovationGame(Game):
 
     # Age 1 tests
     def test_metalworking(self):
-        print('-----------------------')
-        print('-- Test: Metalworking --')
         self.__create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
@@ -1274,8 +1256,6 @@ class InnovationGame(Game):
         self.action_dogma()
 
     def test_mysticism(self):
-        print('-----------------------')
-        print('-- Test: Mysticism --')
         self.__create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
@@ -1286,8 +1266,6 @@ class InnovationGame(Game):
         self.action_dogma()
 
     def test_sailing(self):
-        print('-----------------------')
-        print('-- Test: Sailing --')
         self.set_up_test('Sailing')
         self.action_dogma()
         card_was_melded = False
@@ -1302,8 +1280,6 @@ class InnovationGame(Game):
             return False
 
     def test_the_wheel(self):
-        print('-----------------------')
-        print('-- Test: The Wheel --')
         self.set_up_test('The Wheel')
         self.action_dogma()
 
@@ -1471,3 +1447,4 @@ class InnovationGame(Game):
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
 g.test_suite()
+
