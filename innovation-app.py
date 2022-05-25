@@ -1232,6 +1232,7 @@ class InnovationGame(Game):
     def test_suite(self):
         tests = [[self.test_metalworking, True],        # Age 1
                  [self.test_mysticism, True],
+                 [self.test_sailing, True],
                  [self.test_colonialism, True],         # Age 4
                  [self.test_experimentation, True],
                  [self.test_astronomy, True],           # Age 5
@@ -1239,9 +1240,24 @@ class InnovationGame(Game):
                  [self.test_machine_tools, True],       # Age 6
                  [self.test_electricity, True]]         # Age 7
 
+        results = []
         for test in tests:
             if test[1]:
-                test[0]()
+                results.append(test[0]())
+
+        print(results)
+        if all(results):
+            print('All Tests Pass')
+
+    def set_up_test(self, card_name):
+        self.__create_game()
+        self.set_up_game()
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        self.turn_card = self.get_card_object(card_name)
+        self.active_card = self.turn_card
+        self.meld_card()
+        self.action_dogma()
 
     # Age 1 tests
     def test_metalworking(self):
@@ -1267,6 +1283,19 @@ class InnovationGame(Game):
         self.active_card = self.turn_card
         self.meld_card()
         self.action_dogma()
+
+    def test_sailing(self):
+        self.set_up_test('Sailing')
+        card_was_melded = False
+        for stack in self.active_player.stacks:
+            card = stack.see_top_card()
+            if self.active_card != self.get_card_object('Sailing') and card == self.active_card:
+                card_was_melded = True
+
+        if card_was_melded:
+            return True
+        else:
+            return False
 
     # Age 4 tests
     def test_colonialism(self):
@@ -1382,9 +1411,9 @@ class InnovationGame(Game):
             correct_card_draw = False
 
         if all_top_cards_have_factory and correct_card_draw:
-            print('Pass')
+            return True
         else:
-            print('Failure')
+            return False
 
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
