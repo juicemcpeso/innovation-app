@@ -578,7 +578,7 @@ class InnovationGame(Game):
 
         # Create dictionaries to find objects
         self.special_achievements = {}
-        self.draw_piles = {}
+        self.draw_piles = []
 
         # Create everything needed for the game
         self.verbose = True
@@ -602,7 +602,7 @@ class InnovationGame(Game):
 
         for line in lines:
             card = InnovationCard(*line.split('|'))
-            start_pile = self.draw_piles[card.age]
+            start_pile = self.get_pile_object(str(card.age))
             if not start_pile:
                 raise ValueError("Error adding card " + str(card) + " to pile " + str(start_pile) + ".")
             start_pile.add_card_to_bottom(card)
@@ -634,7 +634,8 @@ class InnovationGame(Game):
         for pile in pile_list:
             draw_pile = Pile(pile, self.seed)
             self.add_pile(draw_pile)
-            self.draw_piles.update({int(pile): draw_pile})
+            self.draw_piles.append(draw_pile)
+            # self.draw_piles.update({int(pile): draw_pile})
 
         # Create achievement piles
         self.add_pile(Pile('achievements', self.seed))
@@ -678,7 +679,6 @@ class InnovationGame(Game):
         """Sets up the game to be played"""
         self.shuffle_piles()
         self.remove_cards_used_as_achievements()
-        self.create_achievements()
 
     def remove_cards_used_as_achievements(self):
         for i in range(1, 10):
@@ -686,7 +686,7 @@ class InnovationGame(Game):
             self.get_pile_object('removed').add_card_to_bottom(card)
 
     def shuffle_piles(self):
-        for pile in self.draw_piles.values():
+        for pile in self.draw_piles:
             pile.shuffle_pile()
 
     def starting_play(self):
@@ -860,7 +860,7 @@ class InnovationGame(Game):
 
     def base_return(self, card):
         """Base function to return a card"""
-        self.draw_piles[card.age].add_card_to_bottom(card)
+        self.get_pile_object(str(card.age)).add_card_to_bottom(card)
 
     def base_score(self, card):
         """Base function to score a card"""
@@ -1544,7 +1544,7 @@ g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", Tr
 # g.test_suite()
 
 g.create_game()
-g.set_up_game()
-g.shuffle_piles()
+# g.set_up_game()
+# g.shuffle_piles()
 g.set_current_card_location()
 g.write_current_card_locations()
