@@ -570,14 +570,17 @@ class InnovationGame(Game):
         self.draw_piles = {}
 
         # Create everything needed for the game
+
+        # Play a game (Play Ball!)
+        # self.__create_game()
+        # self.play_game()
+
+    def __create_game(self):
         self.__create_piles()
         self.__create_cards()
         self.__create_special_achievements()
         self.__create_players()
         self.__create_effects()
-
-        # Play a game (Play Ball!)
-        # self.play_game()
 
     def __create_cards(self):
         with open('cards/card_list.csv', 'r') as handle:
@@ -591,7 +594,6 @@ class InnovationGame(Game):
                 raise ValueError("Error adding card " + str(card) + " to pile " + str(start_pile) + ".")
             start_pile.add_card_to_bottom(card)
             self.add_card_to_game(card)
-            # self.cards.update({card.name: card})
 
     def __create_special_achievements(self):
         """Makes the five special achievement cards"""
@@ -606,7 +608,6 @@ class InnovationGame(Game):
                 raise ValueError("Error adding card " + str(card) + " to pile " + str(start_pile) + ".")
             start_pile.add_card_to_bottom(card)
             self.add_card_to_game(card)
-            # self.cards.update({card.name: card})
 
     def __create_piles(self):
         # Create the draw piles
@@ -1240,7 +1241,8 @@ class InnovationGame(Game):
     # Age 1 tests
     def test_metalworking(self):
         print('-- Test: Metalworking --')
-        self.shuffle_piles()
+        self.__create_game()
+        self.set_up_game()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
         self.turn_card = self.get_card_object('Metalworking')
@@ -1250,6 +1252,7 @@ class InnovationGame(Game):
 
     def test_mysticism(self):
         print('-- Test: Mysticism --')
+        self.__create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1261,6 +1264,7 @@ class InnovationGame(Game):
     # Age 4 tests
     def test_colonialism(self):
         print('-- Test: Colonialism --')
+        self.__create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1272,6 +1276,7 @@ class InnovationGame(Game):
 
     def test_experimentation(self):
         print('-- Test: Experimentation --')
+        self.__create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1283,6 +1288,7 @@ class InnovationGame(Game):
     # Age 5 tests
     def test_astronomy(self):
         print('-- Test: Astronomy --')
+        self.__create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1306,6 +1312,7 @@ class InnovationGame(Game):
 
     def test_steam_engine(self):
         print('-- Test: Steam Engine --')
+        self.__create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(1)
@@ -1320,6 +1327,7 @@ class InnovationGame(Game):
     # Age 6 tests
     def test_machine_tools(self):
         print('-- Test: Machine Tools --')
+        self.__create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1331,14 +1339,15 @@ class InnovationGame(Game):
     # Age 7 tests
     def test_electricity(self):
         print('-- Test: Electricity --')
+        self.__create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
-        self.active_card = g.get_card_object('Astronomy')
+        self.active_card = self.get_card_object('Astronomy')
         self.meld_card()
-        self.active_card = g.get_card_object('Machine Tools')
+        self.active_card = self.get_card_object('Machine Tools')
         self.meld_card()
-        self.active_card = g.get_card_object('Experimentation')
+        self.active_card = self.get_card_object('Experimentation')
         self.meld_card()
         self.turn_card = self.get_card_object('Electricity')
         self.active_card = self.turn_card
