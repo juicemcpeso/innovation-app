@@ -641,6 +641,11 @@ class InnovationGame(Game):
             p_stack = InnovationStack(self.player_names[i] + "'s purple stack", 'purple', self.seed)
             r_stack = InnovationStack(self.player_names[i] + "'s red stack", 'red', self.seed)
             y_stack = InnovationStack(self.player_names[i] + "'s yellow stack", 'yellow', self.seed)
+            self.add_pile(b_stack)
+            self.add_pile(g_stack)
+            self.add_pile(p_stack)
+            self.add_pile(r_stack)
+            self.add_pile(y_stack)
 
             player = InnovationPlayer(self.player_names[i], i, self.ai_players[i], achievement_pile, score_pile, hand, b_stack, g_stack, p_stack, r_stack, y_stack)
             self.add_player(player)
@@ -886,7 +891,7 @@ class InnovationGame(Game):
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
         # Print for testing
-        print('{p} draws and melds {c}'.format(p=self.active_player, c=card.name))
+        print('{p} draws and melds {c}'.format(p=self.active_player, c=self.active_card.name))
 
     def draw_and_reveal(self, draw_value):
         self.base_draw(draw_value)
@@ -896,7 +901,7 @@ class InnovationGame(Game):
     def draw_and_score(self, draw_value):
         self.base_draw(draw_value)
         # Print for testing
-        print('{p} draws and scores an age {c} card'.format(p=self.active_player, c=card.age))
+        print('{p} draws and scores an age {c} card'.format(p=self.active_player, c=self.active_card.age))
         self.add_card_to_score_pile()
 
     def draw_and_tuck(self, draw_value):
@@ -1225,14 +1230,14 @@ class InnovationGame(Game):
 
     # Tests
     def test_suite(self):
-        tests = [[self.test_metalworking, False],       # Age 1
-                 [self.test_mysticism, False],
-                 [self.test_colonialism, False],        # Age 4
-                 [self.test_experimentation, False],
-                 [self.test_astronomy, False],           # Age 5
-                 [self.test_steam_engine, False],
-                 [self.test_machine_tools, False],      # Age 6
-                 [self.test_electricity, True]]        # Age 7
+        tests = [[self.test_metalworking, True],        # Age 1
+                 [self.test_mysticism, True],
+                 [self.test_colonialism, True],         # Age 4
+                 [self.test_experimentation, True],
+                 [self.test_astronomy, True],           # Age 5
+                 [self.test_steam_engine, True],
+                 [self.test_machine_tools, True],       # Age 6
+                 [self.test_electricity, True]]         # Age 7
 
         for test in tests:
             if test[1]:
@@ -1240,6 +1245,7 @@ class InnovationGame(Game):
 
     # Age 1 tests
     def test_metalworking(self):
+        print('-----------------------')
         print('-- Test: Metalworking --')
         self.__create_game()
         self.set_up_game()
@@ -1251,6 +1257,7 @@ class InnovationGame(Game):
         self.action_dogma()
 
     def test_mysticism(self):
+        print('-----------------------')
         print('-- Test: Mysticism --')
         self.__create_game()
         self.shuffle_piles()
@@ -1263,6 +1270,7 @@ class InnovationGame(Game):
 
     # Age 4 tests
     def test_colonialism(self):
+        print('-----------------------')
         print('-- Test: Colonialism --')
         self.__create_game()
         self.shuffle_piles()
@@ -1275,6 +1283,7 @@ class InnovationGame(Game):
         self.action_dogma()
 
     def test_experimentation(self):
+        print('-----------------------')
         print('-- Test: Experimentation --')
         self.__create_game()
         self.shuffle_piles()
@@ -1287,6 +1296,7 @@ class InnovationGame(Game):
 
     # Age 5 tests
     def test_astronomy(self):
+        print('-----------------------')
         print('-- Test: Astronomy --')
         self.__create_game()
         self.shuffle_piles()
@@ -1311,6 +1321,7 @@ class InnovationGame(Game):
         self.action_dogma()
 
     def test_steam_engine(self):
+        print('-----------------------')
         print('-- Test: Steam Engine --')
         self.__create_game()
         self.shuffle_piles()
@@ -1326,6 +1337,7 @@ class InnovationGame(Game):
 
     # Age 6 tests
     def test_machine_tools(self):
+        print('-----------------------')
         print('-- Test: Machine Tools --')
         self.__create_game()
         self.shuffle_piles()
@@ -1338,7 +1350,9 @@ class InnovationGame(Game):
 
     # Age 7 tests
     def test_electricity(self):
+        print('-----------------------')
         print('-- Test: Electricity --')
+        # Setup
         self.__create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
@@ -1353,6 +1367,24 @@ class InnovationGame(Game):
         self.active_card = self.turn_card
         self.meld_card()
         self.action_dogma()
+
+        # Evaluation
+        all_top_cards_have_factory = True
+        for stack in self.get_player_object(0).stacks:
+            if stack.cards:
+                card = stack.see_top_card()
+                if not card.contains_icon(self.factory):
+                    all_top_cards_have_factory = False
+                    break
+
+        correct_card_draw = True
+        if self.get_player_object(0).hand.get_pile_size() != 2:
+            correct_card_draw = False
+
+        if all_top_cards_have_factory and correct_card_draw:
+            print('Pass')
+        else:
+            print('Failure')
 
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
