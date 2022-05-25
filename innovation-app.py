@@ -26,6 +26,8 @@ class InnovationCard(Card):
         Card.__init__(self, n)
 
         self.dogma = []
+        self.current_pile = None
+        self.current_position = 0
 
         # Set color to an int 0-4, alphabetically with options
         color_options = ['blue', 'green', 'purple', 'red', 'yellow']
@@ -125,9 +127,14 @@ class SpecialAchievementCard(Card):
         self.criteria_text = c
         self.alternative_text = a
 
-# [Card name, effect number, effect type (str), demand_flag]
+        self.current_pile = None
+        self.current_position = 0
+
+
 class Effect:
     """Class for a card effect"""
+
+    # [Card name, effect number, effect type (str), demand_flag]
     def __init__(self, cn, en, et, d, f):
         self.name = cn + ' Effect ' + str(en)
         self.card_name = cn
@@ -198,6 +205,12 @@ class Pile:
         if len(card_list):
             card = card_list.pop()
         return card
+
+    def get_card_position(self, card):
+        try:
+            return self.cards.index(card)
+        except ValueError:
+            raise ValueError("Could find index of " + str(card) + " in card pile " + str(self) + ".")
 
     def get_pile_size(self):
         return len(self.cards)
@@ -794,6 +807,33 @@ class InnovationGame(Game):
             if player.achievement_pile.get_pile_size() >= self.achievement_goal:
                 self.game_end()
 
+    # Save game state
+    def set_current_card_location(self):
+        for card in self.cards:
+            self.set_current_card_pile(card)
+            self.set_current_card_position(card)
+
+    def set_current_card_pile(self, card):
+        for pile in self.piles:
+            for c in pile.cards:
+                if c == card:
+                    card.current_pile = pile
+
+    def set_current_card_position(self, card):
+        for pile in self.piles:
+            for c in pile.cards:
+                if c == card:
+                    card.current_position = pile.get_card_position(card)
+
+    def write_current_piles(self):
+        # TODO - update this function to write to a file
+        current_locations = ''
+        for card in self.cards:
+            current_locations = current_locations + "{n},{l},{p}\n".format(n=card.name,
+                                                                           l=card.current_pile,
+                                                                           p=card.current_position)
+        print(current_locations)
+
     # Base functions
     def base_draw(self, draw_value):
         """Base function to draw a card of a specified value"""
@@ -1302,7 +1342,6 @@ class InnovationGame(Game):
         else:
             return False
 
-
     def test_sailing(self):
         self.set_up_test('Sailing')
         self.action_dogma()
@@ -1496,5 +1535,10 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
-g.test_suite()
+# g.test_suite()
 
+g._InnovationGame__create_game()
+g.set_up_game()
+g.shuffle_piles()
+g.set_current_card_location()
+g.print_current_piles()
