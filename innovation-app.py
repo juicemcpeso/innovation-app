@@ -1572,28 +1572,11 @@ class InnovationGame(Game):
 
     # Age 4 tests
     def test_colonialism(self):
-        print('-----------------------')
-        print('-- Test: Colonialism --')
-        self.create_game()
-        self.shuffle_piles()
-        self.turn_player = self.get_player_object(0)
-        self.active_player = self.get_player_object(0)
-        self.active_card = self.get_card_object('Colonialism')
-        self.turn_card = self.active_card
-        self.active_card = self.turn_card
-        self.meld_card()
+        self.set_up_test('Colonialism')
         self.action_dogma()
 
     def test_experimentation(self):
-        print('-----------------------')
-        print('-- Test: Experimentation --')
-        self.create_game()
-        self.shuffle_piles()
-        self.turn_player = self.get_player_object(0)
-        self.active_player = self.get_player_object(0)
-        self.turn_card = self.get_card_object('Experimentation')
-        self.active_card = self.turn_card
-        self.meld_card()
+        self.set_up_test('Experimentation')
         self.action_dogma()
 
     # Age 5 tests
@@ -1639,15 +1622,7 @@ class InnovationGame(Game):
 
     # Age 6 tests
     def test_machine_tools(self):
-        print('-----------------------')
-        print('-- Test: Machine Tools --')
-        self.create_game()
-        self.shuffle_piles()
-        self.turn_player = self.get_player_object(0)
-        self.active_player = self.get_player_object(0)
-        self.turn_card = self.get_card_object('Machine Tools')
-        self.active_card = self.turn_card
-        self.meld_card()
+        self.set_up_test('Machine Tools')
         self.action_dogma()
 
     # Age 7 tests
