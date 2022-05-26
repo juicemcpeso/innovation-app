@@ -26,6 +26,7 @@ class InnovationCard(Card):
         Card.__init__(self, n)
 
         self.dogma = []
+        self.tests = []
         self.current_pile = None
         self.current_position = 0
 
@@ -133,13 +134,13 @@ class SpecialAchievementCard(Card):
 
 class Test:
 
-    def __init__(self, cn, tn, des='', f):
-        self.name = 'Test' + cn + str(tn)
-        self.number = tn
-        self.description = des
+    def __init__(self, tn, f, cd=None):
+        self.name = 'Test: ' + tn
+        self.function = f
+        self.associated_card = cd
+
         self.toggle = True
         self.result = False
-        self.function = f
 
     def activate(self):
         self.result = False
@@ -471,6 +472,7 @@ class Game:
         self.players = []
         self.cards = []
         self.effects = []
+        self.tests = []
         self.game_over = False
         self.round = 0
 
@@ -538,6 +540,12 @@ class Game:
             self.effects.append(e)
         else:
             raise ValueError("Could not add effect " + str(e) + " to card game " + str(self.name) + ".")
+
+    def add_test_to_game(self, t):
+        if isinstance(t, Test):
+            self.tests.append(t)
+        else:
+            raise ValueError("Could not add effect " + str(t) + " to card game " + str(self.name) + ".")
 
     def __repr__(self):
         string = "<Game: %s on %s>" % (self.name, self.date)
@@ -608,7 +616,7 @@ class InnovationGame(Game):
         self.verbose = True
 
         # Play a game (Play Ball!)
-        # self.create_game()
+        self.create_game()
         # self.set_up_game()
         # self.play_game()
 
@@ -1340,6 +1348,63 @@ class InnovationGame(Game):
         if self.verbose:
             print(string_to_print)
 
+    def create_tests(self):
+        # Test name, function, corresponding card
+        test_list = [['Metalworking', self.test_metalworking, self.get_card_object('Metalworking')]]           # Age 1
+                        # ['Mysticism', 0, 'castle', False, self.mysticism_effect_0],
+                        # ['Sailing', 0, 'crown', False, self.sailing_effect_0],
+                        # ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
+                        # ['Writing', 0, 'lightbulb', False, self.writing_effect_0],
+                        # ['Calendar', 0, 'leaf', False, self.calendar_effect_0],                     # Age 2
+                        # ['Fermenting', 0, 'leaf', False, self.fermenting_effect_0],
+                        # ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],            # Age 4
+                        # ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
+                        # ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],              # Age 5
+                        # ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
+                        # ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
+                        # ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],        # Age 6
+                        # ['Electricity', 0, 'factory', False, self.electricity_effect_0]]            # Age 7
+
+        for test_to_add in test_list:
+            test = Test(test_to_add[0], test_to_add[1], test_to_add[2])
+            self.add_test_to_game(test)
+            associated_card = self.get_card_object(test_to_add[0])
+            associated_card.tests.append(test)
+
+    def run_all_tests(self):
+        passed_tests = []
+        failed_tests = []
+        for test in self.tests:
+            if test.toggle:
+                test.activate()
+                if test.result:
+                    passed_tests.append(test)
+                else:
+                    failed_tests.append(test)
+
+        self.determine_pass_or_fail(failed_tests)
+
+    def test_a_card(self, card_name):
+        passed_tests = []
+        failed_tests = []
+        card = self.get_card_object(card_name)
+        for test in card.tests:
+            test.activate()
+            if test.result:
+                passed_tests.append(test)
+            else:
+                failed_tests.append(test)
+
+        self.determine_pass_or_fail(failed_tests)
+
+    def determine_pass_or_fail(self, failed_test_list):
+        if failed_test_list:
+            print('The following tests failed:')
+            for test in failed_test_list:
+                print(test.name)
+        else:
+            print('All tests passed')
+
     def test_suite(self):
         tests = [[self.test_metalworking, True],        # Age 1
                  [self.test_mysticism, True],
@@ -1630,3 +1695,7 @@ class InnovationGame(Game):
 
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
+g.verbose = False
+g.create_tests()
+g.run_all_tests()
+g.test_a_card('Metalworking')
