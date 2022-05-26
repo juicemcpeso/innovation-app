@@ -131,6 +131,26 @@ class SpecialAchievementCard(Card):
         self.current_position = 0
 
 
+class Test:
+
+    def __init__(self, cn, tn, des='', f):
+        self.name = 'Test' + cn + str(tn)
+        self.number = tn
+        self.description = des
+        self.toggle = True
+        self.result = False
+        self.function = f
+
+    def activate(self):
+        self.result = False
+        self.result = self.function()
+
+    def __repr__(self):
+        return "<%s>" % self.name
+
+    def __str__(self):
+        return self.name
+
 class Effect:
     """Class for a card effect"""
 
@@ -163,7 +183,7 @@ class Effect:
         self.function()
 
     def __repr__(self):
-        return "<Card: %s>" % self.name
+        return "<%s>" % self.name
 
     def __str__(self):
         return self.name
