@@ -683,7 +683,7 @@ class InnovationGame(Game):
     def set_up_game(self):
         """Sets up the game to be played"""
         self.shuffle_piles()
-        self.record_current_card_location()
+        self.record_current_card_locations()
         self.remove_cards_used_as_achievements()
 
     def remove_cards_used_as_achievements(self):
@@ -819,7 +819,7 @@ class InnovationGame(Game):
                 self.game_end()
 
     # Save game state
-    def record_current_card_location(self):
+    def record_current_card_locations(self):
         for card in self.cards:
             self.set_current_card_pile(card)
             self.set_current_card_position(card)
@@ -918,6 +918,7 @@ class InnovationGame(Game):
         self.active_player.achievement_pile.add_card_to_bottom(self.active_card)
         self.print_for_testing('{p} claims achievement: {c}'.format(p=self.active_player, c=self.active_card.name))
         self.check_game_end()
+        self.record_current_card_locations()
 
     def claim_special_achievement(self, achievement_name):
         card = g.get_card_object(achievement_name)
@@ -928,40 +929,47 @@ class InnovationGame(Game):
             self.check_game_end()
         else:
             self.print_for_testing('Special achievement {c} already claimed'.format(c=card.name))
+        self.record_current_card_locations()
 
     def add_card_to_hand(self):
         """Moves selected card to active player's hand"""
         self.find_and_remove_card(self.active_card)
         self.active_player.hand.add_card_to_bottom(self.active_card)
         self.print_for_testing('{p} adds {c} to hand'.format(p=self.active_player, c=self.active_card.name))
+        self.record_current_card_locations()
 
     def add_card_to_score_pile(self):
         """Moves selected card to the score pile"""
         self.find_and_remove_card(self.active_card)
         self.base_score(self.active_card)
         self.print_for_testing('{p} adds {c} to score pile'.format(p=self.active_player, c=self.active_card.name))
+        self.record_current_card_locations()
 
     def draw_to_hand(self, draw_value):
         """Draws a card to a players hand of a specified draw value"""
         self.base_draw(draw_value)
         self.print_for_testing('{p} draws {c}'.format(p=self.active_player, c=self.active_card.name))
         self.add_card_to_hand()
+        self.record_current_card_locations()
 
     def draw_and_meld(self, draw_value):
         self.base_draw(draw_value)
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
         self.print_for_testing('{p} draws and melds {c}'.format(p=self.active_player, c=self.active_card.name))
+        self.record_current_card_locations()
 
     def draw_and_reveal(self, draw_value):
         self.base_draw(draw_value)
         # TODO - update to inform card counting module, remove printing
         self.print_for_testing('{p} draws and reveals {c}'.format(p=self.active_player, c=self.active_card.name))
+        self.record_current_card_locations()
 
     def draw_and_score(self, draw_value):
         self.base_draw(draw_value)
         self.print_for_testing('{p} draws and scores an age {c} card'.format(p=self.active_player, c=self.active_card.age))
         self.add_card_to_score_pile()
+        self.record_current_card_locations()
 
     def draw_and_tuck(self, draw_value):
         self.base_draw(draw_value)
@@ -969,21 +977,25 @@ class InnovationGame(Game):
         self.base_tuck(self.active_card)
         # TODO - update to inform card counting module
         self.print_for_testing('{p} draws and tucks {c}'.format(p=self.active_player, c=self.active_card.name))
+        self.record_current_card_locations()
 
     def return_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_return(self.active_card)
         self.print_for_testing('{p} returns {c}'.format(p=self.active_player.name, c=self.active_card.name))
+        self.record_current_card_locations()
 
     def meld_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
         self.print_for_testing('{p} melds {c}'.format(p=self.active_player.name, c=self.active_card.name))
+        self.record_current_card_locations()
 
     def tuck_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_tuck(self.active_card)
         self.print_for_testing('{p} tucks {c}'.format(p=self.active_player.name, c=self.active_card.name))
+        self.record_current_card_locations()
 
     # Actions
     def action_draw(self):
@@ -1572,7 +1584,7 @@ g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", Tr
 # g.test_suite()
 g.create_game()
 g.set_up_game()
-g.record_current_card_location()
+g.record_current_card_locations()
 print('------------------------------------------')
 print('-- A --')
 test_cards = g.write_current_card_locations()
