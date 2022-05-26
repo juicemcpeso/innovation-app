@@ -26,9 +26,11 @@ class InnovationCard(Card):
         Card.__init__(self, n)
 
         self.dogma = []
+        self.current_pile = None
+        self.current_position = 0
 
         # Set color to an int 0-4, alphabetically with options
-        color_options = ['blue', 'green', 'purple', 'red', 'yellow']
+        color_options = ['blue', 'green', 'purple', 'red', 'yellow','']
         if c not in color_options:
             raise ValueError("Error creating Innovation Card. Color must be blue, green, purple, red, or yellow.")
         for color in color_options:
@@ -41,7 +43,7 @@ class InnovationCard(Card):
         self.age = int(a)
 
         # Set effect type to an int 0-5, in specified order
-        effect_type_options = ['crown', 'leaf', 'lightbulb', 'castle', 'factory', 'clock']
+        effect_type_options = ['crown', 'leaf', 'lightbulb', 'castle', 'factory', 'clock','']
         if t not in effect_type_options:
             raise ValueError("Error creating Innovation Card. "
                              "Effect type must be crown, lead, lightbulb, castle, factory, or clock.")
@@ -125,9 +127,14 @@ class SpecialAchievementCard(Card):
         self.criteria_text = c
         self.alternative_text = a
 
-# [Card name, effect number, effect type (str), demand_flag]
+        self.current_pile = None
+        self.current_position = 0
+
+
 class Effect:
     """Class for a card effect"""
+
+    # [Card name, effect number, effect type (str), demand_flag]
     def __init__(self, cn, en, et, d, f):
         self.name = cn + ' Effect ' + str(en)
         self.card_name = cn
@@ -198,6 +205,12 @@ class Pile:
         if len(card_list):
             card = card_list.pop()
         return card
+
+    def get_card_position(self, card):
+        try:
+            return self.cards.index(card)
+        except ValueError:
+            raise ValueError("Could find index of " + str(card) + " in card pile " + str(self) + ".")
 
     def get_pile_size(self):
         return len(self.cards)
@@ -443,12 +456,15 @@ class Game:
 
         # Set the random see if not specified
         if se is None:
-            self.seed = random.randint(0, 9999999999)
+            self.seed = self.set_random_seed()
         else:
             if isinstance(se, int) and (0 <= se <= 9999999999):
                 self.seed = se
             else:
                 raise ValueError("Could not create game. Seed must be int between 0 and 9,999,999,999")
+
+    def set_random_seed(self):
+        return random.randint(0, 9999999999)
 
     def add_pile(self, p):
         if isinstance(p, Pile):
@@ -564,39 +580,46 @@ class InnovationGame(Game):
             self.achievement_goal = 4
 
         # Create dictionaries to find objects
-        # self.cards = {}
-        self.achievements = {}
         self.special_achievements = {}
-        self.draw_piles = {}
+        self.draw_piles = []
+        self.locations_at_beginning_of_action = {}
 
         # Create everything needed for the game
         self.verbose = True
 
         # Play a game (Play Ball!)
-        # self.__create_game()
+        # self.create_game()
+        # self.set_up_game()
         # self.play_game()
 
-    def __create_game(self):
-        self.__create_piles()
-        self.__create_cards()
-        self.__create_special_achievements()
-        self.__create_players()
-        self.__create_effects()
+    def create_game(self):
+        self.create_piles()
+        self.create_cards()
+        self.create_achievements()
+        self.create_special_achievements()
+        self.create_players()
+        self.create_effects()
 
-    def __create_cards(self):
+    def create_cards(self):
         with open('cards/card_list.csv', 'r') as handle:
             handle.readline()
             lines = handle.read().splitlines()
 
         for line in lines:
             card = InnovationCard(*line.split('|'))
-            start_pile = self.draw_piles[card.age]
+            start_pile = self.get_pile_object(str(card.age))
             if not start_pile:
                 raise ValueError("Error adding card " + str(card) + " to pile " + str(start_pile) + ".")
             start_pile.add_card_to_bottom(card)
             self.add_card_to_game(card)
 
-    def __create_special_achievements(self):
+    def create_achievements(self):
+        for i in range(1, 10):
+            card = InnovationCard("Achievement {n}".format(n=i), '', str(i), '', '', '', '', '', '', '', '')
+            self.get_pile_object('achievements').add_card_to_bottom(card)
+            self.add_card_to_game(card)
+
+    def create_special_achievements(self):
         """Makes the five special achievement cards"""
         with open('cards/special_achievement_list.csv', 'r') as handle:
             handle.readline()
@@ -610,23 +633,25 @@ class InnovationGame(Game):
             start_pile.add_card_to_bottom(card)
             self.add_card_to_game(card)
 
-    def __create_piles(self):
+    def create_piles(self):
         # Create the draw piles
         pile_list = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
         for pile in pile_list:
             draw_pile = Pile(pile, self.seed)
             self.add_pile(draw_pile)
-            self.draw_piles.update({int(pile): draw_pile})
+            self.draw_piles.append(draw_pile)
+            # self.draw_piles.update({int(pile): draw_pile})
 
         # Create achievement piles
         self.add_pile(Pile('achievements', self.seed))
         self.add_pile(Pile('special achievements', self.seed))
 
-        # Create box and reveal piles
-        self.add_pile(Pile('reveal', self.seed))
+        # Create box, removed, and reveal piles
         self.add_pile(Pile('box', self.seed))
+        self.add_pile(Pile('removed', self.seed))
+        self.add_pile(Pile('reveal', self.seed))
 
-    def __create_players(self):
+    def create_players(self):
         for i in range(self.number_of_players):
             # Create an achievement pile, score_pile, and hand for each player, add to master list
             achievement_pile = Pile((self.player_names[i] + " achievement pile"), self.seed)
@@ -658,16 +683,16 @@ class InnovationGame(Game):
     def set_up_game(self):
         """Sets up the game to be played"""
         self.shuffle_piles()
+        self.set_current_card_locations()
+        self.remove_cards_used_as_achievements()
 
-        # Pick a card from each of the piles 1-9 to use as an achievement. Change the name of the card to achievement.
+    def remove_cards_used_as_achievements(self):
         for i in range(1, 10):
             card = self.get_pile_object(str(i)).get_top_card()
-            self.get_pile_object('achievements').add_card_to_bottom(card)
-            card.name = "Achievement {n}".format(n=i)
-            self.achievements.update({card.age: card})
+            self.get_pile_object('removed').add_card_to_bottom(card)
 
     def shuffle_piles(self):
-        for pile in self.draw_piles.values():
+        for pile in self.draw_piles:
             pile.shuffle_pile()
 
     def starting_play(self):
@@ -773,7 +798,6 @@ class InnovationGame(Game):
 
     def play_game(self):
         """Play a game of Innovation"""
-        self.set_up_game()
         self.starting_play()
         self.play_first_round()
 
@@ -793,6 +817,56 @@ class InnovationGame(Game):
             print('{p} has {a} achievements'.format(p=player.name, a=player.achievement_pile.get_pile_size()))
             if player.achievement_pile.get_pile_size() >= self.achievement_goal:
                 self.game_end()
+
+    # Save game state
+    def set_current_card_locations(self):
+        for card in self.cards:
+            self.set_current_card_pile(card)
+            self.set_current_card_position(card)
+
+    def set_current_card_pile(self, card):
+        for pile in self.piles:
+            for c in pile.cards:
+                if c == card:
+                    card.current_pile = pile
+
+    def set_current_card_position(self, card):
+        for pile in self.piles:
+            for c in pile.cards:
+                if c == card:
+                    card.current_position = pile.get_card_position(card)
+
+    def record_current_card_locations(self):
+        card_dict = {}
+        for card in self.cards:
+            card_dict.update({card.name: [card.current_pile.name, card.current_position]})
+
+        return card_dict
+
+    def write_current_card_locations(self):
+        # TODO - update this function to write to a file
+        print("{a:16} {b:22} {c:2}".format(a='Card', b='Pile', c='Position'))
+        current_locations = ''
+
+        for card in self.cards:
+            current_locations = current_locations + "{n},{l},{p}\n".format(n=card.name,
+                                                                           l=card.current_pile,
+                                                                           p=card.current_position)
+            print("{a:16} {b:22} {c:2}".format(a=card.name, b=card.current_pile.name, c=card.current_position))
+
+
+    def set_card_location_from_dictionary(self, card_dict):
+        for card_info, pile_info in card_dict.items():
+            self.get_card_object(card_info).current_pile = self.get_pile_object(pile_info[0])
+            self.get_card_object(card_info).current_position = int(pile_info[1])
+
+    def return_cards_to_piles(self):
+        for card in self.cards:
+            self.move_card_to_pile(card, card.current_pile)
+
+    def sort_cards_in_piles(self):
+        for pile in self.piles:
+            pile.cards = sorted(pile.cards, key=lambda x: x.current_position)
 
     # Base functions
     def base_draw(self, draw_value):
@@ -814,7 +888,7 @@ class InnovationGame(Game):
 
     def base_return(self, card):
         """Base function to return a card"""
-        self.draw_piles[card.age].add_card_to_bottom(card)
+        self.get_pile_object(str(card.age)).add_card_to_bottom(card)
 
     def base_score(self, card):
         """Base function to score a card"""
@@ -837,6 +911,10 @@ class InnovationGame(Game):
                 if c == card:
                     pile.remove_card(c)
 
+    def move_card_to_pile(self, card, pile):
+        self.find_and_remove_card(card)
+        pile.add_card_to_bottom(card)
+
     # Combination functions used as card actions
     def add_card_to_achievement_pile(self):
         """Moves selected card to a player's achievement pile"""
@@ -844,6 +922,7 @@ class InnovationGame(Game):
         self.active_player.achievement_pile.add_card_to_bottom(self.active_card)
         self.print_for_testing('{p} claims achievement: {c}'.format(p=self.active_player, c=self.active_card.name))
         self.check_game_end()
+        self.set_current_card_locations()
 
     def claim_special_achievement(self, achievement_name):
         card = g.get_card_object(achievement_name)
@@ -854,40 +933,47 @@ class InnovationGame(Game):
             self.check_game_end()
         else:
             self.print_for_testing('Special achievement {c} already claimed'.format(c=card.name))
+        self.set_current_card_locations()
 
     def add_card_to_hand(self):
         """Moves selected card to active player's hand"""
         self.find_and_remove_card(self.active_card)
         self.active_player.hand.add_card_to_bottom(self.active_card)
         self.print_for_testing('{p} adds {c} to hand'.format(p=self.active_player, c=self.active_card.name))
+        self.set_current_card_locations()
 
     def add_card_to_score_pile(self):
         """Moves selected card to the score pile"""
         self.find_and_remove_card(self.active_card)
         self.base_score(self.active_card)
         self.print_for_testing('{p} adds {c} to score pile'.format(p=self.active_player, c=self.active_card.name))
+        self.set_current_card_locations()
 
     def draw_to_hand(self, draw_value):
         """Draws a card to a players hand of a specified draw value"""
         self.base_draw(draw_value)
         self.print_for_testing('{p} draws {c}'.format(p=self.active_player, c=self.active_card.name))
         self.add_card_to_hand()
+        self.set_current_card_locations()
 
     def draw_and_meld(self, draw_value):
         self.base_draw(draw_value)
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
         self.print_for_testing('{p} draws and melds {c}'.format(p=self.active_player, c=self.active_card.name))
+        self.set_current_card_locations()
 
     def draw_and_reveal(self, draw_value):
         self.base_draw(draw_value)
         # TODO - update to inform card counting module, remove printing
         self.print_for_testing('{p} draws and reveals {c}'.format(p=self.active_player, c=self.active_card.name))
+        self.set_current_card_locations()
 
     def draw_and_score(self, draw_value):
         self.base_draw(draw_value)
         self.print_for_testing('{p} draws and scores an age {c} card'.format(p=self.active_player, c=self.active_card.age))
         self.add_card_to_score_pile()
+        self.set_current_card_locations()
 
     def draw_and_tuck(self, draw_value):
         self.base_draw(draw_value)
@@ -895,21 +981,25 @@ class InnovationGame(Game):
         self.base_tuck(self.active_card)
         # TODO - update to inform card counting module
         self.print_for_testing('{p} draws and tucks {c}'.format(p=self.active_player, c=self.active_card.name))
+        self.set_current_card_locations()
 
     def return_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_return(self.active_card)
         self.print_for_testing('{p} returns {c}'.format(p=self.active_player.name, c=self.active_card.name))
+        self.set_current_card_locations()
 
     def meld_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
         self.print_for_testing('{p} melds {c}'.format(p=self.active_player.name, c=self.active_card.name))
+        self.set_current_card_locations()
 
     def tuck_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_tuck(self.active_card)
         self.print_for_testing('{p} tucks {c}'.format(p=self.active_player.name, c=self.active_card.name))
+        self.set_current_card_locations()
 
     # Actions
     def action_draw(self):
@@ -944,11 +1034,11 @@ class InnovationGame(Game):
         sharing_players = self.determine_who_can_share()
         self.execute_dogma(sharing_players)
 
-        self.draw_if_opponents_shared(sharing_players)
+        # self.draw_if_opponents_shared(sharing_players)
 
     def execute_dogma(self, sharing_players):
+        dogma_was_shared = False
         for effect in self.turn_card.dogma:
-
             if effect.demand:
                 # Demand effects
                 for eligible_player in self.turn_player.share_order:
@@ -966,6 +1056,14 @@ class InnovationGame(Game):
                     self.print_for_testing('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
                     effect.activate()
 
+                    # Only run sharing code if it's not the turn player and nobody has shared yet.
+                    if eligible_player != self.turn_player and not dogma_was_shared:
+                        dogma_was_shared = self.check_if_opponent_shared()
+
+        if dogma_was_shared:
+            self.print_for_testing('{p} draws a card due to other players sharing effect'.format(p=self.turn_player))
+            self.action_draw()
+
     def determine_who_can_share(self):
         """Function to see who can share in an effect"""
         sharing_players = []
@@ -976,6 +1074,16 @@ class InnovationGame(Game):
                 sharing_players.append(opponent)
 
         return sharing_players
+
+    def check_if_opponent_shared(self):
+        original_state = self.locations_at_beginning_of_action
+        current_state = self.record_current_card_locations()
+        if original_state != current_state:
+            print('true')
+            return True
+        else:
+            print('false')
+            return False
 
     def draw_if_opponents_shared(self, list_of_players):
         non_demand_effects = False
@@ -990,6 +1098,7 @@ class InnovationGame(Game):
     # Functions to select and simulate actions
     def take_action(self):
         """Function to take an action"""
+        self.locations_at_beginning_of_action = self.record_current_card_locations()
         self.active_player = self.turn_player
         available_actions = self.available_actions()
         selected_action = self.select_action(available_actions)
@@ -1073,7 +1182,7 @@ class InnovationGame(Game):
         return action_list[selection]
 
     # Effects
-    def __create_effects(self):
+    def create_effects(self):
         # [Card name, effect number, effect type (str), demand_flag, function]
         effects_list = [['Metalworking', 0, 'castle', False, self.metalworking_effect_0],           # Age 1
                         ['Mysticism', 0, 'castle', False, self.mysticism_effect_0],
@@ -1236,7 +1345,7 @@ class InnovationGame(Game):
     def set_up_test(self, card_name):
         print('-----------------------')
         print('-- Test: {t} --'.format(t=card_name))
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1302,7 +1411,6 @@ class InnovationGame(Game):
         else:
             return False
 
-
     def test_sailing(self):
         self.set_up_test('Sailing')
         self.action_dogma()
@@ -1355,9 +1463,16 @@ class InnovationGame(Game):
     # Age 2 tests
     def test_calendar(self):
         self.set_up_test('Calendar')
-        self.active_card = self.get_card_object('A.I.')
-        self.add_card_to_score_pile()
-        self.active_card = self.turn_card
+        # self.active_card = g.get_card_object('Fermenting')
+        # self.active_player = g.get_player_object(1)
+        # self.meld_card()
+        # self.active_card = self.get_card_object('A.I.')
+        # self.add_card_to_score_pile()
+        # self.active_card = g.get_card_object('Agriculture')
+        # self.active_player = g.get_player_object(2)
+        # self.meld_card()
+        # self.active_card = self.turn_card
+        self.locations_at_beginning_of_action = self.record_current_card_locations()
         self.action_dogma()
 
         all_cards_are_threes = True
@@ -1379,7 +1494,7 @@ class InnovationGame(Game):
     def test_colonialism(self):
         print('-----------------------')
         print('-- Test: Colonialism --')
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1392,7 +1507,7 @@ class InnovationGame(Game):
     def test_experimentation(self):
         print('-----------------------')
         print('-- Test: Experimentation --')
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1405,7 +1520,7 @@ class InnovationGame(Game):
     def test_astronomy(self):
         print('-----------------------')
         print('-- Test: Astronomy --')
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1430,7 +1545,7 @@ class InnovationGame(Game):
     def test_steam_engine(self):
         print('-----------------------')
         print('-- Test: Steam Engine --')
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(1)
@@ -1446,7 +1561,7 @@ class InnovationGame(Game):
     def test_machine_tools(self):
         print('-----------------------')
         print('-- Test: Machine Tools --')
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1460,7 +1575,7 @@ class InnovationGame(Game):
         print('-----------------------')
         print('-- Test: Electricity --')
         # Setup
-        self.__create_game()
+        self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
         self.active_player = self.get_player_object(0)
@@ -1495,6 +1610,3 @@ class InnovationGame(Game):
 
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
-
-g.test_suite()
-
