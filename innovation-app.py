@@ -842,7 +842,8 @@ class InnovationGame(Game):
     def check_game_end(self):
         """Runs when a card is added to an achievement pile. Checks to see if anybody has met goal."""
         for player in self.players:
-            print('{p} has {a} achievements'.format(p=player.name, a=player.achievement_pile.get_pile_size()))
+            self.print_for_testing('{p} has {a} achievements'.format(p=player.name,
+                                                                     a=player.achievement_pile.get_pile_size()))
             if player.achievement_pile.get_pile_size() >= self.achievement_goal:
                 self.game_end()
 
@@ -1107,10 +1108,8 @@ class InnovationGame(Game):
         original_state = self.locations_at_beginning_of_action
         current_state = self.record_current_card_locations()
         if original_state != current_state:
-            print('true')
             return True
         else:
-            print('false')
             return False
 
     def draw_if_opponents_shared(self, list_of_players):
@@ -1350,20 +1349,17 @@ class InnovationGame(Game):
 
     def create_tests(self):
         # Test name, function, corresponding card
-        test_list = [['Metalworking', self.test_metalworking, self.get_card_object('Metalworking')]]           # Age 1
-                        # ['Mysticism', 0, 'castle', False, self.mysticism_effect_0],
-                        # ['Sailing', 0, 'crown', False, self.sailing_effect_0],
-                        # ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
-                        # ['Writing', 0, 'lightbulb', False, self.writing_effect_0],
-                        # ['Calendar', 0, 'leaf', False, self.calendar_effect_0],                     # Age 2
-                        # ['Fermenting', 0, 'leaf', False, self.fermenting_effect_0],
-                        # ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],            # Age 4
-                        # ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
-                        # ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],              # Age 5
-                        # ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
-                        # ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
-                        # ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],        # Age 6
-                        # ['Electricity', 0, 'factory', False, self.electricity_effect_0]]            # Age 7
+        test_list = [['Metalworking', self.test_metalworking, self.get_card_object('Metalworking')],
+                     ['Mysticism', self.test_mysticism, self.get_card_object('Mysticism')],
+                     ['Sailing', self.test_sailing, self.get_card_object('Sailing')],
+                     ['The Wheel', self.test_the_wheel, self.get_card_object('The Wheel')],
+                     ['Calendar', self.test_calendar, self.get_card_object('Calendar')],
+                     ['Colonialism', self.test_colonialism, self.get_card_object('Colonialism')],
+                     ['Experimentation', self.test_experimentation, self.get_card_object('Experimentation')],
+                     ['Astronomy', self.test_astronomy, self.get_card_object('Astronomy')],
+                     ['Steam Engine', self.test_steam_engine, self.get_card_object('Steam Engine')],
+                     ['Machine Tools', self.test_machine_tools, self.get_card_object('Machine Tools')],
+                     ['Electricity', self.test_electricity, self.get_card_object('Electricity')]]
 
         for test_to_add in test_list:
             test = Test(test_to_add[0], test_to_add[1], test_to_add[2])
@@ -1428,8 +1424,7 @@ class InnovationGame(Game):
             print('All Tests Pass')
 
     def set_up_test(self, card_name):
-        print('-----------------------')
-        print('-- Test: {t} --'.format(t=card_name))
+        self.print_for_testing('Test: {t}'.format(t=card_name))
         self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
@@ -1698,4 +1693,3 @@ g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", Tr
 g.verbose = False
 g.create_tests()
 g.run_all_tests()
-g.test_a_card('Metalworking')
