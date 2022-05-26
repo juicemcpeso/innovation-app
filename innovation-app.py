@@ -456,12 +456,15 @@ class Game:
 
         # Set the random see if not specified
         if se is None:
-            self.seed = random.randint(0, 9999999999)
+            self.seed = self.set_random_seed()
         else:
             if isinstance(se, int) and (0 <= se <= 9999999999):
                 self.seed = se
             else:
                 raise ValueError("Could not create game. Seed must be int between 0 and 9,999,999,999")
+
+    def set_random_seed(self):
+        return random.randint(0, 9999999999)
 
     def add_pile(self, p):
         if isinstance(p, Pile):
@@ -579,13 +582,14 @@ class InnovationGame(Game):
         # Create dictionaries to find objects
         self.special_achievements = {}
         self.draw_piles = []
+        self.locations = {}
 
         # Create everything needed for the game
         self.verbose = True
 
         # Play a game (Play Ball!)
-        self.create_game()
-        self.set_up_game()
+        # self.create_game()
+        # self.set_up_game()
         # self.play_game()
 
     def create_game(self):
@@ -679,6 +683,7 @@ class InnovationGame(Game):
     def set_up_game(self):
         """Sets up the game to be played"""
         self.shuffle_piles()
+        self.record_current_card_location()
         self.remove_cards_used_as_achievements()
 
     def remove_cards_used_as_achievements(self):
@@ -814,7 +819,7 @@ class InnovationGame(Game):
                 self.game_end()
 
     # Save game state
-    def set_current_card_location(self):
+    def record_current_card_location(self):
         for card in self.cards:
             self.set_current_card_pile(card)
             self.set_current_card_position(card)
@@ -835,11 +840,29 @@ class InnovationGame(Game):
         # TODO - update this function to write to a file
         print("{a:16} {b:22} {c:2}".format(a='Card', b='Pile', c='Position'))
         current_locations = ''
+        card_dict = {}
+
         for card in self.cards:
             current_locations = current_locations + "{n},{l},{p}\n".format(n=card.name,
                                                                            l=card.current_pile,
                                                                            p=card.current_position)
             print("{a:16} {b:22} {c:2}".format(a=card.name, b=card.current_pile.name, c=card.current_position))
+            card_dict.update({card.name: [card.current_pile.name, card.current_position]})
+
+        return card_dict
+
+    def set_card_location_from_dictionary(self, card_dict):
+        for card_info, pile_info in card_dict.items():
+            self.get_card_object(card_info).current_pile = self.get_pile_object(pile_info[0])
+            self.get_card_object(card_info).current_position = int(pile_info[1])
+
+    def return_cards_to_piles(self):
+        for card in self.cards:
+            self.move_card_to_pile(card, card.current_pile)
+
+    def sort_cards_in_piles(self):
+        for pile in self.piles:
+            pile.cards = sorted(pile.cards, key=lambda x: x.current_position)
 
     # Base functions
     def base_draw(self, draw_value):
@@ -883,6 +906,10 @@ class InnovationGame(Game):
             for c in pile.cards:
                 if c == card:
                     pile.remove_card(c)
+
+    def move_card_to_pile(self, card, pile):
+        self.find_and_remove_card(card)
+        pile.add_card_to_bottom(card)
 
     # Combination functions used as card actions
     def add_card_to_achievement_pile(self):
@@ -1543,7 +1570,24 @@ class InnovationGame(Game):
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 
 # g.test_suite()
-# g.set_up_game()
-# g.shuffle_piles()
-g.set_current_card_location()
+g.create_game()
+g.set_up_game()
+g.record_current_card_location()
+print('------------------------------------------')
+print('-- A --')
+test_cards = g.write_current_card_locations()
+
+g.cards = []
+g.set_random_seed()
+g.create_game()
+g.set_up_game()
+print('------------------------------------------')
+print('-- B --')
+g.write_current_card_locations()
+
+g.set_card_location_from_dictionary(test_cards)
+g.return_cards_to_piles()
+g.sort_cards_in_piles()
+print('------------------------------------------')
+print('-- C --')
 g.write_current_card_locations()
