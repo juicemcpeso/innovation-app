@@ -134,15 +134,18 @@ class SpecialAchievementCard(Card):
 
 class Test:
 
-    def __init__(self, tn, f, cd=None):
-        self.name = 'Test: ' + tn
-        self.function = f
+    def __init__(self, tn, sup, fun, val, cd=None):
+        self.name = 'Test: ' + tn + ' (' + str(val) + ')'
+        self.setup = sup
+        self.function = fun
+        self.valid = val
         self.associated_card = cd
 
         self.toggle = True
         self.result = False
 
     def activate(self):
+        self.setup()
         self.result = False
         self.result = self.function()
 
@@ -1348,7 +1351,7 @@ class InnovationGame(Game):
             print(string_to_print)
 
     def create_tests(self):
-        # Test name, function, corresponding card
+        # Test name, setup function, test function, valid/invalid (T/F), corresponding card
         test_list = [['Metalworking', self.test_metalworking, self.get_card_object('Metalworking')],
                      ['Mysticism', self.test_mysticism, self.get_card_object('Mysticism')],
                      ['Sailing', self.test_sailing, self.get_card_object('Sailing')],
