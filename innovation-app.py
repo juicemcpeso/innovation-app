@@ -1473,10 +1473,8 @@ class InnovationGame(Game):
 
         return all(results)
 
-    def test_mysticism_setup(self):
-        self.set_up_test_generic('Mysticism')
-
     def test_mysticism(self):
+        results = []
         self.action_dogma()
 
         card_was_melded_properly = False
@@ -1485,34 +1483,31 @@ class InnovationGame(Game):
                 card_was_melded_properly = True
         else:
             card_was_melded_properly = True
+        results.append(card_was_melded_properly)
 
         draw_a_one = False
         if self.active_player.hand.get_pile_size() == 1:
             for card in self.active_player.hand.cards:
                 if card.age == 1:
                     draw_a_one = True
+        results.append(draw_a_one)
 
-        if draw_a_one and card_was_melded_properly:
-            return True
-        else:
-            return False
+        return all(results)
 
     def test_sailing(self):
-        self.set_up_test_generic('Sailing')
         self.action_dogma()
+
         card_was_melded = False
         for stack in self.active_player.stacks:
             card = stack.see_top_card()
             if self.active_card != self.get_card_object('Sailing') and card == self.active_card:
                 card_was_melded = True
 
-        if card_was_melded:
-            return True
-        else:
-            return False
+        return card_was_melded
 
     def test_the_wheel(self):
-        self.set_up_test_generic('The Wheel')
+        results = []
+
         self.action_dogma()
 
         all_cards_are_ones = True
@@ -1525,14 +1520,12 @@ class InnovationGame(Game):
                     break
         else:
             correct_number_of_cards = False
+        results.append(all_cards_are_ones)
+        results.append(correct_number_of_cards)
 
-        if all_cards_are_ones and correct_number_of_cards:
-            return True
-        else:
-            return False
+        return all(results)
 
     def test_writing(self):
-        self.set_up_test_generic('Writing')
         self.action_dogma()
 
         draw_a_two = False
@@ -1541,10 +1534,7 @@ class InnovationGame(Game):
                 if card.age == 2:
                     draw_a_two = True
 
-        if draw_a_two:
-            return True
-        else:
-            return False
+        return draw_a_two
 
     # Age 2 tests
     def test_calendar(self):
