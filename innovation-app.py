@@ -1403,28 +1403,6 @@ class InnovationGame(Game):
         else:
             print('All tests passed')
 
-    def test_suite(self):
-        tests = [[self.test_metalworking, True],        # Age 1
-                 [self.test_mysticism, True],
-                 [self.test_sailing, True],
-                 [self.test_the_wheel, True],
-                 [self.test_calendar, True],             # Age 2
-                 [self.test_colonialism, True],         # Age 4
-                 [self.test_experimentation, True],
-                 [self.test_astronomy, True],           # Age 5
-                 [self.test_steam_engine, True],
-                 [self.test_machine_tools, True],       # Age 6
-                 [self.test_electricity, True]]         # Age 7
-
-        results = []
-        for test in tests:
-            if test[1]:
-                results.append(test[0]())
-
-        print(results)
-        if all(results):
-            print('All Tests Pass')
-
     def set_up_test_generic(self, card_name):
         self.print_for_testing('Test: {t}'.format(t=card_name))
         self.create_game()
