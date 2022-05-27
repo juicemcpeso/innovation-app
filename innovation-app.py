@@ -134,18 +134,17 @@ class SpecialAchievementCard(Card):
 
 class Test:
 
-    def __init__(self, tn, sup, fun, val, cd=None):
-        self.name = 'Test: ' + tn + ' (' + str(val) + ')'
+    def __init__(self, tn, sup, fun, cd=None):
+        self.name = 'Test: ' + tn
         self.setup = sup
         self.function = fun
-        self.valid = val
         self.associated_card = cd
 
         self.toggle = True
         self.result = False
 
     def activate(self):
-        self.setup()
+        self.setup(self.associated_card.name)
         self.result = False
         self.result = self.function()
 
@@ -1351,21 +1350,21 @@ class InnovationGame(Game):
             print(string_to_print)
 
     def create_tests(self):
-        # Test name, setup function, test function, valid/invalid (T/F), corresponding card
-        test_list = [['Metalworking', self.test_metalworking, self.get_card_object('Metalworking')],
-                     ['Mysticism', self.test_mysticism, self.get_card_object('Mysticism')],
-                     ['Sailing', self.test_sailing, self.get_card_object('Sailing')],
-                     ['The Wheel', self.test_the_wheel, self.get_card_object('The Wheel')],
-                     ['Calendar', self.test_calendar, self.get_card_object('Calendar')],
-                     ['Colonialism', self.test_colonialism, self.get_card_object('Colonialism')],
-                     ['Experimentation', self.test_experimentation, self.get_card_object('Experimentation')],
-                     ['Astronomy', self.test_astronomy, self.get_card_object('Astronomy')],
-                     ['Steam Engine', self.test_steam_engine, self.get_card_object('Steam Engine')],
-                     ['Machine Tools', self.test_machine_tools, self.get_card_object('Machine Tools')],
-                     ['Electricity', self.test_electricity, self.get_card_object('Electricity')]]
+        # Test name, setup function, test function, corresponding card
+        test_list = [['Metalworking', self.set_up_test_generic, self.test_metalworking, self.get_card_object('Metalworking')],
+                     ['Mysticism', self.set_up_test_generic, self.test_mysticism, self.get_card_object('Mysticism')],
+                     ['Sailing', self.set_up_test_generic, self.test_sailing, self.get_card_object('Sailing')],
+                     ['The Wheel', self.set_up_test_generic, self.test_the_wheel, self.get_card_object('The Wheel')],
+                     ['Calendar', self.set_up_test_generic, self.test_calendar, self.get_card_object('Calendar')],
+                     ['Colonialism', self.set_up_test_generic, self.test_colonialism, self.get_card_object('Colonialism')],
+                     ['Experimentation', self.set_up_test_generic, self.test_experimentation, self.get_card_object('Experimentation')],
+                     ['Astronomy', self.set_up_test_generic, self.test_astronomy, self.get_card_object('Astronomy')],
+                     ['Steam Engine', self.set_up_test_generic, self.test_steam_engine, self.get_card_object('Steam Engine')],
+                     ['Machine Tools', self.set_up_test_generic, self.test_machine_tools, self.get_card_object('Machine Tools')],
+                     ['Electricity', self.set_up_test_generic, self.test_electricity, self.get_card_object('Electricity')]]
 
         for test_to_add in test_list:
-            test = Test(test_to_add[0], test_to_add[1], test_to_add[2])
+            test = Test(test_to_add[0], test_to_add[1], test_to_add[2], test_to_add[3])
             self.add_test_to_game(test)
             associated_card = self.get_card_object(test_to_add[0])
             associated_card.tests.append(test)
@@ -1426,7 +1425,7 @@ class InnovationGame(Game):
         if all(results):
             print('All Tests Pass')
 
-    def set_up_test(self, card_name):
+    def set_up_test_generic(self, card_name):
         self.print_for_testing('Test: {t}'.format(t=card_name))
         self.create_game()
         self.shuffle_piles()
@@ -1435,15 +1434,18 @@ class InnovationGame(Game):
         self.turn_card = self.get_card_object(card_name)
         self.active_card = self.turn_card
         self.meld_card()
+        self.locations_at_beginning_of_action = self.record_current_card_locations()
 
     # Age 1 tests
     def test_metalworking(self):
-        self.set_up_test('Metalworking')
+        results = []
+
         self.action_dogma()
 
         cards_were_drawn = False
         if self.active_player.hand.get_pile_size() == 1 or self.active_player.score_pile.get_pile_size() > 0:
             cards_were_drawn = True
+        results.append(cards_were_drawn)
 
         score_cards_have_castles = False
         if self.active_player.score_pile.cards:
@@ -1455,6 +1457,7 @@ class InnovationGame(Game):
                     break
         else:
             score_cards_have_castles = True
+        results.append(score_cards_have_castles)
 
         hand_cards_do_not_have_castles = False
         if self.active_player.hand.cards:
@@ -1466,14 +1469,14 @@ class InnovationGame(Game):
                     break
         else:
             hand_cards_do_not_have_castles = True
+        results.append(hand_cards_do_not_have_castles)
 
-        if cards_were_drawn and score_cards_have_castles and hand_cards_do_not_have_castles:
-            return True
-        else:
-            return False
+        return all(results)
+
+    def test_mysticism_setup(self):
+        self.set_up_test_generic('Mysticism')
 
     def test_mysticism(self):
-        self.set_up_test('Mysticism')
         self.action_dogma()
 
         card_was_melded_properly = False
@@ -1495,7 +1498,7 @@ class InnovationGame(Game):
             return False
 
     def test_sailing(self):
-        self.set_up_test('Sailing')
+        self.set_up_test_generic('Sailing')
         self.action_dogma()
         card_was_melded = False
         for stack in self.active_player.stacks:
@@ -1509,7 +1512,7 @@ class InnovationGame(Game):
             return False
 
     def test_the_wheel(self):
-        self.set_up_test('The Wheel')
+        self.set_up_test_generic('The Wheel')
         self.action_dogma()
 
         all_cards_are_ones = True
@@ -1529,7 +1532,7 @@ class InnovationGame(Game):
             return False
 
     def test_writing(self):
-        self.set_up_test('Writing')
+        self.set_up_test_generic('Writing')
         self.action_dogma()
 
         draw_a_two = False
@@ -1545,17 +1548,6 @@ class InnovationGame(Game):
 
     # Age 2 tests
     def test_calendar(self):
-        self.set_up_test('Calendar')
-        # self.active_card = g.get_card_object('Fermenting')
-        # self.active_player = g.get_player_object(1)
-        # self.meld_card()
-        # self.active_card = self.get_card_object('A.I.')
-        # self.add_card_to_score_pile()
-        # self.active_card = g.get_card_object('Agriculture')
-        # self.active_player = g.get_player_object(2)
-        # self.meld_card()
-        # self.active_card = self.turn_card
-        self.locations_at_beginning_of_action = self.record_current_card_locations()
         self.action_dogma()
 
         all_cards_are_threes = True
@@ -1575,11 +1567,11 @@ class InnovationGame(Game):
 
     # Age 4 tests
     def test_colonialism(self):
-        self.set_up_test('Colonialism')
+        self.set_up_test_generic('Colonialism')
         self.action_dogma()
 
     def test_experimentation(self):
-        self.set_up_test('Experimentation')
+        self.set_up_test_generic('Experimentation')
         self.action_dogma()
 
     # Age 5 tests
@@ -1625,7 +1617,7 @@ class InnovationGame(Game):
 
     # Age 6 tests
     def test_machine_tools(self):
-        self.set_up_test('Machine Tools')
+        self.set_up_test_generic('Machine Tools')
         self.action_dogma()
 
     # Age 7 tests
