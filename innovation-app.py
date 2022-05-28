@@ -320,6 +320,12 @@ class InnovationStack(Pile):
         self.splay_right = False
         self.splay_up = False
 
+    def contains_icon(self, icon_type):
+        if self.count_icons_in_stack(icon_type) > 0:
+            return True
+        else:
+            return False
+
     def count_icons_in_stack(self, icon_type):
         """Gets the total number of icons of a type in a stack"""
         total_icons = 0
@@ -1279,7 +1285,7 @@ class InnovationGame(Game):
     def fermenting_effect_0(self):
         stacks_with_leaves = 0
         for stack in self.active_player.stacks:
-            if stack.count_icons_in_stack(self.leaf) > 0:
+            if stack.contains_icon(self.leaf):
                 stacks_with_leaves += 1
 
         i = 0
@@ -1363,6 +1369,7 @@ class InnovationGame(Game):
                      ['Sailing', self.set_up_test_generic, self.test_sailing, self.get_card_object('Sailing')],
                      ['The Wheel', self.set_up_test_generic, self.test_the_wheel, self.get_card_object('The Wheel')],
                      ['Calendar', self.set_up_test_generic, self.test_calendar, self.get_card_object('Calendar')],
+                     ['Fermenting', self.test_fermenting_setup, self.test_fermenting, self.get_card_object('Fermenting')],
                      ['Colonialism', self.set_up_test_generic, self.test_colonialism, self.get_card_object('Colonialism')],
                      ['Experimentation', self.set_up_test_generic, self.test_experimentation, self.get_card_object('Experimentation')],
                      ['Astronomy', self.set_up_test_generic, self.test_astronomy, self.get_card_object('Astronomy')],
@@ -1495,26 +1502,30 @@ class InnovationGame(Game):
 
     def test_draw_multiple(self, draw_value, number_of_cards):
         results = []
-        if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
-            cards = self.test_see_next_draw_cards(draw_value, number_of_cards)
 
-            self.action_dogma()
-
-            for card in cards:
-                if self.active_player.hand.is_card_in_pile(card) \
-                        and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
-                    results.append(True)
-                else:
-                    results.append(False)
-
-            return all(results)
-
+        if number_of_cards == 0:
+            return True
         else:
-            self.action_dogma()
-            if self.game_over:
-                return True
+            if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
+                cards = self.test_see_next_draw_cards(draw_value, number_of_cards)
+
+                self.action_dogma()
+
+                for card in cards:
+                    if self.active_player.hand.is_card_in_pile(card) \
+                            and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
+                        results.append(True)
+                    else:
+                        results.append(False)
+
+                return all(results)
+
             else:
-                return False
+                self.action_dogma()
+                if self.game_over:
+                    return True
+                else:
+                    return False
 
     def test_draw_and_meld_multiple(self, draw_value, number_of_cards):
         cards_to_meld = []
@@ -1641,6 +1652,22 @@ class InnovationGame(Game):
         else:
             return False
 
+    def test_fermenting_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+        self.active_card = g.get_card_object('Sailing')
+        g.meld_card()
+        self.active_card = g.get_card_object('Calendar')
+        g.meld_card()
+        self.locations_at_beginning_of_action = self.record_current_card_locations()
+
+    def test_fermenting(self):
+        total_leaves = 0
+        for stack in self.active_player.stacks:
+            if stack.contains_icon(self.leaf):
+                total_leaves = total_leaves + 1
+
+        return(self.test_draw_multiple(2, total_leaves))
+
     # Age 4 tests
     def test_colonialism(self):
         self.set_up_test_generic('Colonialism')
@@ -1736,4 +1763,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.test_a_card('The Wheel')
+g.test_a_card('Fermenting')
