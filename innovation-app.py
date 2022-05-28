@@ -4,6 +4,7 @@
 
 import random
 import math
+import copy
 
 
 class Card:
@@ -229,11 +230,17 @@ class Pile:
             card = card_list.pop()
         return card
 
+    def is_card_in_pile(self, card):
+        if card in self.cards:
+            return True
+        else:
+            return False
+
     def get_card_position(self, card):
         try:
             return self.cards.index(card)
         except ValueError:
-            raise ValueError("Could find index of " + str(card) + " in card pile " + str(self) + ".")
+            raise ValueError("Could not find index of " + str(card) + " in card pile " + str(self) + ".")
 
     def get_pile_size(self):
         return len(self.cards)
@@ -1414,6 +1421,41 @@ class InnovationGame(Game):
         self.meld_card()
         self.locations_at_beginning_of_action = self.record_current_card_locations()
 
+    # Generic tests
+    def test_cards_available_to_draw(self, draw_value):
+        i = draw_value
+        while i <= 10:
+            if self.get_pile_object(str(draw_value)).cards:
+                return True
+            i = i + 1
+        return False
+
+    def test_see_draw_card(self, draw_value):
+        i = draw_value
+        while i <= 10:
+            pile = self.get_pile_object(str(i))
+            if pile.cards:
+                drawn_card = pile.see_top_card()
+                return drawn_card
+            i = i + 1
+
+    def test_draw_and_meld(self, draw_value):
+        if self.test_cards_available_to_draw(draw_value):
+            card = self.test_see_draw_card(draw_value)
+
+            self.action_dogma()
+
+            if self.active_player.stacks[card.color].see_top_card() == card \
+                    and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
+                return True
+            else:
+                return False
+        else:
+            if self.game_over:
+                return True
+            else:
+                return False
+
     # Age 1 tests
     def test_metalworking(self):
         results = []
@@ -1539,8 +1581,7 @@ class InnovationGame(Game):
         self.action_dogma()
 
     def test_experimentation(self):
-        self.set_up_test_generic('Experimentation')
-        self.action_dogma()
+        return self.test_draw_and_meld(5)
 
     # Age 5 tests
     def test_astronomy(self):
@@ -1628,6 +1669,6 @@ class InnovationGame(Game):
 
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
-g.verbose = False
 g.create_tests()
-g.run_all_tests()
+g.test_a_card('Experimentation')
+
