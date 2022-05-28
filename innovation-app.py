@@ -262,6 +262,10 @@ class Pile:
         if len(self.cards) > 0:
             return self.cards[0]
 
+    def see_bottom_card(self):
+        if len(self.cards) > 0:
+            return self.cards[-1]
+
     def shuffle_pile(self):
         random.seed(self.seed)
         random.shuffle(self.cards)
@@ -1461,6 +1465,17 @@ class InnovationGame(Game):
                 return drawn_card
             i = i + 1
 
+    def test_see_all_draw_cards(self, draw_value):
+        draw_cards = []
+        i = draw_value
+        while i <= 10:
+            pile = pile = self.get_pile_object(str(i))
+            for card in pile.cards:
+                draw_cards.append(card)
+            i = i + 1
+
+        return draw_cards
+
     def test_see_next_draw_cards(self, draw_value, number_of_cards):
         i = draw_value
         cards_to_see = []
@@ -1540,8 +1555,6 @@ class InnovationGame(Game):
             else:
                 return False
 
-
-
         if self.test_cards_available_to_draw(draw_value):
             card = self.test_see_draw_card(draw_value)
 
@@ -1552,6 +1565,26 @@ class InnovationGame(Game):
                 return True
             else:
                 return False
+
+    def test_tuck_card(self, card):
+        if self.active_player.stacks[card.color].see_bottom_card() == card:
+            return True
+        else:
+            return False
+
+    def test_tuck_multiple_cards(self, card_list):
+        count_by_color = [0, 0, 0, 0, 0]
+        results = []
+        card_list.reverse()
+        for card in card_list:
+            index = -1 - count_by_color[card.color]
+            if self.active_player.stacks[card.color].cards[index] == card:
+                results.append(True)
+            else:
+                results.append(False)
+            count_by_color[card.color] = count_by_color[card.color] + 1
+
+        return all(results)
 
     # Age 1 tests
     def test_metalworking(self):
@@ -1673,8 +1706,16 @@ class InnovationGame(Game):
 
     # Age 4 tests
     def test_colonialism(self):
-        self.set_up_test_generic('Colonialism')
+        all_cards = self.test_see_all_draw_cards(3)
+        cards_to_be_drawn = []
+        for card in all_cards:
+            cards_to_be_drawn.append(card)
+            if not card.contains_icon(self.crown):
+                break
+
         self.action_dogma()
+
+        return self.test_tuck_multiple_cards(cards_to_be_drawn)
 
     def test_experimentation(self):
         return self.test_draw_and_meld(5)
@@ -1766,4 +1807,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.test_a_card('Fermenting')
+g.test_a_card('Colonialism')
