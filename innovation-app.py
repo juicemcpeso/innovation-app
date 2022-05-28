@@ -962,6 +962,12 @@ class InnovationGame(Game):
                 if c == card:
                     pile.remove_card(c)
 
+    def find_card(self, card):
+        for pile in self.piles:
+            for c in pile.cards:
+                if c == card:
+                    return pile
+
     def move_card_to_pile(self, card, pile):
         self.find_and_remove_card(card)
         pile.add_card_to_bottom(card)
@@ -1379,7 +1385,7 @@ class InnovationGame(Game):
                      ['Fermenting', self.test_fermenting_setup, self.test_fermenting, self.get_card_object('Fermenting')],
                      ['Colonialism', self.set_up_test_generic, self.test_colonialism, self.get_card_object('Colonialism')],
                      ['Experimentation', self.set_up_test_generic, self.test_experimentation, self.get_card_object('Experimentation')],
-                     ['Astronomy', self.set_up_test_generic, self.test_astronomy, self.get_card_object('Astronomy')],
+                     ['Astronomy', self.test_astronomy_setup, self.test_astronomy, self.get_card_object('Astronomy')],
                      ['Steam Engine', self.set_up_test_generic, self.test_steam_engine, self.get_card_object('Steam Engine')],
                      ['Machine Tools', self.set_up_test_generic, self.test_machine_tools, self.get_card_object('Machine Tools')],
                      ['Electricity', self.set_up_test_generic, self.test_electricity, self.get_card_object('Electricity')]]
@@ -1387,7 +1393,7 @@ class InnovationGame(Game):
         for test_to_add in test_list:
             test = Test(test_to_add[0], test_to_add[1], test_to_add[2], test_to_add[3])
             self.add_test_to_game(test)
-            associated_card = self.get_card_object(test_to_add[0])
+            associated_card = test_to_add[3]
             associated_card.tests.append(test)
 
     def run_all_tests(self):
@@ -1586,6 +1592,26 @@ class InnovationGame(Game):
 
         return all(results)
 
+    def test_meld_card(self, card):
+        if self.active_player.stacks[card.color].see_top_card() == card:
+            return True
+        else:
+            return False
+
+    def test_meld_multiple_cards(self, card_list):
+        count_by_color = [0, 0, 0, 0, 0]
+        results = []
+        card_list.reverse()
+        for card in card_list:
+            index = 0 + count_by_color[card.color]
+            if self.active_player.stacks[card.color].cards[index] == card:
+                results.append(True)
+            else:
+                results.append(False)
+            count_by_color[card.color] = count_by_color[card.color] + 1
+
+        return all(results)
+
     # Age 1 tests
     def test_metalworking(self):
         results = []
@@ -1722,12 +1748,28 @@ class InnovationGame(Game):
 
     # Age 5 tests
     def test_astronomy(self):
-        print('-----------------------')
-        print('-- Test: Astronomy --')
-        self.create_game()
-        self.shuffle_piles()
-        self.turn_player = self.get_player_object(0)
-        self.active_player = self.get_player_object(0)
+        universe_original_pile = self.find_card(self.get_card_object('Universe'))
+
+        # Determine which cards should show up
+        all_cards = self.test_see_all_draw_cards(6)
+        cards_to_be_drawn = []
+        for card in all_cards:
+            cards_to_be_drawn.append(card)
+            if card.color == self.blue or card.color == self.green:
+                pass
+            else:
+                break
+
+        self.action_dogma()
+
+        if self.test_astronomy_0(cards_to_be_drawn[:-1]) and self.test_astronomy_1(universe_original_pile):
+            return True
+        else:
+            return False
+
+    def test_astronomy_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+
         # Red
         self.active_card = g.get_card_object('Machine Tools')
         self.meld_card()
@@ -1743,8 +1785,40 @@ class InnovationGame(Game):
 
         self.turn_card = self.get_card_object('Astronomy')
         self.active_card = self.turn_card
-        self.meld_card()
-        self.action_dogma()
+
+    def test_astronomy_0(self, card_list):
+        return self.test_meld_multiple_cards(card_list)
+
+    def test_astronomy_1(self, universe_pile):
+        top_cards_are_6 = []
+        universe = self.get_card_object('Universe')
+        universe_original_pile = universe_pile
+
+        for stack in self.active_player.stacks:
+            if stack.color != self.purple:
+                if stack.cards:
+                    if stack.see_top_card().age >= 6:
+                        top_cards_are_6.append(True)
+                    else:
+                        top_cards_are_6.append(False)
+                else:
+                    top_cards_are_6.append(False)
+
+        if all(top_cards_are_6):
+            if universe_original_pile == self.get_pile_object('special achievements'):
+                if self.find_card(universe) == self.active_player.achievement_pile:
+                    return True
+                else:
+                    return False
+            elif universe_original_pile == self.find_card(universe):
+                return True
+            else:
+                return False
+        else:
+            if universe_original_pile == self.find_card(universe):
+                return True
+            else:
+                return False
 
     def test_steam_engine(self):
         print('-----------------------')
@@ -1807,4 +1881,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.test_a_card('Colonialism')
+g.test_a_card('Astronomy')
