@@ -1425,10 +1425,22 @@ class InnovationGame(Game):
     def test_cards_available_to_draw(self, draw_value):
         i = draw_value
         while i <= 10:
-            if self.get_pile_object(str(draw_value)).cards:
+            if self.get_pile_object(str(i)).cards:
                 return True
             i = i + 1
         return False
+
+    def test_enough_cards_available_to_draw(self, draw_value, number_of_cards):
+        i = draw_value
+        cards_available = 0
+        while i <= 10:
+            cards_available = cards_available + self.get_pile_object(str(i)).get_pile_size()
+            i = i + 1
+
+        if cards_available > number_of_cards:
+            return True
+        else:
+            return False
 
     def test_see_draw_card(self, draw_value):
         i = draw_value
@@ -1438,6 +1450,30 @@ class InnovationGame(Game):
                 drawn_card = pile.see_top_card()
                 return drawn_card
             i = i + 1
+
+    def test_see_next_draw_cards(self, draw_value, number_of_cards):
+        i = draw_value
+        cards_to_see = []
+        cards_remaining = number_of_cards
+
+        while i <= 10:
+            pile = self.get_pile_object(str(i))
+            j = 0
+            if pile.get_pile_size() >= cards_remaining:
+                while j < cards_remaining:
+                    cards_to_see.append(pile.cards[j])
+                    j = j + 1
+                cards_remaining = cards_remaining - pile.get_pile_size()
+            else:
+                while j < pile.get_pile_size():
+                    cards_to_see.append(pile.cards[j])
+                    j = j + 1
+                cards_remaining = cards_remaining - pile.get_pile_size()
+            if cards_remaining == 0:
+                break
+            i = i + 1
+
+        return cards_to_see
 
     def test_draw_and_meld(self, draw_value):
         if self.test_cards_available_to_draw(draw_value):
@@ -1452,6 +1488,29 @@ class InnovationGame(Game):
                 return False
         else:
             if self.game_over:
+                return True
+            else:
+                return False
+
+    def test_draw_and_meld_multiple(self, draw_value, number_of_cards):
+        cards_to_meld = []
+        if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
+            cards_to_meld.append(self.test_see_draw_card())
+        else:
+            if self.game_over:
+                return True
+            else:
+                return False
+
+
+
+        if self.test_cards_available_to_draw(draw_value):
+            card = self.test_see_draw_card(draw_value)
+
+            self.action_dogma()
+
+            if self.active_player.stacks[card.color].see_top_card() == card \
+                    and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
                 return True
             else:
                 return False
@@ -1670,5 +1729,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.test_a_card('Experimentation')
-
+print(g.test_see_next_draw_cards(7, 5))
