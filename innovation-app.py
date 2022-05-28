@@ -145,7 +145,10 @@ class Test:
         self.result = False
 
     def activate(self):
-        self.setup(self.associated_card.name)
+        if self.associated_card:
+            self.setup(self.associated_card.name)
+        else:
+            self.setup()
         self.result = False
         self.result = self.function()
 
