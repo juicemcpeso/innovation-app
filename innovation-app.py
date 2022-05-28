@@ -1487,6 +1487,30 @@ class InnovationGame(Game):
             else:
                 return False
         else:
+            self.action_dogma()
+            if self.game_over:
+                return True
+            else:
+                return False
+
+    def test_draw_multiple(self, draw_value, number_of_cards):
+        results = []
+        if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
+            cards = self.test_see_next_draw_cards(draw_value, number_of_cards)
+
+            self.action_dogma()
+
+            for card in cards:
+                if self.active_player.hand.is_card_in_pile(card) \
+                        and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
+                    results.append(True)
+                else:
+                    results.append(False)
+
+            return all(results)
+
+        else:
+            self.action_dogma()
             if self.game_over:
                 return True
             else:
@@ -1585,24 +1609,7 @@ class InnovationGame(Game):
         return card_was_melded
 
     def test_the_wheel(self):
-        results = []
-
-        self.action_dogma()
-
-        all_cards_are_ones = True
-        correct_number_of_cards = True
-        if self.active_player.hand.get_pile_size() == 2:
-            for card in self.active_player.hand.cards:
-                if card.age != 1:
-                    print(card.age)
-                    all_cards_are_ones = False
-                    break
-        else:
-            correct_number_of_cards = False
-        results.append(all_cards_are_ones)
-        results.append(correct_number_of_cards)
-
-        return all(results)
+        return self.test_draw_multiple(1, 2)
 
     def test_writing(self):
         self.action_dogma()
@@ -1729,4 +1736,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-print(g.test_see_next_draw_cards(7, 5))
+g.test_a_card('The Wheel')
