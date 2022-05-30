@@ -1676,15 +1676,6 @@ class InnovationGame(Game):
 
     def test_writing(self):
         return self.test_draw_multiple(2, 1)
-        # self.action_dogma()
-        #
-        # draw_a_two = False
-        # if self.active_player.hand.get_pile_size() == 1:
-        #     for card in self.active_player.hand.cards:
-        #         if card.age == 2:
-        #             draw_a_two = True
-        #
-        # return draw_a_two
 
     # Age 2 tests
     def test_calendar(self):
