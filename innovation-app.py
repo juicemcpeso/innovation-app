@@ -637,6 +637,7 @@ class InnovationGame(Game):
         self.locations_at_beginning_of_action = {}
         self.piles_at_beginning_of_action = {}
         self.piles_at_beginning_of_effect = {}
+        self.piles_at_beginning_of_no_share = {}
 
         # Create everything needed for the game
         self.verbose = True
@@ -930,6 +931,9 @@ class InnovationGame(Game):
     def set_effect_pile_state(self):
         self.piles_at_beginning_of_effect = self.get_pile_state()
 
+    def set_no_share_pile_state(self):
+        self.piles_at_beginning_of_no_share = self.get_pile_state()
+
     def set_card_location_from_dictionary(self, card_dict):
         for card_info, pile_info in card_dict.items():
             self.get_card_object(card_info).current_pile = self.get_pile_object(pile_info[0])
@@ -1124,6 +1128,7 @@ class InnovationGame(Game):
 
     def execute_dogma(self, sharing_players):
         dogma_was_shared = False
+        self.set_action_pile_state()
         for effect in self.turn_card.dogma:
             if effect.demand:
                 # Demand effects
@@ -1153,9 +1158,10 @@ class InnovationGame(Game):
             self.action_draw()
 
     def execute_dogma_for_yourself(self):
+        self.set_no_share_pile_state()
         for effect in self.active_card.dogma:
             if not effect.demand:
-                self.print_for_testing('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
+                self.print_for_testing('{p} resolves {c} dogma'.format(p=self.active_player.name, c=self.active_card.name))
                 effect.activate()
 
     def determine_who_can_share(self):
@@ -1495,6 +1501,14 @@ class InnovationGame(Game):
 
         self.determine_pass_or_fail(failed_tests)
 
+    def test_no_share_effect(self, card):
+        # TODO - update to only run tests on non-DEMAND effects
+        results = []
+        for test in card.tests:
+            test.activate()
+            results.append(test.result)
+        return all(results)
+
     def determine_pass_or_fail(self, failed_test_list):
         if failed_test_list:
             print('The following tests failed:')
@@ -1535,15 +1549,28 @@ class InnovationGame(Game):
         else:
             return False
 
+    # def test_see_draw_card(self, draw_value):
+    #     i = draw_value
+    #     if i == 0:
+    #         i = 1
+    #
+    #     while i <= 10:
+    #         pile = self.get_pile_object(str(i))
+    #         if pile.cards:
+    #             drawn_card = pile.see_top_card()
+    #             return drawn_card
+    #         i = i + 1
+    #     self.piles_at_beginning_of_effect[str(i)]
+
     def test_see_draw_card(self, draw_value):
         i = draw_value
         if i == 0:
             i = 1
 
         while i <= 10:
-            pile = self.get_pile_object(str(i))
-            if pile.cards:
-                drawn_card = pile.see_top_card()
+            pile = self.piles_at_beginning_of_effect[str(i)]
+            if pile:
+                drawn_card = self.get_card_object(pile[0])
                 return drawn_card
             i = i + 1
 
@@ -1557,17 +1584,6 @@ class InnovationGame(Game):
             i = i + 1
 
         return draw_cards
-
-    # def test_see_all_draw_cards(self, draw_value):
-    #     draw_cards = []
-    #     i = draw_value
-    #     while i <= 10:
-    #         pile = pile = self.get_pile_object(str(i))
-    #         for card in pile.cards:
-    #             draw_cards.append(card)
-    #         i = i + 1
-    #
-    #     return draw_cards
 
     def test_see_next_draw_cards(self, draw_value, number_of_cards):
         i = draw_value
@@ -2021,27 +2037,33 @@ class InnovationGame(Game):
     # Age 10 tests
     def test_robotics(self):
         card_to_score = None
-        if self.active_player.green_stack.cards:
-            card_to_score = self.active_player.green_stack.see_top_card()
+
+        if self.piles_at_beginning_of_action[self.active_player.green_stack.name]:
+            card_to_score = self.get_card_object(self.piles_at_beginning_of_effect[self.active_player.green_stack.name][0])
 
         card_to_draw = self.test_see_draw_card(10)
 
-        self.action_dogma()
-
         if card_to_score:
-            scored_correctly = self.test_score_card(card_to_score)
+            if card_to_score.name in self.piles_at_beginning_of_no_share[self.active_player.score_pile.name]:
+                scored_correctly = True
+            else:
+                False
         else:
             scored_correctly = True
 
-        melded_correctly = self.test_meld_card(card_to_draw)
-        print(scored_correctly)
-        print(melded_correctly)
-        return scored_correctly and melded_correctly
+        if self.piles_at_beginning_of_no_share[self.active_player.stacks[card_to_draw.color].name][0] == card_to_draw.name:
+            melded_correctly = True
+        else:
+            melded_correctly = False
+
+        no_share_correctly = self.test_no_share_effect(card_to_draw)
+
+        return scored_correctly and melded_correctly and no_share_correctly
 
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Metalworking')
+g.test_a_card('Robotics')
 # g.create_game()
 # g.set_up_game()
 # b = g.get_pile_state()
