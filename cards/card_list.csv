@@ -25,4 +25,6 @@ Bicycle|green|7|crown|crown|crown|crown||You may exchange all the cards in your 
 Electricity|green|7|lightbulb|lightbulb|factory||factory|Return all your top cards without a [Factory], then draw an 8 for each card you returned.||
 Antibiotics|yellow|8|leaf|leaf|leaf|leaf||You may return up to three cards from your hand. For every different value of card that you returned, draw two 8.||
 Collaboration|green|9|crown||crown|clock|crown|I demand you draw two 9 and reveal them. Transfer the card of my choice to my board, and meld the other.|If you have ten or more green cards on your board, you win.|
+Genetics|blue|9|lightbulb|lightbulb|lightbulb|lightbulb||Draw and meld a 10. Score all cards beneath it.||
 A.I.|purple|10|clock|lightbulb|lightbulb|clock||Draw and score a 10.|If Robotics and Software are top cards on any board, the single player with the lowest score wins.|
+Robotics|red|10|factory||factory|clock|factory|Score your top green card. Draw and meld a 10, then execute each of its non-demand dogma effects. Do not share them.||

@@ -1046,6 +1046,13 @@ class InnovationGame(Game):
         self.print_for_testing('{p} returns {c}'.format(p=self.active_player.name, c=self.active_card.name))
         self.set_current_card_locations()
 
+    def score_cards(self, card_list):
+        for card in card_list:
+            self.find_and_remove_card(card)
+            self.base_score(card)
+            self.print_for_testing('{p} scores {c}'.format(p=self.active_player.name, c=card.name))
+        self.set_current_card_locations()
+
     def meld_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
@@ -1120,6 +1127,12 @@ class InnovationGame(Game):
         if dogma_was_shared:
             self.print_for_testing('{p} draws a card due to other players sharing effect'.format(p=self.turn_player))
             self.action_draw()
+
+    def execute_dogma_for_yourself(self):
+        for effect in self.active_card.dogma:
+            if not effect.demand:
+                self.print_for_testing('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
+                effect.activate()
 
     def determine_who_can_share(self):
         """Function to see who can share in an effect"""
@@ -1252,7 +1265,9 @@ class InnovationGame(Game):
                         ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
                         ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
                         ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],        # Age 6
-                        ['Electricity', 0, 'factory', False, self.electricity_effect_0]]            # Age 7
+                        ['Electricity', 0, 'factory', False, self.electricity_effect_0],            # Age 7
+                        ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],                # Age 9
+                        ['Robotics', 0, 'factory', False, self.robotics_effect_0]]                  # Age 10
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1305,6 +1320,7 @@ class InnovationGame(Game):
         while i < stacks_with_leaves:
             self.draw_to_hand(2)
             i += 1
+    # Age 3 effects
 
     # Age 4 effects
     def colonialism_effect_0(self):
@@ -1370,6 +1386,25 @@ class InnovationGame(Game):
             self.draw_to_hand(8)
             i += 1
 
+    # Age 8 effects
+
+    # Age 9 effects
+    def genetics_effect_0(self):
+        self.draw_and_meld(10)
+        active_stack = self.active_player.stacks[self.active_card.color].cards
+        if len(active_stack) > 1:
+            self.score_cards(active_stack[1:])
+
+    # Age 10 effects
+    def robotics_effect_0(self):
+        if self.active_player.green_stack.cards:
+            self.active_card = self.active_player.green_stack.get_top_card()
+            self.add_card_to_score_pile()
+
+        self.draw_and_meld(10)
+
+        self.execute_dogma_for_yourself()
+
     # Tests
     def print_for_testing(self, string_to_print):
         if self.verbose:
@@ -1390,7 +1425,9 @@ class InnovationGame(Game):
                      ['Astronomy', self.test_astronomy_setup, self.test_astronomy, self.get_card_object('Astronomy')],
                      ['Steam Engine', self.set_up_test_generic, self.test_steam_engine, self.get_card_object('Steam Engine')],
                      ['Machine Tools', self.test_machine_tools_setup, self.test_machine_tools, self.get_card_object('Machine Tools')],
-                     ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')]]
+                     ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')],
+                     ['Genetics', self.test_genetics_setup, self.test_genetics, self.get_card_object('Genetics')],
+                     ['Robotics', self.set_up_test_generic, self.test_robotics, self.get_card_object('Robotics')]]
 
         for test_to_add in test_list:
             test = Test(test_to_add[0], test_to_add[1], test_to_add[2], test_to_add[3])
@@ -1617,10 +1654,14 @@ class InnovationGame(Game):
 
         return all(results)
 
+    def test_score_card(self, card):
+        return self.active_player.score_pile.is_card_in_pile(card)
+
     def test_score_multiple_cards(self, card_list):
         results = []
         for card in card_list:
             results.append(self.active_player.score_pile.is_card_in_pile(card))
+        print(results)
         return all(results)
 
     def test_if_card_in_hand(self, card):
@@ -1723,6 +1764,7 @@ class InnovationGame(Game):
                 total_leaves = total_leaves + 1
 
         return self.test_draw_multiple(2, total_leaves)
+    # Age 3 tests
 
     # Age 4 tests
     def test_colonialism(self):
@@ -1892,8 +1934,58 @@ class InnovationGame(Game):
                 draw_correctly.append(self.active_player.hand.is_card_in_pile(card))
 
         return all(return_correctly) and all(draw_correctly)
+    # Age 8 tests
+
+    # Age 9 tests
+    def test_genetics_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+        self.active_card = self.get_card_object('Mysticism')
+        self.meld_card()
+        self.active_card = self.get_card_object('Astronomy')
+        self.meld_card()
+
+    def test_genetics(self):
+        melded_card = self.test_see_draw_card(10)
+        cards_to_score = []
+        current_score_pile = self.active_player.score_pile.cards
+        if self.active_player.stacks[melded_card.color].cards:
+            for card in self.active_player.stacks[melded_card.color].cards:
+                cards_to_score.append(card)
+
+        self.action_dogma()
+
+        melded_correctly = self.test_meld_card(melded_card)
+
+        if cards_to_score:
+            scored_correctly = self.test_score_multiple_cards(cards_to_score)
+        else:
+            if self.active_player.score_pile.cards == current_score_pile:
+                scored_correctly = True
+            else:
+                scored_correctly = False
+        return melded_correctly and scored_correctly
+
+    # Age 10 tests
+    def test_robotics(self):
+        card_to_score = None
+        if self.active_player.green_stack.cards:
+            card_to_score = self.active_player.green_stack.see_top_card()
+
+        card_to_draw = self.test_see_draw_card(10)
+
+        self.action_dogma()
+
+        if card_to_score:
+            scored_correctly = self.test_score_card(card_to_score)
+        else:
+            scored_correctly = True
+
+        melded_correctly = self.test_meld_card(card_to_draw)
+        print(scored_correctly)
+        print(melded_correctly)
+        return scored_correctly and melded_correctly
 
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.run_all_tests()Cle
+g.test_a_card('Robotics')
