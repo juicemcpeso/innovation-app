@@ -1046,6 +1046,13 @@ class InnovationGame(Game):
         self.print_for_testing('{p} returns {c}'.format(p=self.active_player.name, c=self.active_card.name))
         self.set_current_card_locations()
 
+    def score_cards(self, card_list):
+        for card in card_list:
+            self.find_and_remove_card(card)
+            self.base_score(card)
+            self.print_for_testing('{p} scores {c}'.format(p=self.active_player.name, c=card.name))
+        self.set_current_card_locations()
+
     def meld_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
@@ -1252,7 +1259,8 @@ class InnovationGame(Game):
                         ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
                         ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
                         ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],        # Age 6
-                        ['Electricity', 0, 'factory', False, self.electricity_effect_0]]            # Age 7
+                        ['Electricity', 0, 'factory', False, self.electricity_effect_0],            # Age 7
+                        ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0]]                # Age 9
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1374,6 +1382,11 @@ class InnovationGame(Game):
     # Age 8 effects
 
     # Age 9 effects
+    def genetics_effect_0(self):
+        self.draw_and_meld(10)
+        active_stack = self.active_player.stacks[self.active_card.color].cards
+        if len(active_stack) > 1:
+            self.score_cards(active_stack[1:])
 
     # Age 10 effects
 
@@ -1629,6 +1642,7 @@ class InnovationGame(Game):
         results = []
         for card in card_list:
             results.append(self.active_player.score_pile.is_card_in_pile(card))
+        print(results)
         return all(results)
 
     def test_if_card_in_hand(self, card):
@@ -1912,14 +1926,16 @@ class InnovationGame(Game):
         self.meld_card()
 
     def test_genetics(self):
-        card = self.test_see_draw_card(10)
+        melded_card = self.test_see_draw_card(10)
+        cards_to_score = []
         current_score_pile = self.active_player.score_pile.cards
-        if self.active_player.stacks[card.color].cards:
-            cards_to_score = self.active_player.stacks[card.color].cards
+        if self.active_player.stacks[melded_card.color].cards:
+            for card in self.active_player.stacks[melded_card.color].cards:
+                cards_to_score.append(card)
 
         self.action_dogma()
 
-        melded_correctly = self.test_meld_card(card)
+        melded_correctly = self.test_meld_card(melded_card)
 
         if cards_to_score:
             scored_correctly = self.test_score_multiple_cards(cards_to_score)
@@ -1928,7 +1944,6 @@ class InnovationGame(Game):
                 scored_correctly = True
             else:
                 scored_correctly = False
-
         return melded_correctly and scored_correctly
 
     # Age 10 tests
