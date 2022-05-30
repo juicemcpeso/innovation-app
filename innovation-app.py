@@ -1711,22 +1711,6 @@ class InnovationGame(Game):
         else:
             return self.test_if_cards_still_in_draw_pile(cards_to_draw)
 
-
-        # all_cards_are_threes = True
-        # correct_number_of_cards = True
-        # if self.active_player.hand.get_pile_size == 2:
-        #     for card in self.active_player.hand.cards:
-        #         if card.age != 3:
-        #             all_cards_are_threes = False
-        #             break
-        # else:
-        #     correct_number_of_cards = False
-        #
-        # if all_cards_are_threes:
-        #     return True
-        # else:
-        #     return False
-
     def test_fermenting_setup(self, card_name):
         self.set_up_test_generic(card_name)
         self.active_card = g.get_card_object('Sailing')
