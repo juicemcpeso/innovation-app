@@ -1390,7 +1390,8 @@ class InnovationGame(Game):
                      ['Astronomy', self.test_astronomy_setup, self.test_astronomy, self.get_card_object('Astronomy')],
                      ['Steam Engine', self.set_up_test_generic, self.test_steam_engine, self.get_card_object('Steam Engine')],
                      ['Machine Tools', self.test_machine_tools_setup, self.test_machine_tools, self.get_card_object('Machine Tools')],
-                     ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')]]
+                     ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')],
+                     ['Genetics', self.test_genetics_setup, self.test_genetics, self.get_card_object('Genetics')]]
 
         for test_to_add in test_list:
             test = Test(test_to_add[0], test_to_add[1], test_to_add[2], test_to_add[3])
