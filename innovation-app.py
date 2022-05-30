@@ -135,9 +135,10 @@ class SpecialAchievementCard(Card):
 
 class Test:
 
-    def __init__(self, tn, sup, fun, cd=None):
+    def __init__(self, tn, sup, act, fun, cd=None):
         self.name = 'Test: ' + tn
         self.setup = sup
+        self.act = act
         self.function = fun
         self.associated_card = cd
 
@@ -149,6 +150,7 @@ class Test:
             self.setup(self.associated_card.name)
         else:
             self.setup()
+        self.act()
         self.result = False
         self.result = self.function()
 
@@ -1443,7 +1445,7 @@ class InnovationGame(Game):
             print(string_to_print)
 
     def create_tests(self):
-        # Test name, setup function, test function, corresponding card
+        # Test name, setup function, action function, evaluation function, corresponding card
         test_list = [['Metalworking', self.set_up_test_generic, self.test_metalworking, self.get_card_object('Metalworking')],
                      ['Mysticism', self.set_up_test_generic, self.test_mysticism, self.get_card_object('Mysticism')],
                      ['Sailing', self.set_up_test_generic, self.test_sailing, self.get_card_object('Sailing')],
@@ -1462,7 +1464,7 @@ class InnovationGame(Game):
                      ['Robotics', self.set_up_test_generic, self.test_robotics, self.get_card_object('Robotics')]]
 
         for test_to_add in test_list:
-            test = Test(test_to_add[0], test_to_add[1], test_to_add[2], test_to_add[3])
+            test = Test(test_to_add[0], test_to_add[1], self.action_dogma, test_to_add[2], test_to_add[3])
             self.add_test_to_game(test)
             associated_card = test_to_add[3]
             associated_card.tests.append(test)
