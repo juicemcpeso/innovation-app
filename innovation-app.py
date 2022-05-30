@@ -1821,19 +1821,33 @@ class InnovationGame(Game):
                 return False
 
     def test_steam_engine(self):
-        print('-----------------------')
-        print('-- Test: Steam Engine --')
-        self.create_game()
-        self.shuffle_piles()
-        self.turn_player = self.get_player_object(0)
-        self.active_player = self.get_player_object(1)
-        self.active_card = g.get_card_object('Machine Tools')
-        self.meld_card()
-        self.active_player = self.get_player_object(0)
-        self.turn_card = self.get_card_object('Steam Engine')
-        self.active_card = self.turn_card
-        self.meld_card()
+        yellow_cards = []
+        bottom_yellow = self.active_player.yellow_stack.see_bottom_card()
+        tuck_correctly = False
+        score_correctly = False
+
+        cards = self.test_see_next_draw_cards(4, 2)
+        if len(cards) == 2:
+            for card in cards:
+                if card.color == self.yellow:
+                    cards.remove(card)
+                    yellow_cards.append(card)
+
         self.action_dogma()
+
+        if cards:
+            tuck_correctly = self.test_tuck_multiple_cards(cards)
+        else:
+            tuck_correctly = True
+
+        if len(yellow_cards) == 1:
+            bottom_yellow = yellow_cards[0]
+        elif len(yellow_cards) == 2:
+            bottom_yellow = yellow_cards[1]
+
+        score_correctly = self.active_player.score_pile.is_card_in_pile(bottom_yellow)
+
+        return score_correctly and tuck_correctly
 
     # Age 6 tests
     def test_machine_tools(self):
@@ -1881,4 +1895,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.test_a_card('Astronomy')
+g.test_a_card('Steam Engine')
