@@ -1896,4 +1896,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.test_a_card('Mysticism')
+g.run_all_tests()Cle
