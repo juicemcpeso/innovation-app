@@ -1893,7 +1893,35 @@ class InnovationGame(Game):
 
         return all(return_correctly) and all(draw_correctly)
 
+    # Age 9 tests
+    def test_genetics_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+        self.active_card = self.get_card_object('Mysticism')
+        self.meld_card()
+        self.active_card = self.get_card_object('Astronomy')
+        self.meld_card()
+
+    def test_genetics(self):
+        card = self.test_see_draw_card(10)
+        current_score_pile = self.active_player.score_pile.cards
+        if self.active_player.stacks[card.color].cards:
+            cards_to_score = self.active_player.stacks[card.color].cards
+
+        self.action_dogma()
+
+        melded_correctly = self.test_meld_card(card)
+
+        if cards_to_score:
+            scored_correctly = self.test_score_multiple_cards(cards_to_score)
+        else:
+            if self.active_player.score_pile.cards == current_score_pile:
+                scored_correctly = True
+            else:
+                scored_correctly = False
+
+        return melded_correctly and scored_correctly
+
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.run_all_tests()
+g.test_a_card('Genetics')
