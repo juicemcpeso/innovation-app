@@ -1305,6 +1305,7 @@ class InnovationGame(Game):
         while i < stacks_with_leaves:
             self.draw_to_hand(2)
             i += 1
+    # Age 3 effects
 
     # Age 4 effects
     def colonialism_effect_0(self):
@@ -1369,6 +1370,12 @@ class InnovationGame(Game):
         while i < number_of_cards_returned:
             self.draw_to_hand(8)
             i += 1
+
+    # Age 8 effects
+
+    # Age 9 effects
+
+    # Age 10 effects
 
     # Tests
     def print_for_testing(self, string_to_print):
@@ -1724,6 +1731,7 @@ class InnovationGame(Game):
                 total_leaves = total_leaves + 1
 
         return self.test_draw_multiple(2, total_leaves)
+    # Age 3 tests
 
     # Age 4 tests
     def test_colonialism(self):
@@ -1893,6 +1901,7 @@ class InnovationGame(Game):
                 draw_correctly.append(self.active_player.hand.is_card_in_pile(card))
 
         return all(return_correctly) and all(draw_correctly)
+    # Age 8 tests
 
     # Age 9 tests
     def test_genetics_setup(self, card_name):
@@ -1921,6 +1930,8 @@ class InnovationGame(Game):
                 scored_correctly = False
 
         return melded_correctly and scored_correctly
+
+    # Age 10 tests
 
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
