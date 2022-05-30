@@ -1623,6 +1623,9 @@ class InnovationGame(Game):
             results.append(self.active_player.score_pile.is_card_in_pile(card))
         return all(results)
 
+    def test_if_card_in_hand(self, card):
+        return self.active_player.hand.is_card_in_pile(card)
+
     def test_if_multiple_cards_in_hand(self, card_list):
         results = []
         for card in card_list:
@@ -1653,25 +1656,19 @@ class InnovationGame(Game):
         return scored_correctly and drawn_correctly
 
     def test_mysticism(self):
-        results = []
+        current_colors = []
+        for stack in self.active_player.stacks:
+            if stack.cards:
+                current_colors.append(stack.color)
+
+        next_cards = self.test_see_next_draw_cards(1, 2)
+
         self.action_dogma()
 
-        card_was_melded_properly = False
-        if self.active_card.color == self.purple and self.active_card != self.get_card_object('Mysticism'):
-            if self.active_player.purple_stack.see_top_card() == self.active_card:
-                card_was_melded_properly = True
+        if next_cards[0].color in current_colors:
+            return self.test_meld_card(next_cards[0]) and self.test_if_card_in_hand(next_cards[1])
         else:
-            card_was_melded_properly = True
-        results.append(card_was_melded_properly)
-
-        draw_a_one = False
-        if self.active_player.hand.get_pile_size() == 1:
-            for card in self.active_player.hand.cards:
-                if card.age == 1:
-                    draw_a_one = True
-        results.append(draw_a_one)
-
-        return all(results)
+            return self.test_if_card_in_hand(next_cards[0])
 
     def test_sailing(self):
         self.action_dogma()
@@ -1899,4 +1896,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.test_a_card('Calendar')
+g.test_a_card('Mysticism')
