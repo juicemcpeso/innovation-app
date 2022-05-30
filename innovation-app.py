@@ -1551,12 +1551,23 @@ class InnovationGame(Game):
         draw_cards = []
         i = draw_value
         while i <= 10:
-            pile = pile = self.get_pile_object(str(i))
-            for card in pile.cards:
-                draw_cards.append(card)
+            pile = self.piles_at_beginning_of_effect[str(i)]
+            for card in pile:
+                draw_cards.append(self.get_card_object(card))
             i = i + 1
 
         return draw_cards
+
+    # def test_see_all_draw_cards(self, draw_value):
+    #     draw_cards = []
+    #     i = draw_value
+    #     while i <= 10:
+    #         pile = pile = self.get_pile_object(str(i))
+    #         for card in pile.cards:
+    #             draw_cards.append(card)
+    #         i = i + 1
+    #
+    #     return draw_cards
 
     def test_see_next_draw_cards(self, draw_value, number_of_cards):
         i = draw_value
@@ -1695,7 +1706,6 @@ class InnovationGame(Game):
         results = []
         for card in card_list:
             results.append(self.active_player.score_pile.is_card_in_pile(card))
-        print(results)
         return all(results)
 
     def test_if_card_in_hand(self, card):
@@ -1722,8 +1732,6 @@ class InnovationGame(Game):
             cards_that_will_be_drawn.append(card)
             if not card.contains_icon(self.castle):
                 break
-
-        self.action_dogma()
 
         scored_correctly = self.test_score_multiple_cards(cards_that_will_be_drawn[:-1])
         drawn_correctly = self.active_player.hand.is_card_in_pile(cards_that_will_be_drawn[-1])
@@ -1788,8 +1796,6 @@ class InnovationGame(Game):
         results = []
         if self.active_player.score_pile.get_pile_size() > self.active_player.hand.get_pile_size():
             cards_to_draw = self.test_see_next_draw_cards(3, 2)
-
-        self.action_dogma()
 
         if cards_to_draw:
             return self.test_if_multiple_cards_in_hand(cards_to_draw)
@@ -2035,9 +2041,12 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Calendar')
+g.test_a_card('Metalworking')
 # g.create_game()
 # g.set_up_game()
+# b = g.get_pile_state()
+# print(b)
+# print(b['1'])
 
 # g.active_player = g.get_player_object(0)
 # g.active_card = g.get_card_object('Astronomy')
