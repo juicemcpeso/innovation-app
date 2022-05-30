@@ -1387,7 +1387,7 @@ class InnovationGame(Game):
                      ['Experimentation', self.set_up_test_generic, self.test_experimentation, self.get_card_object('Experimentation')],
                      ['Astronomy', self.test_astronomy_setup, self.test_astronomy, self.get_card_object('Astronomy')],
                      ['Steam Engine', self.set_up_test_generic, self.test_steam_engine, self.get_card_object('Steam Engine')],
-                     ['Machine Tools', self.set_up_test_generic, self.test_machine_tools, self.get_card_object('Machine Tools')],
+                     ['Machine Tools', self.test_machine_tools_setup, self.test_machine_tools, self.get_card_object('Machine Tools')],
                      ['Electricity', self.set_up_test_generic, self.test_electricity, self.get_card_object('Electricity')]]
 
         for test_to_add in test_list:
@@ -1464,6 +1464,9 @@ class InnovationGame(Game):
 
     def test_see_draw_card(self, draw_value):
         i = draw_value
+        if i == 0:
+            i = 1
+
         while i <= 10:
             pile = self.get_pile_object(str(i))
             if pile.cards:
@@ -1850,15 +1853,21 @@ class InnovationGame(Game):
         return score_correctly and tuck_correctly
 
     # Age 6 tests
+    def test_machine_tools_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+        self.active_card = self.get_card_object('Steam Engine')
+        self.add_card_to_score_pile()
+
     def test_machine_tools(self):
-        self.set_up_test_generic('Machine Tools')
+        highest_card = self.active_player.score_pile.highest_card_value()
+        draw_card = self.test_see_draw_card(highest_card)
+
         self.action_dogma()
+
+        return self.active_player.score_pile.is_card_in_pile(draw_card)
 
     # Age 7 tests
     def test_electricity(self):
-        print('-----------------------')
-        print('-- Test: Electricity --')
-        # Setup
         self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
@@ -1895,4 +1904,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.test_a_card('Steam Engine')
+g.test_a_card('Machine Tools')
