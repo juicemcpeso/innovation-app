@@ -1381,6 +1381,7 @@ class InnovationGame(Game):
                      ['Mysticism', self.set_up_test_generic, self.test_mysticism, self.get_card_object('Mysticism')],
                      ['Sailing', self.set_up_test_generic, self.test_sailing, self.get_card_object('Sailing')],
                      ['The Wheel', self.set_up_test_generic, self.test_the_wheel, self.get_card_object('The Wheel')],
+                     ['Writing', self.set_up_test_generic, self.test_writing, self.get_card_object('Writing')],
                      ['Calendar', self.set_up_test_generic, self.test_calendar, self.get_card_object('Calendar')],
                      ['Fermenting', self.test_fermenting_setup, self.test_fermenting, self.get_card_object('Fermenting')],
                      ['Colonialism', self.set_up_test_generic, self.test_colonialism, self.get_card_object('Colonialism')],
@@ -1688,15 +1689,16 @@ class InnovationGame(Game):
         return self.test_draw_multiple(1, 2)
 
     def test_writing(self):
-        self.action_dogma()
-
-        draw_a_two = False
-        if self.active_player.hand.get_pile_size() == 1:
-            for card in self.active_player.hand.cards:
-                if card.age == 2:
-                    draw_a_two = True
-
-        return draw_a_two
+        return self.test_draw_multiple(2, 1)
+        # self.action_dogma()
+        #
+        # draw_a_two = False
+        # if self.active_player.hand.get_pile_size() == 1:
+        #     for card in self.active_player.hand.cards:
+        #         if card.age == 2:
+        #             draw_a_two = True
+        #
+        # return draw_a_two
 
     # Age 2 tests
     def test_calendar(self):
@@ -1905,4 +1907,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.test_a_card('Electricity')
+g.test_a_card('Writing')
