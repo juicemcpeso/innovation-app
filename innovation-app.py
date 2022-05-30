@@ -1638,6 +1638,9 @@ class InnovationGame(Game):
 
         return all(results)
 
+    def test_score_card(self, card):
+        return self.active_player.score_pile.is_card_in_pile(card)
+
     def test_score_multiple_cards(self, card_list):
         results = []
         for card in card_list:
@@ -1947,6 +1950,21 @@ class InnovationGame(Game):
         return melded_correctly and scored_correctly
 
     # Age 10 tests
+    def test_robotics(self):
+        card_to_score = None
+        if self.active_player.green_stack.cards:
+            card_to_score = self.active_player.green_stack.see_top_card()
+
+        card_to_draw = self.test_see_draw_card(10)
+
+        self.action_dogma()
+
+        if card_to_score:
+            scored_correctly = self.test_score_card(card_to_score)
+
+        melded_correctly = self.test_meld_card(card_to_draw)
+
+        return scored_correctly and melded_correctly
 
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
