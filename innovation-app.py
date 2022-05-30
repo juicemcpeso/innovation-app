@@ -633,6 +633,8 @@ class InnovationGame(Game):
         self.special_achievements = {}
         self.draw_piles = []
         self.locations_at_beginning_of_action = {}
+        self.piles_at_beginning_of_turn = {}
+        self.piles_at_beginning_of_action = {}
 
         # Create everything needed for the game
         self.verbose = True
@@ -905,6 +907,20 @@ class InnovationGame(Game):
                                                                            p=card.current_position)
             print("{a:16} {b:22} {c:2}".format(a=card.name, b=card.current_pile.name, c=card.current_position))
 
+    def set_pile_state(self):
+        pile_state = {}
+        for pile in self.piles:
+            card_list = []
+            for card in pile.cards:
+                card_list.append(card.name)
+            pile_state.update({pile.name: card_list})
+        return pile_state
+
+    def set_turn_pile_state(self):
+        self.piles_at_beginning_of_turn = self.set_pile_state()
+
+    def set_action_pile_state(self):
+        self.piles_at_beginning_of_action = self.set_pile_state()
 
     def set_card_location_from_dictionary(self, card_dict):
         for card_info, pile_info in card_dict.items():
@@ -1098,7 +1114,6 @@ class InnovationGame(Game):
         sharing_players = self.determine_who_can_share()
         self.execute_dogma(sharing_players)
 
-        # self.draw_if_opponents_shared(sharing_players)
 
     def execute_dogma(self, sharing_players):
         dogma_was_shared = False
@@ -1986,6 +2001,14 @@ class InnovationGame(Game):
         return scored_correctly and melded_correctly
 
 
-g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
-g.create_tests()
-g.test_a_card('Robotics')
+g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Jurdrick", True, 'Blanch', True, "Debbie", True)
+# g.create_tests()
+# g.test_a_card('Robotics')
+g.create_game()
+g.set_up_game()
+a = g.set_current_pile_state()
+g.active_player = g.get_player_object(0)
+g.active_card = g.get_card_object('Astronomy')
+g.meld_card()
+b = g.set_current_pile_state()
+print(a == b)
