@@ -1382,7 +1382,8 @@ class InnovationGame(Game):
                      ['Sailing', self.set_up_test_generic, self.test_sailing, self.get_card_object('Sailing')],
                      ['The Wheel', self.set_up_test_generic, self.test_the_wheel, self.get_card_object('The Wheel')],
                      ['Writing', self.set_up_test_generic, self.test_writing, self.get_card_object('Writing')],
-                     ['Calendar', self.set_up_test_generic, self.test_calendar, self.get_card_object('Calendar')],
+                     ['Calendar (no score cards)', self.set_up_test_generic, self.test_calendar, self.get_card_object('Calendar')],
+                     ['Calendar (score cards)', self.test_calendar_setup, self.test_calendar, self.get_card_object('Calendar')],
                      ['Fermenting', self.test_fermenting_setup, self.test_fermenting, self.get_card_object('Fermenting')],
                      ['Colonialism', self.set_up_test_generic, self.test_colonialism, self.get_card_object('Colonialism')],
                      ['Experimentation', self.set_up_test_generic, self.test_experimentation, self.get_card_object('Experimentation')],
@@ -1622,6 +1623,18 @@ class InnovationGame(Game):
             results.append(self.active_player.score_pile.is_card_in_pile(card))
         return all(results)
 
+    def test_if_multiple_cards_in_hand(self, card_list):
+        results = []
+        for card in card_list:
+            results.append(self.active_player.hand.is_card_in_pile(card))
+        return all(results)
+
+    def test_if_cards_still_in_draw_pile(self, card_list):
+        results = []
+        for card in card_list:
+            results.append(self.get_pile_object(str(card.age)).is_card_in_pile(card))
+        return all(results)
+
     # Age 1 tests
     def test_metalworking(self):
         deck = self.test_see_all_draw_cards(1)
@@ -1678,23 +1691,41 @@ class InnovationGame(Game):
         return self.test_draw_multiple(2, 1)
 
     # Age 2 tests
+    def test_calendar_setup(self, card_name):
+        """Condition where player has cards in score pile"""
+        self.set_up_test_generic(card_name)
+        self.active_card = self.get_card_object('A.I.')
+        self.add_card_to_score_pile()
+        self.active_card = self.get_card_object('Calendar')
+
     def test_calendar(self):
+        cards_to_draw = []
+        results = []
+        if self.active_player.score_pile.get_pile_size() > self.active_player.hand.get_pile_size():
+            cards_to_draw = self.test_see_next_draw_cards(3, 2)
+
         self.action_dogma()
 
-        all_cards_are_threes = True
-        correct_number_of_cards = True
-        if self.active_player.hand.get_pile_size == 2:
-            for card in self.active_player.hand.cards:
-                if card.age != 3:
-                    all_cards_are_threes = False
-                    break
+        if cards_to_draw:
+            return self.test_if_multiple_cards_in_hand(cards_to_draw)
         else:
-            correct_number_of_cards = False
+            return self.test_if_cards_still_in_draw_pile(cards_to_draw)
 
-        if all_cards_are_threes:
-            return True
-        else:
-            return False
+
+        # all_cards_are_threes = True
+        # correct_number_of_cards = True
+        # if self.active_player.hand.get_pile_size == 2:
+        #     for card in self.active_player.hand.cards:
+        #         if card.age != 3:
+        #             all_cards_are_threes = False
+        #             break
+        # else:
+        #     correct_number_of_cards = False
+        #
+        # if all_cards_are_threes:
+        #     return True
+        # else:
+        #     return False
 
     def test_fermenting_setup(self, card_name):
         self.set_up_test_generic(card_name)
@@ -1884,4 +1915,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.test_a_card('Metalworking')
+g.test_a_card('Calendar')
