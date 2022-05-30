@@ -633,8 +633,8 @@ class InnovationGame(Game):
         self.special_achievements = {}
         self.draw_piles = []
         self.locations_at_beginning_of_action = {}
-        self.piles_at_beginning_of_turn = {}
         self.piles_at_beginning_of_action = {}
+        self.piles_at_beginning_of_effect = {}
 
         # Create everything needed for the game
         self.verbose = True
@@ -737,6 +737,8 @@ class InnovationGame(Game):
         self.shuffle_piles()
         self.set_current_card_locations()
         self.remove_cards_used_as_achievements()
+        self.set_action_pile_state()
+        self.set_effect_pile_state()
 
     def remove_cards_used_as_achievements(self):
         for i in range(1, 10):
@@ -907,20 +909,24 @@ class InnovationGame(Game):
                                                                            p=card.current_position)
             print("{a:16} {b:22} {c:2}".format(a=card.name, b=card.current_pile.name, c=card.current_position))
 
-    def set_pile_state(self):
+    def get_pile_state(self):
         pile_state = {}
+        check_added_cards = []
         for pile in self.piles:
             card_list = []
             for card in pile.cards:
+                if card in check_added_cards:
+                    raise ValueError("Duplicate card. Card {c} is already in pile {p}".format(c=card.name, p=pile.name))
                 card_list.append(card.name)
+                check_added_cards.append(card)
             pile_state.update({pile.name: card_list})
         return pile_state
 
-    def set_turn_pile_state(self):
-        self.piles_at_beginning_of_turn = self.set_pile_state()
-
     def set_action_pile_state(self):
-        self.piles_at_beginning_of_action = self.set_pile_state()
+        self.piles_at_beginning_of_action = self.get_pile_state()
+
+    def set_effect_pile_state(self):
+        self.piles_at_beginning_of_effect = self.get_pile_state()
 
     def set_card_location_from_dictionary(self, card_dict):
         for card_info, pile_info in card_dict.items():
@@ -1114,7 +1120,6 @@ class InnovationGame(Game):
         sharing_players = self.determine_who_can_share()
         self.execute_dogma(sharing_players)
 
-
     def execute_dogma(self, sharing_players):
         dogma_was_shared = False
         for effect in self.turn_card.dogma:
@@ -1122,6 +1127,7 @@ class InnovationGame(Game):
                 # Demand effects
                 for eligible_player in self.turn_player.share_order:
                     if eligible_player not in sharing_players:
+                        self.set_effect_pile_state()
                         self.active_player = eligible_player
                         self.print_for_testing('{t} DEMANDS {p} resolve {c} dogma'.format(t=self.turn_player,
                                                                                           p=eligible_player.name,
@@ -1131,6 +1137,7 @@ class InnovationGame(Game):
             else:
                 # Standard effects
                 for eligible_player in sharing_players:
+                    self.set_effect_pile_state()
                     self.active_player = eligible_player
                     self.print_for_testing('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
                     effect.activate()
@@ -1160,9 +1167,17 @@ class InnovationGame(Game):
 
         return sharing_players
 
+    # def check_if_opponent_shared(self):
+    #     original_state = self.locations_at_beginning_of_action
+    #     current_state = self.record_current_card_locations()
+    #     if original_state != current_state:
+    #         return True
+    #     else:
+    #         return False
+
     def check_if_opponent_shared(self):
-        original_state = self.locations_at_beginning_of_action
-        current_state = self.record_current_card_locations()
+        original_state = self.piles_at_beginning_of_effect
+        current_state = self.get_pile_state()
         if original_state != current_state:
             return True
         else:
@@ -1182,6 +1197,8 @@ class InnovationGame(Game):
     def take_action(self):
         """Function to take an action"""
         self.locations_at_beginning_of_action = self.record_current_card_locations()
+        self.set_action_pile_state()
+        self.set_effect_pile_state()
         self.active_player = self.turn_player
         available_actions = self.available_actions()
         selected_action = self.select_action(available_actions)
@@ -1430,7 +1447,7 @@ class InnovationGame(Game):
         test_list = [['Metalworking', self.set_up_test_generic, self.test_metalworking, self.get_card_object('Metalworking')],
                      ['Mysticism', self.set_up_test_generic, self.test_mysticism, self.get_card_object('Mysticism')],
                      ['Sailing', self.set_up_test_generic, self.test_sailing, self.get_card_object('Sailing')],
-                     ['The Wheel', self.set_up_test_generic, self.test_the_wheel, self.get_card_object('The Wheel')],
+                     ['The Wheel', self.test_the_wheel_setup, self.test_the_wheel, self.get_card_object('The Wheel')],
                      ['Writing', self.set_up_test_generic, self.test_writing, self.get_card_object('Writing')],
                      ['Calendar (no score cards)', self.set_up_test_generic, self.test_calendar, self.get_card_object('Calendar')],
                      ['Calendar (score cards)', self.test_calendar_setup, self.test_calendar, self.get_card_object('Calendar')],
@@ -1737,6 +1754,15 @@ class InnovationGame(Game):
 
         return card_was_melded
 
+    def test_the_wheel_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+        self.active_player = self.get_player_object(1)
+        self.active_card = self.get_card_object('Mysticism')
+        self.meld_card()
+        self.active_card = self.get_card_object('The Wheel')
+        self.active_player = self.get_player_object(0)
+        self.turn_player = self.active_player
+
     def test_the_wheel(self):
         return self.test_draw_multiple(1, 2)
 
@@ -1747,8 +1773,12 @@ class InnovationGame(Game):
     def test_calendar_setup(self, card_name):
         """Condition where player has cards in score pile"""
         self.set_up_test_generic(card_name)
+        self.active_player = self.get_player_object(1)
+        self.active_card = self.get_card_object('Fermenting')
+        self.meld_card()
         self.active_card = self.get_card_object('A.I.')
         self.add_card_to_score_pile()
+        self.active_player = self.get_player_object(0)
         self.active_card = self.get_card_object('Calendar')
 
     def test_calendar(self):
@@ -2001,14 +2031,14 @@ class InnovationGame(Game):
         return scored_correctly and melded_correctly
 
 
-g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Jurdrick", True, 'Blanch', True, "Debbie", True)
-# g.create_tests()
-# g.test_a_card('Robotics')
-g.create_game()
-g.set_up_game()
-a = g.set_current_pile_state()
-g.active_player = g.get_player_object(0)
-g.active_card = g.get_card_object('Astronomy')
-g.meld_card()
-b = g.set_current_pile_state()
-print(a == b)
+g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+g.create_tests()
+g.test_a_card('Calendar')
+# g.create_game()
+# g.set_up_game()
+
+# g.active_player = g.get_player_object(0)
+# g.active_card = g.get_card_object('Astronomy')
+# g.meld_card()
+# b = g.set_pile_state()
+# print(a == b)
