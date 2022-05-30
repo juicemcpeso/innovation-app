@@ -4,6 +4,7 @@
 
 import random
 import math
+import copy
 
 
 class Card:
@@ -26,6 +27,7 @@ class InnovationCard(Card):
         Card.__init__(self, n)
 
         self.dogma = []
+        self.tests = []
         self.current_pile = None
         self.current_position = 0
 
@@ -131,6 +133,31 @@ class SpecialAchievementCard(Card):
         self.current_position = 0
 
 
+class Test:
+
+    def __init__(self, tn, sup, fun, cd=None):
+        self.name = 'Test: ' + tn
+        self.setup = sup
+        self.function = fun
+        self.associated_card = cd
+
+        self.toggle = True
+        self.result = False
+
+    def activate(self):
+        if self.associated_card:
+            self.setup(self.associated_card.name)
+        else:
+            self.setup()
+        self.result = False
+        self.result = self.function()
+
+    def __repr__(self):
+        return "<%s>" % self.name
+
+    def __str__(self):
+        return self.name
+
 class Effect:
     """Class for a card effect"""
 
@@ -163,7 +190,7 @@ class Effect:
         self.function()
 
     def __repr__(self):
-        return "<Card: %s>" % self.name
+        return "<%s>" % self.name
 
     def __str__(self):
         return self.name
@@ -206,11 +233,17 @@ class Pile:
             card = card_list.pop()
         return card
 
+    def is_card_in_pile(self, card):
+        if card in self.cards:
+            return True
+        else:
+            return False
+
     def get_card_position(self, card):
         try:
             return self.cards.index(card)
         except ValueError:
-            raise ValueError("Could find index of " + str(card) + " in card pile " + str(self) + ".")
+            raise ValueError("Could not find index of " + str(card) + " in card pile " + str(self) + ".")
 
     def get_pile_size(self):
         return len(self.cards)
@@ -228,6 +261,10 @@ class Pile:
     def see_top_card(self):
         if len(self.cards) > 0:
             return self.cards[0]
+
+    def see_bottom_card(self):
+        if len(self.cards) > 0:
+            return self.cards[-1]
 
     def shuffle_pile(self):
         random.seed(self.seed)
@@ -289,6 +326,12 @@ class InnovationStack(Pile):
         self.splay_left = False
         self.splay_right = False
         self.splay_up = False
+
+    def contains_icon(self, icon_type):
+        if self.count_icons_in_stack(icon_type) > 0:
+            return True
+        else:
+            return False
 
     def count_icons_in_stack(self, icon_type):
         """Gets the total number of icons of a type in a stack"""
@@ -451,6 +494,7 @@ class Game:
         self.players = []
         self.cards = []
         self.effects = []
+        self.tests = []
         self.game_over = False
         self.round = 0
 
@@ -518,6 +562,12 @@ class Game:
             self.effects.append(e)
         else:
             raise ValueError("Could not add effect " + str(e) + " to card game " + str(self.name) + ".")
+
+    def add_test_to_game(self, t):
+        if isinstance(t, Test):
+            self.tests.append(t)
+        else:
+            raise ValueError("Could not add effect " + str(t) + " to card game " + str(self.name) + ".")
 
     def __repr__(self):
         string = "<Game: %s on %s>" % (self.name, self.date)
@@ -588,7 +638,7 @@ class InnovationGame(Game):
         self.verbose = True
 
         # Play a game (Play Ball!)
-        # self.create_game()
+        self.create_game()
         # self.set_up_game()
         # self.play_game()
 
@@ -814,7 +864,8 @@ class InnovationGame(Game):
     def check_game_end(self):
         """Runs when a card is added to an achievement pile. Checks to see if anybody has met goal."""
         for player in self.players:
-            print('{p} has {a} achievements'.format(p=player.name, a=player.achievement_pile.get_pile_size()))
+            self.print_for_testing('{p} has {a} achievements'.format(p=player.name,
+                                                                     a=player.achievement_pile.get_pile_size()))
             if player.achievement_pile.get_pile_size() >= self.achievement_goal:
                 self.game_end()
 
@@ -910,6 +961,12 @@ class InnovationGame(Game):
             for c in pile.cards:
                 if c == card:
                     pile.remove_card(c)
+
+    def find_card(self, card):
+        for pile in self.piles:
+            for c in pile.cards:
+                if c == card:
+                    return pile
 
     def move_card_to_pile(self, card, pile):
         self.find_and_remove_card(card)
@@ -1079,10 +1136,8 @@ class InnovationGame(Game):
         original_state = self.locations_at_beginning_of_action
         current_state = self.record_current_card_locations()
         if original_state != current_state:
-            print('true')
             return True
         else:
-            print('false')
             return False
 
     def draw_if_opponents_shared(self, list_of_players):
@@ -1243,7 +1298,7 @@ class InnovationGame(Game):
     def fermenting_effect_0(self):
         stacks_with_leaves = 0
         for stack in self.active_player.stacks:
-            if stack.count_icons_in_stack(self.leaf) > 0:
+            if stack.contains_icon(self.leaf):
                 stacks_with_leaves += 1
 
         i = 0
@@ -1320,31 +1375,65 @@ class InnovationGame(Game):
         if self.verbose:
             print(string_to_print)
 
-    def test_suite(self):
-        tests = [[self.test_metalworking, True],        # Age 1
-                 [self.test_mysticism, True],
-                 [self.test_sailing, True],
-                 [self.test_the_wheel, True],
-                 [self.test_calendar, True],             # Age 2
-                 [self.test_colonialism, True],         # Age 4
-                 [self.test_experimentation, True],
-                 [self.test_astronomy, True],           # Age 5
-                 [self.test_steam_engine, True],
-                 [self.test_machine_tools, True],       # Age 6
-                 [self.test_electricity, True]]         # Age 7
+    def create_tests(self):
+        # Test name, setup function, test function, corresponding card
+        test_list = [['Metalworking', self.set_up_test_generic, self.test_metalworking, self.get_card_object('Metalworking')],
+                     ['Mysticism', self.set_up_test_generic, self.test_mysticism, self.get_card_object('Mysticism')],
+                     ['Sailing', self.set_up_test_generic, self.test_sailing, self.get_card_object('Sailing')],
+                     ['The Wheel', self.set_up_test_generic, self.test_the_wheel, self.get_card_object('The Wheel')],
+                     ['Writing', self.set_up_test_generic, self.test_writing, self.get_card_object('Writing')],
+                     ['Calendar (no score cards)', self.set_up_test_generic, self.test_calendar, self.get_card_object('Calendar')],
+                     ['Calendar (score cards)', self.test_calendar_setup, self.test_calendar, self.get_card_object('Calendar')],
+                     ['Fermenting', self.test_fermenting_setup, self.test_fermenting, self.get_card_object('Fermenting')],
+                     ['Colonialism', self.set_up_test_generic, self.test_colonialism, self.get_card_object('Colonialism')],
+                     ['Experimentation', self.set_up_test_generic, self.test_experimentation, self.get_card_object('Experimentation')],
+                     ['Astronomy', self.test_astronomy_setup, self.test_astronomy, self.get_card_object('Astronomy')],
+                     ['Steam Engine', self.set_up_test_generic, self.test_steam_engine, self.get_card_object('Steam Engine')],
+                     ['Machine Tools', self.test_machine_tools_setup, self.test_machine_tools, self.get_card_object('Machine Tools')],
+                     ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')]]
 
-        results = []
-        for test in tests:
-            if test[1]:
-                results.append(test[0]())
+        for test_to_add in test_list:
+            test = Test(test_to_add[0], test_to_add[1], test_to_add[2], test_to_add[3])
+            self.add_test_to_game(test)
+            associated_card = test_to_add[3]
+            associated_card.tests.append(test)
 
-        print(results)
-        if all(results):
-            print('All Tests Pass')
+    def run_all_tests(self):
+        passed_tests = []
+        failed_tests = []
+        for test in self.tests:
+            if test.toggle:
+                test.activate()
+                if test.result:
+                    passed_tests.append(test)
+                else:
+                    failed_tests.append(test)
 
-    def set_up_test(self, card_name):
-        print('-----------------------')
-        print('-- Test: {t} --'.format(t=card_name))
+        self.determine_pass_or_fail(failed_tests)
+
+    def test_a_card(self, card_name):
+        passed_tests = []
+        failed_tests = []
+        card = self.get_card_object(card_name)
+        for test in card.tests:
+            test.activate()
+            if test.result:
+                passed_tests.append(test)
+            else:
+                failed_tests.append(test)
+
+        self.determine_pass_or_fail(failed_tests)
+
+    def determine_pass_or_fail(self, failed_test_list):
+        if failed_test_list:
+            print('The following tests failed:')
+            for test in failed_test_list:
+                print(test.name)
+        else:
+            print('All tests passed')
+
+    def set_up_test_generic(self, card_name):
+        self.print_for_testing('Test: {t}'.format(t=card_name))
         self.create_game()
         self.shuffle_piles()
         self.turn_player = self.get_player_object(0)
@@ -1352,178 +1441,329 @@ class InnovationGame(Game):
         self.turn_card = self.get_card_object(card_name)
         self.active_card = self.turn_card
         self.meld_card()
+        self.locations_at_beginning_of_action = self.record_current_card_locations()
+
+    # Generic tests
+    def test_cards_available_to_draw(self, draw_value):
+        i = draw_value
+        while i <= 10:
+            if self.get_pile_object(str(i)).cards:
+                return True
+            i = i + 1
+        return False
+
+    def test_enough_cards_available_to_draw(self, draw_value, number_of_cards):
+        i = draw_value
+        cards_available = 0
+        while i <= 10:
+            cards_available = cards_available + self.get_pile_object(str(i)).get_pile_size()
+            i = i + 1
+
+        if cards_available > number_of_cards:
+            return True
+        else:
+            return False
+
+    def test_see_draw_card(self, draw_value):
+        i = draw_value
+        if i == 0:
+            i = 1
+
+        while i <= 10:
+            pile = self.get_pile_object(str(i))
+            if pile.cards:
+                drawn_card = pile.see_top_card()
+                return drawn_card
+            i = i + 1
+
+    def test_see_all_draw_cards(self, draw_value):
+        draw_cards = []
+        i = draw_value
+        while i <= 10:
+            pile = pile = self.get_pile_object(str(i))
+            for card in pile.cards:
+                draw_cards.append(card)
+            i = i + 1
+
+        return draw_cards
+
+    def test_see_next_draw_cards(self, draw_value, number_of_cards):
+        i = draw_value
+        cards_to_see = []
+        cards_remaining = number_of_cards
+
+        while i <= 10:
+            pile = self.get_pile_object(str(i))
+            j = 0
+            if pile.get_pile_size() >= cards_remaining:
+                while j < cards_remaining:
+                    cards_to_see.append(pile.cards[j])
+                    j = j + 1
+                cards_remaining = cards_remaining - pile.get_pile_size()
+            else:
+                while j < pile.get_pile_size():
+                    cards_to_see.append(pile.cards[j])
+                    j = j + 1
+                cards_remaining = cards_remaining - pile.get_pile_size()
+            if cards_remaining == 0:
+                break
+            i = i + 1
+
+        return cards_to_see
+
+    def test_draw_and_meld(self, draw_value):
+        if self.test_cards_available_to_draw(draw_value):
+            card = self.test_see_draw_card(draw_value)
+
+            self.action_dogma()
+
+            if self.active_player.stacks[card.color].see_top_card() == card \
+                    and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
+                return True
+            else:
+                return False
+        else:
+            self.action_dogma()
+            if self.game_over:
+                return True
+            else:
+                return False
+
+    def test_draw_multiple(self, draw_value, number_of_cards):
+        results = []
+
+        if number_of_cards == 0:
+            return True
+        else:
+            if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
+                cards = self.test_see_next_draw_cards(draw_value, number_of_cards)
+
+                self.action_dogma()
+
+                for card in cards:
+                    if self.active_player.hand.is_card_in_pile(card) \
+                            and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
+                        results.append(True)
+                    else:
+                        results.append(False)
+
+                return all(results)
+
+            else:
+                self.action_dogma()
+                if self.game_over:
+                    return True
+                else:
+                    return False
+
+    def test_draw_and_meld_multiple(self, draw_value, number_of_cards):
+        cards_to_meld = []
+        if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
+            cards_to_meld.append(self.test_see_draw_card())
+        else:
+            if self.game_over:
+                return True
+            else:
+                return False
+
+        if self.test_cards_available_to_draw(draw_value):
+            card = self.test_see_draw_card(draw_value)
+
+            self.action_dogma()
+
+            if self.active_player.stacks[card.color].see_top_card() == card \
+                    and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
+                return True
+            else:
+                return False
+
+    def test_tuck_card(self, card):
+        if self.active_player.stacks[card.color].see_bottom_card() == card:
+            return True
+        else:
+            return False
+
+    def test_tuck_multiple_cards(self, card_list):
+        count_by_color = [0, 0, 0, 0, 0]
+        results = []
+        card_list.reverse()
+        for card in card_list:
+            index = -1 - count_by_color[card.color]
+            if self.active_player.stacks[card.color].cards[index] == card:
+                results.append(True)
+            else:
+                results.append(False)
+            count_by_color[card.color] = count_by_color[card.color] + 1
+
+        return all(results)
+
+    def test_meld_card(self, card):
+        if self.active_player.stacks[card.color].see_top_card() == card:
+            return True
+        else:
+            return False
+
+    def test_meld_multiple_cards(self, card_list):
+        count_by_color = [0, 0, 0, 0, 0]
+        results = []
+        card_list.reverse()
+        for card in card_list:
+            index = 0 + count_by_color[card.color]
+            if self.active_player.stacks[card.color].cards[index] == card:
+                results.append(True)
+            else:
+                results.append(False)
+            count_by_color[card.color] = count_by_color[card.color] + 1
+
+        return all(results)
+
+    def test_score_multiple_cards(self, card_list):
+        results = []
+        for card in card_list:
+            results.append(self.active_player.score_pile.is_card_in_pile(card))
+        return all(results)
+
+    def test_if_card_in_hand(self, card):
+        return self.active_player.hand.is_card_in_pile(card)
+
+    def test_if_multiple_cards_in_hand(self, card_list):
+        results = []
+        for card in card_list:
+            results.append(self.active_player.hand.is_card_in_pile(card))
+        return all(results)
+
+    def test_if_cards_still_in_draw_pile(self, card_list):
+        results = []
+        for card in card_list:
+            results.append(self.get_pile_object(str(card.age)).is_card_in_pile(card))
+        return all(results)
 
     # Age 1 tests
     def test_metalworking(self):
-        self.set_up_test('Metalworking')
+        deck = self.test_see_all_draw_cards(1)
+        cards_that_will_be_drawn = []
+
+        for card in deck:
+            cards_that_will_be_drawn.append(card)
+            if not card.contains_icon(self.castle):
+                break
+
         self.action_dogma()
 
-        cards_were_drawn = False
-        if self.active_player.hand.get_pile_size() == 1 or self.active_player.score_pile.get_pile_size() > 0:
-            cards_were_drawn = True
+        scored_correctly = self.test_score_multiple_cards(cards_that_will_be_drawn[:-1])
+        drawn_correctly = self.active_player.hand.is_card_in_pile(cards_that_will_be_drawn[-1])
 
-        score_cards_have_castles = False
-        if self.active_player.score_pile.cards:
-            for card in self.active_player.score_pile.cards:
-                if card.contains_icon(self.castle):
-                    score_cards_have_castles = True
-                else:
-                    score_cards_have_castles = False
-                    break
-        else:
-            score_cards_have_castles = True
-
-        hand_cards_do_not_have_castles = False
-        if self.active_player.hand.cards:
-            for card in self.active_player.hand.cards:
-                if not card.contains_icon(self.castle):
-                    hand_cards_do_not_have_castles = True
-                else:
-                    hand_cards_do_not_have_castles = False
-                    break
-        else:
-            hand_cards_do_not_have_castles = True
-
-        if cards_were_drawn and score_cards_have_castles and hand_cards_do_not_have_castles:
-            return True
-        else:
-            return False
+        return scored_correctly and drawn_correctly
 
     def test_mysticism(self):
-        self.set_up_test('Mysticism')
+        current_colors = []
+        for stack in self.active_player.stacks:
+            if stack.cards:
+                current_colors.append(stack.color)
+
+        next_cards = self.test_see_next_draw_cards(1, 2)
+
         self.action_dogma()
 
-        card_was_melded_properly = False
-        if self.active_card.color == self.purple and self.active_card != self.get_card_object('Mysticism'):
-            if self.active_player.purple_stack.see_top_card() == self.active_card:
-                card_was_melded_properly = True
+        if next_cards[0].color in current_colors:
+            return self.test_meld_card(next_cards[0]) and self.test_if_card_in_hand(next_cards[1])
         else:
-            card_was_melded_properly = True
-
-        draw_a_one = False
-        if self.active_player.hand.get_pile_size() == 1:
-            for card in self.active_player.hand.cards:
-                if card.age == 1:
-                    draw_a_one = True
-
-        if draw_a_one and card_was_melded_properly:
-            return True
-        else:
-            return False
+            return self.test_if_card_in_hand(next_cards[0])
 
     def test_sailing(self):
-        self.set_up_test('Sailing')
         self.action_dogma()
+
         card_was_melded = False
         for stack in self.active_player.stacks:
             card = stack.see_top_card()
             if self.active_card != self.get_card_object('Sailing') and card == self.active_card:
                 card_was_melded = True
 
-        if card_was_melded:
-            return True
-        else:
-            return False
+        return card_was_melded
 
     def test_the_wheel(self):
-        self.set_up_test('The Wheel')
-        self.action_dogma()
-
-        all_cards_are_ones = True
-        correct_number_of_cards = True
-        if self.active_player.hand.get_pile_size() == 2:
-            for card in self.active_player.hand.cards:
-                if card.age != 1:
-                    print(card.age)
-                    all_cards_are_ones = False
-                    break
-        else:
-            correct_number_of_cards = False
-
-        if all_cards_are_ones and correct_number_of_cards:
-            return True
-        else:
-            return False
+        return self.test_draw_multiple(1, 2)
 
     def test_writing(self):
-        self.set_up_test('Writing')
-        self.action_dogma()
-
-        draw_a_two = False
-        if self.active_player.hand.get_pile_size() == 1:
-            for card in self.active_player.hand.cards:
-                if card.age == 2:
-                    draw_a_two = True
-
-        if draw_a_two:
-            return True
-        else:
-            return False
+        return self.test_draw_multiple(2, 1)
 
     # Age 2 tests
+    def test_calendar_setup(self, card_name):
+        """Condition where player has cards in score pile"""
+        self.set_up_test_generic(card_name)
+        self.active_card = self.get_card_object('A.I.')
+        self.add_card_to_score_pile()
+        self.active_card = self.get_card_object('Calendar')
+
     def test_calendar(self):
-        self.set_up_test('Calendar')
-        # self.active_card = g.get_card_object('Fermenting')
-        # self.active_player = g.get_player_object(1)
-        # self.meld_card()
-        # self.active_card = self.get_card_object('A.I.')
-        # self.add_card_to_score_pile()
-        # self.active_card = g.get_card_object('Agriculture')
-        # self.active_player = g.get_player_object(2)
-        # self.meld_card()
-        # self.active_card = self.turn_card
-        self.locations_at_beginning_of_action = self.record_current_card_locations()
+        cards_to_draw = []
+        results = []
+        if self.active_player.score_pile.get_pile_size() > self.active_player.hand.get_pile_size():
+            cards_to_draw = self.test_see_next_draw_cards(3, 2)
+
         self.action_dogma()
 
-        all_cards_are_threes = True
-        correct_number_of_cards = True
-        if self.active_player.hand.get_pile_size == 2:
-            for card in self.active_player.hand.cards:
-                if card.age != 3:
-                    all_cards_are_threes = False
-                    break
+        if cards_to_draw:
+            return self.test_if_multiple_cards_in_hand(cards_to_draw)
         else:
-            correct_number_of_cards = False
+            return self.test_if_cards_still_in_draw_pile(cards_to_draw)
 
-        if all_cards_are_threes:
-            return True
-        else:
-            return False
+    def test_fermenting_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+        self.active_card = g.get_card_object('Sailing')
+        g.meld_card()
+        self.active_card = g.get_card_object('Calendar')
+        g.meld_card()
+        self.locations_at_beginning_of_action = self.record_current_card_locations()
+
+    def test_fermenting(self):
+        total_leaves = 0
+        for stack in self.active_player.stacks:
+            if stack.contains_icon(self.leaf):
+                total_leaves = total_leaves + 1
+
+        return self.test_draw_multiple(2, total_leaves)
 
     # Age 4 tests
     def test_colonialism(self):
-        print('-----------------------')
-        print('-- Test: Colonialism --')
-        self.create_game()
-        self.shuffle_piles()
-        self.turn_player = self.get_player_object(0)
-        self.active_player = self.get_player_object(0)
-        self.active_card = self.get_card_object('Colonialism')
-        self.turn_card = self.active_card
-        self.active_card = self.turn_card
-        self.meld_card()
+        all_cards = self.test_see_all_draw_cards(3)
+        cards_to_be_drawn = []
+        for card in all_cards:
+            cards_to_be_drawn.append(card)
+            if not card.contains_icon(self.crown):
+                break
+
         self.action_dogma()
 
+        return self.test_tuck_multiple_cards(cards_to_be_drawn)
+
     def test_experimentation(self):
-        print('-----------------------')
-        print('-- Test: Experimentation --')
-        self.create_game()
-        self.shuffle_piles()
-        self.turn_player = self.get_player_object(0)
-        self.active_player = self.get_player_object(0)
-        self.turn_card = self.get_card_object('Experimentation')
-        self.active_card = self.turn_card
-        self.meld_card()
-        self.action_dogma()
+        return self.test_draw_and_meld(5)
 
     # Age 5 tests
     def test_astronomy(self):
-        print('-----------------------')
-        print('-- Test: Astronomy --')
-        self.create_game()
-        self.shuffle_piles()
-        self.turn_player = self.get_player_object(0)
-        self.active_player = self.get_player_object(0)
+        universe_original_pile = self.find_card(self.get_card_object('Universe'))
+
+        # Determine which cards should show up
+        all_cards = self.test_see_all_draw_cards(6)
+        cards_to_be_drawn = []
+        for card in all_cards:
+            cards_to_be_drawn.append(card)
+            if card.color == self.blue or card.color == self.green:
+                pass
+            else:
+                break
+
+        self.action_dogma()
+
+        if self.test_astronomy_0(cards_to_be_drawn[:-1]) and self.test_astronomy_1(universe_original_pile):
+            return True
+        else:
+            return False
+
+    def test_astronomy_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+
         # Red
         self.active_card = g.get_card_object('Machine Tools')
         self.meld_card()
@@ -1539,74 +1779,121 @@ class InnovationGame(Game):
 
         self.turn_card = self.get_card_object('Astronomy')
         self.active_card = self.turn_card
-        self.meld_card()
-        self.action_dogma()
+
+    def test_astronomy_0(self, card_list):
+        return self.test_meld_multiple_cards(card_list)
+
+    def test_astronomy_1(self, universe_pile):
+        top_cards_are_6 = []
+        universe = self.get_card_object('Universe')
+        universe_original_pile = universe_pile
+
+        for stack in self.active_player.stacks:
+            if stack.color != self.purple:
+                if stack.cards:
+                    if stack.see_top_card().age >= 6:
+                        top_cards_are_6.append(True)
+                    else:
+                        top_cards_are_6.append(False)
+                else:
+                    top_cards_are_6.append(False)
+
+        if all(top_cards_are_6):
+            if universe_original_pile == self.get_pile_object('special achievements'):
+                if self.find_card(universe) == self.active_player.achievement_pile:
+                    return True
+                else:
+                    return False
+            elif universe_original_pile == self.find_card(universe):
+                return True
+            else:
+                return False
+        else:
+            if universe_original_pile == self.find_card(universe):
+                return True
+            else:
+                return False
 
     def test_steam_engine(self):
-        print('-----------------------')
-        print('-- Test: Steam Engine --')
-        self.create_game()
-        self.shuffle_piles()
-        self.turn_player = self.get_player_object(0)
-        self.active_player = self.get_player_object(1)
-        self.active_card = g.get_card_object('Machine Tools')
-        self.meld_card()
-        self.active_player = self.get_player_object(0)
-        self.turn_card = self.get_card_object('Steam Engine')
-        self.active_card = self.turn_card
-        self.meld_card()
+        yellow_cards = []
+        bottom_yellow = self.active_player.yellow_stack.see_bottom_card()
+        tuck_correctly = False
+        score_correctly = False
+
+        cards = self.test_see_next_draw_cards(4, 2)
+        if len(cards) == 2:
+            for card in cards:
+                if card.color == self.yellow:
+                    cards.remove(card)
+                    yellow_cards.append(card)
+
         self.action_dogma()
+
+        if cards:
+            tuck_correctly = self.test_tuck_multiple_cards(cards)
+        else:
+            tuck_correctly = True
+
+        if len(yellow_cards) == 1:
+            bottom_yellow = yellow_cards[0]
+        elif len(yellow_cards) == 2:
+            bottom_yellow = yellow_cards[1]
+
+        score_correctly = self.active_player.score_pile.is_card_in_pile(bottom_yellow)
+
+        return score_correctly and tuck_correctly
 
     # Age 6 tests
+    def test_machine_tools_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+        self.active_card = self.get_card_object('Steam Engine')
+        self.add_card_to_score_pile()
+
     def test_machine_tools(self):
-        print('-----------------------')
-        print('-- Test: Machine Tools --')
-        self.create_game()
-        self.shuffle_piles()
-        self.turn_player = self.get_player_object(0)
-        self.active_player = self.get_player_object(0)
-        self.turn_card = self.get_card_object('Machine Tools')
-        self.active_card = self.turn_card
-        self.meld_card()
+        highest_card = self.active_player.score_pile.highest_card_value()
+        draw_card = self.test_see_draw_card(highest_card)
+
         self.action_dogma()
 
+        return self.active_player.score_pile.is_card_in_pile(draw_card)
+
     # Age 7 tests
-    def test_electricity(self):
-        print('-----------------------')
-        print('-- Test: Electricity --')
-        # Setup
-        self.create_game()
-        self.shuffle_piles()
-        self.turn_player = self.get_player_object(0)
-        self.active_player = self.get_player_object(0)
+    def test_electricity_setup(self, card_name):
+        self.set_up_test_generic(card_name)
         self.active_card = self.get_card_object('Astronomy')
         self.meld_card()
         self.active_card = self.get_card_object('Machine Tools')
         self.meld_card()
         self.active_card = self.get_card_object('Experimentation')
         self.meld_card()
-        self.turn_card = self.get_card_object('Electricity')
-        self.active_card = self.turn_card
-        self.meld_card()
-        self.action_dogma()
 
-        # Evaluation
-        all_top_cards_have_factory = True
+    def test_electricity(self):
+        cards_to_return = []
+        return_correctly = []
+        draw_correctly = []
         for stack in self.get_player_object(0).stacks:
             if stack.cards:
                 card = stack.see_top_card()
                 if not card.contains_icon(self.factory):
-                    all_top_cards_have_factory = False
-                    break
+                    cards_to_return.append(card)
 
-        correct_card_draw = True
-        if self.get_player_object(0).hand.get_pile_size() != 2:
-            correct_card_draw = False
+        if cards_to_return:
+            draw_cards = self.test_see_next_draw_cards(8, len(cards_to_return))
 
-        if all_top_cards_have_factory and correct_card_draw:
-            return True
-        else:
-            return False
+        self.action_dogma()
+
+        if cards_to_return:
+            for card in cards_to_return:
+                if self.get_pile_object(str(card.age)).see_bottom_card() == card:
+                    return_correctly.append(True)
+                else:
+                    return_correctly.append(False)
+            for card in draw_cards:
+                draw_correctly.append(self.active_player.hand.is_card_in_pile(card))
+
+        return all(return_correctly) and all(draw_correctly)
 
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
+g.create_tests()
+g.run_all_tests()Cle
