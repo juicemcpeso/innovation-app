@@ -1616,42 +1616,28 @@ class InnovationGame(Game):
 
         return all(results)
 
+    def test_score_multiple_cards(self, card_list):
+        results = []
+        for card in card_list:
+            results.append(self.active_player.score_pile.is_card_in_pile(card))
+        return all(results)
+
     # Age 1 tests
     def test_metalworking(self):
-        results = []
+        deck = self.test_see_all_draw_cards(1)
+        cards_that_will_be_drawn = []
+
+        for card in deck:
+            cards_that_will_be_drawn.append(card)
+            if not card.contains_icon(self.castle):
+                break
 
         self.action_dogma()
 
-        cards_were_drawn = False
-        if self.active_player.hand.get_pile_size() == 1 or self.active_player.score_pile.get_pile_size() > 0:
-            cards_were_drawn = True
-        results.append(cards_were_drawn)
+        scored_correctly = self.test_score_multiple_cards(cards_that_will_be_drawn[:-1])
+        drawn_correctly = self.active_player.hand.is_card_in_pile(cards_that_will_be_drawn[-1])
 
-        score_cards_have_castles = False
-        if self.active_player.score_pile.cards:
-            for card in self.active_player.score_pile.cards:
-                if card.contains_icon(self.castle):
-                    score_cards_have_castles = True
-                else:
-                    score_cards_have_castles = False
-                    break
-        else:
-            score_cards_have_castles = True
-        results.append(score_cards_have_castles)
-
-        hand_cards_do_not_have_castles = False
-        if self.active_player.hand.cards:
-            for card in self.active_player.hand.cards:
-                if not card.contains_icon(self.castle):
-                    hand_cards_do_not_have_castles = True
-                else:
-                    hand_cards_do_not_have_castles = False
-                    break
-        else:
-            hand_cards_do_not_have_castles = True
-        results.append(hand_cards_do_not_have_castles)
-
-        return all(results)
+        return scored_correctly and drawn_correctly
 
     def test_mysticism(self):
         results = []
@@ -1907,4 +1893,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.test_a_card('Writing')
+g.test_a_card('Metalworking')
