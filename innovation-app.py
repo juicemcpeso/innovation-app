@@ -1388,7 +1388,7 @@ class InnovationGame(Game):
                      ['Astronomy', self.test_astronomy_setup, self.test_astronomy, self.get_card_object('Astronomy')],
                      ['Steam Engine', self.set_up_test_generic, self.test_steam_engine, self.get_card_object('Steam Engine')],
                      ['Machine Tools', self.test_machine_tools_setup, self.test_machine_tools, self.get_card_object('Machine Tools')],
-                     ['Electricity', self.set_up_test_generic, self.test_electricity, self.get_card_object('Electricity')]]
+                     ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')]]
 
         for test_to_add in test_list:
             test = Test(test_to_add[0], test_to_add[1], test_to_add[2], test_to_add[3])
@@ -1731,7 +1731,7 @@ class InnovationGame(Game):
             if stack.contains_icon(self.leaf):
                 total_leaves = total_leaves + 1
 
-        return(self.test_draw_multiple(2, total_leaves))
+        return self.test_draw_multiple(2, total_leaves)
 
     # Age 4 tests
     def test_colonialism(self):
@@ -1867,41 +1867,42 @@ class InnovationGame(Game):
         return self.active_player.score_pile.is_card_in_pile(draw_card)
 
     # Age 7 tests
-    def test_electricity(self):
-        self.create_game()
-        self.shuffle_piles()
-        self.turn_player = self.get_player_object(0)
-        self.active_player = self.get_player_object(0)
+    def test_electricity_setup(self, card_name):
+        self.set_up_test_generic(card_name)
         self.active_card = self.get_card_object('Astronomy')
         self.meld_card()
         self.active_card = self.get_card_object('Machine Tools')
         self.meld_card()
         self.active_card = self.get_card_object('Experimentation')
         self.meld_card()
-        self.turn_card = self.get_card_object('Electricity')
-        self.active_card = self.turn_card
-        self.meld_card()
-        self.action_dogma()
 
-        # Evaluation
-        all_top_cards_have_factory = True
+    def test_electricity(self):
+        cards_to_return = []
+        return_correctly = []
+        draw_correctly = []
         for stack in self.get_player_object(0).stacks:
             if stack.cards:
                 card = stack.see_top_card()
                 if not card.contains_icon(self.factory):
-                    all_top_cards_have_factory = False
-                    break
+                    cards_to_return.append(card)
 
-        correct_card_draw = True
-        if self.get_player_object(0).hand.get_pile_size() != 2:
-            correct_card_draw = False
+        if cards_to_return:
+            draw_cards = self.test_see_next_draw_cards(8, len(cards_to_return))
 
-        if all_top_cards_have_factory and correct_card_draw:
-            return True
-        else:
-            return False
+        self.action_dogma()
+
+        if cards_to_return:
+            for card in cards_to_return:
+                if self.get_pile_object(str(card.age)).see_bottom_card() == card:
+                    return_correctly.append(True)
+                else:
+                    return_correctly.append(False)
+            for card in draw_cards:
+                draw_correctly.append(self.active_player.hand.is_card_in_pile(card))
+
+        return all(return_correctly) and all(draw_correctly)
 
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.test_a_card('Machine Tools')
+g.test_a_card('Electricity')
