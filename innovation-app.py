@@ -1128,6 +1128,12 @@ class InnovationGame(Game):
             self.print_for_testing('{p} draws a card due to other players sharing effect'.format(p=self.turn_player))
             self.action_draw()
 
+    def execute_dogma_for_yourself(self):
+        for effect in self.active_card.dogma:
+            if not effect.demand:
+                self.print_for_testing('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
+                effect.activate()
+
     def determine_who_can_share(self):
         """Function to see who can share in an effect"""
         sharing_players = []
@@ -1260,7 +1266,8 @@ class InnovationGame(Game):
                         ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
                         ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],        # Age 6
                         ['Electricity', 0, 'factory', False, self.electricity_effect_0],            # Age 7
-                        ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0]]                # Age 9
+                        ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],                # Age 9
+                        ['Robotics', 0, 'factory', False, self.robotics_effect_0]]                  # Age 10
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1389,6 +1396,14 @@ class InnovationGame(Game):
             self.score_cards(active_stack[1:])
 
     # Age 10 effects
+    def robotics_effect_0(self):
+        if self.active_player.green_stack.cards:
+            self.active_card = self.active_player.green_stack.get_top_card()
+            self.add_card_to_score_pile()
+
+        self.draw_and_meld(10)
+
+        self.execute_dogma_for_yourself()
 
     # Tests
     def print_for_testing(self, string_to_print):
@@ -1411,7 +1426,8 @@ class InnovationGame(Game):
                      ['Steam Engine', self.set_up_test_generic, self.test_steam_engine, self.get_card_object('Steam Engine')],
                      ['Machine Tools', self.test_machine_tools_setup, self.test_machine_tools, self.get_card_object('Machine Tools')],
                      ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')],
-                     ['Genetics', self.test_genetics_setup, self.test_genetics, self.get_card_object('Genetics')]]
+                     ['Genetics', self.test_genetics_setup, self.test_genetics, self.get_card_object('Genetics')],
+                     ['Robotics', self.set_up_test_generic, self.test_robotics, self.get_card_object('Robotics')]]
 
         for test_to_add in test_list:
             test = Test(test_to_add[0], test_to_add[1], test_to_add[2], test_to_add[3])
@@ -1961,12 +1977,15 @@ class InnovationGame(Game):
 
         if card_to_score:
             scored_correctly = self.test_score_card(card_to_score)
+        else:
+            scored_correctly = True
 
         melded_correctly = self.test_meld_card(card_to_draw)
-
+        print(scored_correctly)
+        print(melded_correctly)
         return scored_correctly and melded_correctly
 
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
 g.create_tests()
-g.test_a_card('Genetics')
+g.test_a_card('Robotics')
