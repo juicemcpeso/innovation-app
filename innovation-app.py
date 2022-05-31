@@ -1826,15 +1826,7 @@ class InnovationGame(Game):
             return self.test_if_card_in_hand(next_cards[0])
 
     def test_sailing(self):
-        self.action_dogma()
-
-        card_was_melded = False
-        for stack in self.active_player.stacks:
-            card = stack.see_top_card()
-            if self.active_card != self.get_card_object('Sailing') and card == self.active_card:
-                card_was_melded = True
-
-        return card_was_melded
+        return self.test_draw_and_meld(1, 1)
 
     def test_the_wheel_setup(self, card_name):
         self.set_up_test_generic(card_name)
@@ -2119,7 +2111,8 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Experimentation')
+g.test_a_card('Sailing')
+print(g.active_player.stacks[g.active_card.color].see_top_card())
 # g.create_game()
 # g.set_up_game()
 # b = g.get_pile_state()
