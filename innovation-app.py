@@ -1996,7 +1996,7 @@ class InnovationGame(Game):
 
     def test_steam_engine(self):
         yellow_stack = self.piles_at_beginning_of_effect[self.active_player.yellow_stack.name]
-        bottom_yellow = self.get_card_object(yellow_stack[:-1])
+        bottom_yellow = self.get_card_object(yellow_stack[-1])
         yellow_cards = []
 
         cards = self.test_see_next_draw_cards(4, 2)
@@ -2011,12 +2011,10 @@ class InnovationGame(Game):
         elif len(yellow_cards) == 2:
             bottom_yellow = yellow_cards[1]
 
-        print(bottom_yellow)
         score_correctly = self.test_score_card(bottom_yellow)
 
         tuck_correctly = self.test_tuck_multiple_cards(cards)
-        print(score_correctly)
-        print(tuck_correctly)
+
         return score_correctly and tuck_correctly
 
         # yellow_cards = []
