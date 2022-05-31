@@ -1537,14 +1537,22 @@ class InnovationGame(Game):
             i = i + 1
         return False
 
-    def test_enough_cards_available_to_draw(self, draw_value, number_of_cards):
-        i = draw_value
-        cards_available = 0
-        while i <= 10:
-            cards_available = cards_available + self.get_pile_object(str(i)).get_pile_size()
-            i = i + 1
+    # def test_enough_cards_available_to_draw(self, draw_value, number_of_cards):
+    #     i = draw_value
+    #     cards_available = 0
+    #     while i <= 10:
+    #         cards_available = cards_available + self.get_pile_object(str(i)).get_pile_size()
+    #         i = i + 1
+    #
+    #     if cards_available > number_of_cards:
+    #         return True
+    #     else:
+    #         return False
 
-        if cards_available > number_of_cards:
+    def test_enough_cards_available_to_draw(self, draw_value, number_of_cards):
+        cards_to_draw = self.test_see_all_draw_cards(draw_value)
+
+        if len(cards_to_draw) >= number_of_cards:
             return True
         else:
             return False
@@ -1585,26 +1593,37 @@ class InnovationGame(Game):
 
         return draw_cards
 
-    def test_see_next_draw_cards(self, draw_value, number_of_cards):
-        i = draw_value
-        cards_to_see = []
-        cards_remaining = number_of_cards
+    # def test_see_next_draw_cards(self, draw_value, number_of_cards):
+    #     i = draw_value
+    #     cards_to_see = []
+    #     cards_remaining = number_of_cards
+    #
+    #     while i <= 10:
+    #         pile = self.get_pile_object(str(i))
+    #         j = 0
+    #         if pile.get_pile_size() >= cards_remaining:
+    #             while j < cards_remaining:
+    #                 cards_to_see.append(pile.cards[j])
+    #                 j = j + 1
+    #             cards_remaining = cards_remaining - pile.get_pile_size()
+    #         else:
+    #             while j < pile.get_pile_size():
+    #                 cards_to_see.append(pile.cards[j])
+    #                 j = j + 1
+    #             cards_remaining = cards_remaining - pile.get_pile_size()
+    #         if cards_remaining == 0:
+    #             break
+    #         i = i + 1
+    #
+    #     return cards_to_see
 
-        while i <= 10:
-            pile = self.get_pile_object(str(i))
-            j = 0
-            if pile.get_pile_size() >= cards_remaining:
-                while j < cards_remaining:
-                    cards_to_see.append(pile.cards[j])
-                    j = j + 1
-                cards_remaining = cards_remaining - pile.get_pile_size()
-            else:
-                while j < pile.get_pile_size():
-                    cards_to_see.append(pile.cards[j])
-                    j = j + 1
-                cards_remaining = cards_remaining - pile.get_pile_size()
-            if cards_remaining == 0:
-                break
+    def test_see_next_draw_cards(self, draw_value, number_of_cards):
+        cards_to_see = []
+        draw_cards = self.test_see_all_draw_cards(draw_value)
+
+        i = 0
+        while i < number_of_cards:
+            cards_to_see.append(draw_cards[i])
             i = i + 1
 
         return cards_to_see
@@ -1627,7 +1646,34 @@ class InnovationGame(Game):
             else:
                 return False
 
-    def test_draw_multiple(self, draw_value, number_of_cards):
+    # def test_draw_multiple(self, draw_value, number_of_cards):
+    #     results = []
+    #
+    #     if number_of_cards == 0:
+    #         return True
+    #     else:
+    #         if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
+    #             cards = self.test_see_next_draw_cards(draw_value, number_of_cards)
+    #
+    #             self.action_dogma()
+    #
+    #             for card in cards:
+    #                 if self.active_player.hand.is_card_in_pile(card) \
+    #                         and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
+    #                     results.append(True)
+    #                 else:
+    #                     results.append(False)
+    #
+    #             return all(results)
+    #
+    #         else:
+    #             self.action_dogma()
+    #             if self.game_over:
+    #                 return True
+    #             else:
+    #                 return False
+
+    def test_draw_cards(self, draw_value, number_of_cards):
         results = []
 
         if number_of_cards == 0:
@@ -1635,8 +1681,6 @@ class InnovationGame(Game):
         else:
             if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
                 cards = self.test_see_next_draw_cards(draw_value, number_of_cards)
-
-                self.action_dogma()
 
                 for card in cards:
                     if self.active_player.hand.is_card_in_pile(card) \
@@ -1648,7 +1692,6 @@ class InnovationGame(Game):
                 return all(results)
 
             else:
-                self.action_dogma()
                 if self.game_over:
                     return True
                 else:
@@ -1790,10 +1833,10 @@ class InnovationGame(Game):
         self.turn_player = self.active_player
 
     def test_the_wheel(self):
-        return self.test_draw_multiple(1, 2)
+        return self.test_draw_cards(1, 2)
 
     def test_writing(self):
-        return self.test_draw_multiple(2, 1)
+        return self.test_draw_cards(2, 1)
 
     # Age 2 tests
     def test_calendar_setup(self, card_name):
@@ -1832,7 +1875,7 @@ class InnovationGame(Game):
             if stack.contains_icon(self.leaf):
                 total_leaves = total_leaves + 1
 
-        return self.test_draw_multiple(2, total_leaves)
+        return self.test_draw_cards(2, total_leaves)
     # Age 3 tests
 
     # Age 4 tests
@@ -2063,7 +2106,7 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Robotics')
+g.test_a_card('The Wheel')
 # g.create_game()
 # g.set_up_game()
 # b = g.get_pile_state()
