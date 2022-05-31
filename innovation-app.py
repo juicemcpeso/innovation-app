@@ -559,6 +559,12 @@ class Game:
             card = card_list.pop()
         return card
 
+    def get_cards_from_list(self, card_list):
+        output_list = []
+        for card_name in card_list:
+            output_list.append(self.get_card_object(card_name))
+        return output_list
+
     def add_effect_to_game(self, e):
         if isinstance(e, Effect):
             self.effects.append(e)
@@ -2062,24 +2068,19 @@ class InnovationGame(Game):
         self.meld_card()
 
     def test_genetics(self):
-        melded_card = self.test_see_draw_card(10)
-        cards_to_score = []
-        current_score_pile = self.active_player.score_pile.cards
-        if self.active_player.stacks[melded_card.color].cards:
-            for card in self.active_player.stacks[melded_card.color].cards:
-                cards_to_score.append(card)
+        starting_score = self.get_cards_from_list(self.piles_at_beginning_of_action[self.active_player.score_pile.name])
+        starting_stack = self.get_cards_from_list(self.piles_at_beginning_of_action[self.active_player.stacks[self.active_card.color].name])
 
-        self.action_dogma()
-
-        melded_correctly = self.test_meld_card(melded_card)
-
-        if cards_to_score:
-            scored_correctly = self.test_score_multiple_cards(cards_to_score)
+        if starting_stack:
+            scored_correctly = self.test_score_multiple_cards(starting_stack)
         else:
-            if self.active_player.score_pile.cards == current_score_pile:
+            if starting_score == self.active_player.score_pile.cards:
                 scored_correctly = True
             else:
                 scored_correctly = False
+
+        melded_correctly = self.test_draw_and_meld(10, 1)
+
         return melded_correctly and scored_correctly
 
     # Age 10 tests
@@ -2111,16 +2112,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Sailing')
-print(g.active_player.stacks[g.active_card.color].see_top_card())
-# g.create_game()
-# g.set_up_game()
-# b = g.get_pile_state()
-# print(b)
-# print(b['1'])
-
-# g.active_player = g.get_player_object(0)
-# g.active_card = g.get_card_object('Astronomy')
-# g.meld_card()
-# b = g.set_pile_state()
-# print(a == b)
+g.test_a_card('Genetics')
