@@ -1529,13 +1529,13 @@ class InnovationGame(Game):
         self.locations_at_beginning_of_action = self.record_current_card_locations()
 
     # Generic tests
-    def test_cards_available_to_draw(self, draw_value):
-        i = draw_value
-        while i <= 10:
-            if self.get_pile_object(str(i)).cards:
-                return True
-            i = i + 1
-        return False
+    # def test_cards_available_to_draw(self, draw_value):
+    #     i = draw_value
+    #     while i <= 10:
+    #         if self.get_pile_object(str(i)).cards:
+    #             return True
+    #         i = i + 1
+    #     return False
 
     # def test_enough_cards_available_to_draw(self, draw_value, number_of_cards):
     #     i = draw_value
@@ -1628,24 +1628,6 @@ class InnovationGame(Game):
 
         return cards_to_see
 
-    def test_draw_and_meld(self, draw_value):
-        if self.test_cards_available_to_draw(draw_value):
-            card = self.test_see_draw_card(draw_value)
-
-            self.action_dogma()
-
-            if self.active_player.stacks[card.color].see_top_card() == card \
-                    and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
-                return True
-            else:
-                return False
-        else:
-            self.action_dogma()
-            if self.game_over:
-                return True
-            else:
-                return False
-
     # def test_draw_multiple(self, draw_value, number_of_cards):
     #     results = []
     #
@@ -1697,26 +1679,57 @@ class InnovationGame(Game):
                 else:
                     return False
 
-    def test_draw_and_meld_multiple(self, draw_value, number_of_cards):
-        cards_to_meld = []
+    def test_draw_and_meld(self, draw_value, number_of_cards):
         if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
-            cards_to_meld.append(self.test_see_draw_card())
+            cards_to_draw = self.test_see_next_draw_cards(draw_value, number_of_cards)
+
+            return self.test_meld_multiple_cards(cards_to_draw)
+
         else:
             if self.game_over:
                 return True
             else:
                 return False
 
-        if self.test_cards_available_to_draw(draw_value):
-            card = self.test_see_draw_card(draw_value)
+    # def test_draw_and_meld(self, draw_value, number_of_cards):
+    #     if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
+    #         card = self.test_see_draw_card(draw_value)
+    #
+    #         self.action_dogma()
+    #
+    #         if self.active_player.stacks[card.color].see_top_card() == card \
+    #                 and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
+    #             return True
+    #         else:
+    #             return False
+    #     else:
+    #         self.action_dogma()
+    #         if self.game_over:
+    #             return True
+    #         else:
+    #             return False
 
-            self.action_dogma()
-
-            if self.active_player.stacks[card.color].see_top_card() == card \
-                    and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
-                return True
-            else:
-                return False
+    # Not used
+    # def test_draw_and_meld_multiple(self, draw_value, number_of_cards):
+    #     cards_to_meld = []
+    #     if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
+    #         cards_to_meld.append(self.test_see_draw_card())
+    #     else:
+    #         if self.game_over:
+    #             return True
+    #         else:
+    #             return False
+    #
+    #     if self.test_cards_available_to_draw(draw_value):
+    #         card = self.test_see_draw_card(draw_value)
+    #
+    #         self.action_dogma()
+    #
+    #         if self.active_player.stacks[card.color].see_top_card() == card \
+    #                 and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
+    #             return True
+    #         else:
+    #             return False
 
     def test_tuck_card(self, card):
         if self.active_player.stacks[card.color].see_bottom_card() == card:
@@ -1892,7 +1905,7 @@ class InnovationGame(Game):
         return self.test_tuck_multiple_cards(cards_to_be_drawn)
 
     def test_experimentation(self):
-        return self.test_draw_and_meld(5)
+        return self.test_draw_and_meld(5, 1)
 
     # Age 5 tests
     def test_astronomy(self):
@@ -2106,7 +2119,7 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('The Wheel')
+g.test_a_card('Experimentation')
 # g.create_game()
 # g.set_up_game()
 # b = g.get_pile_state()
