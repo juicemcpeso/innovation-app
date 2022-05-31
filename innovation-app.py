@@ -1680,6 +1680,7 @@ class InnovationGame(Game):
                 return all(results)
 
             else:
+                # TODO - update game end test function
                 if self.game_over:
                     return True
                 else:
@@ -1692,6 +1693,20 @@ class InnovationGame(Game):
             return self.test_meld_multiple_cards(cards_to_draw)
 
         else:
+            # TODO - update game end test function
+            if self.game_over:
+                return True
+            else:
+                return False
+
+    def test_draw_and_tuck(self, draw_value, number_of_cards):
+        if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
+            cards_to_draw = self.test_see_next_draw_cards(draw_value, number_of_cards)
+
+            return self.test_tuck_multiple_cards(cards_to_draw)
+
+        else:
+            # TODO - update game end test function
             if self.game_over:
                 return True
             else:
@@ -1980,10 +1995,9 @@ class InnovationGame(Game):
                 return False
 
     def test_steam_engine(self):
+        yellow_stack = self.piles_at_beginning_of_effect[self.active_player.yellow_stack.name]
+        bottom_yellow = self.get_card_object(yellow_stack[:-1])
         yellow_cards = []
-        bottom_yellow = self.active_player.yellow_stack.see_bottom_card()
-        tuck_correctly = False
-        score_correctly = False
 
         cards = self.test_see_next_draw_cards(4, 2)
         if len(cards) == 2:
@@ -1992,21 +2006,46 @@ class InnovationGame(Game):
                     cards.remove(card)
                     yellow_cards.append(card)
 
-        self.action_dogma()
-
-        if cards:
-            tuck_correctly = self.test_tuck_multiple_cards(cards)
-        else:
-            tuck_correctly = True
-
         if len(yellow_cards) == 1:
             bottom_yellow = yellow_cards[0]
         elif len(yellow_cards) == 2:
             bottom_yellow = yellow_cards[1]
 
-        score_correctly = self.active_player.score_pile.is_card_in_pile(bottom_yellow)
+        print(bottom_yellow)
+        score_correctly = self.test_score_card(bottom_yellow)
 
+        tuck_correctly = self.test_tuck_multiple_cards(cards)
+        print(score_correctly)
+        print(tuck_correctly)
         return score_correctly and tuck_correctly
+
+        # yellow_cards = []
+        # bottom_yellow = self.active_player.yellow_stack.see_bottom_card()
+        # tuck_correctly = False
+        # score_correctly = False
+        #
+        # cards = self.test_see_next_draw_cards(4, 2)
+        # if len(cards) == 2:
+        #     for card in cards:
+        #         if card.color == self.yellow:
+        #             cards.remove(card)
+        #             yellow_cards.append(card)
+        #
+        # self.action_dogma()
+        #
+        # if cards:
+        #     tuck_correctly = self.test_tuck_multiple_cards(cards)
+        # else:
+        #     tuck_correctly = True
+        #
+        # if len(yellow_cards) == 1:
+        #     bottom_yellow = yellow_cards[0]
+        # elif len(yellow_cards) == 2:
+        #     bottom_yellow = yellow_cards[1]
+        #
+        # score_correctly = self.active_player.score_pile.is_card_in_pile(bottom_yellow)
+        #
+        # return score_correctly and tuck_correctly
 
     # Age 6 tests
     def test_machine_tools_setup(self, card_name):
@@ -2112,4 +2151,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Genetics')
+g.test_a_card('Steam Engine')
