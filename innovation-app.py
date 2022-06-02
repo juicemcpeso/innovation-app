@@ -1534,7 +1534,7 @@ class InnovationGame(Game):
         self.meld_card()
         self.locations_at_beginning_of_action = self.record_current_card_locations()
 
-    # Generic tests
+    # See cards at beginning of effect
     def test_get_stacks_at_beginning_of_effect(self):
         player_stack_names = []
         for stack in self.active_player.stacks:
@@ -1548,6 +1548,26 @@ class InnovationGame(Game):
 
         return stacks_at_beginning_of_effect
 
+    def test_see_score_pile_at_beginning_of_effect(self):
+        starting_score = self.get_cards_from_list(self.piles_at_beginning_of_action[self.active_player.score_pile.name])
+        return starting_score
+
+    def test_get_initial_highest_cards(self, card_list):
+        highest_value = self.test_get_initial_highest_card_value(card_list)
+        highest_cards = []
+        for card in card_list:
+            if card.age == highest_value:
+                highest_cards.append(card)
+        return highest_cards
+
+    def test_get_initial_highest_card_value(self, card_list):
+        highest_value = 0
+        for card in card_list:
+            if card.age > highest_value:
+                highest_value = card.age
+        return highest_value
+
+    # Test the functions
     def test_enough_cards_available_to_draw(self, draw_value, number_of_cards):
         cards_to_draw = self.test_see_all_draw_cards(draw_value)
 
@@ -1620,6 +1640,19 @@ class InnovationGame(Game):
             cards_to_draw = self.test_see_next_draw_cards(draw_value, number_of_cards)
 
             return self.test_meld_multiple_cards(cards_to_draw)
+
+        else:
+            # TODO - update game end test function
+            if self.game_over:
+                return True
+            else:
+                return False
+
+    def test_draw_and_score(self, draw_value, number_of_cards):
+        if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
+            cards_to_draw = self.test_see_next_draw_cards(draw_value, number_of_cards)
+
+            return self.test_score_multiple_cards(cards_to_draw)
 
         else:
             # TODO - update game end test function
@@ -1914,12 +1947,10 @@ class InnovationGame(Game):
         self.add_card_to_score_pile()
 
     def test_machine_tools(self):
-        highest_card = self.active_player.score_pile.highest_card_value()
-        draw_card = self.test_see_draw_card(highest_card)
+        initial_score_pile = self.test_see_score_pile_at_beginning_of_effect()
+        highest_card_value = self.test_get_initial_highest_card_value(initial_score_pile)
 
-        self.action_dogma()
-
-        return self.active_player.score_pile.is_card_in_pile(draw_card)
+        return self.test_draw_and_score(highest_card_value, 1)
 
     # Age 7 tests
     def test_electricity_setup(self, card_name):
@@ -2011,4 +2042,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Mysticism')
+g.test_a_card('Machine Tools')
