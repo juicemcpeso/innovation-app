@@ -1563,6 +1563,11 @@ class InnovationGame(Game):
                 highest_value = card.age
         return highest_value
 
+    def test_get_initial_card_pile(self, card_name):
+        for pile in self.piles_at_beginning_of_effect:
+            if card_name in self.piles_at_beginning_of_effect[pile]:
+                return self.get_pile_object(pile)
+
     # Test the functions
     def test_no_changes(self):
         return self.piles_at_beginning_of_effect == self.get_pile_state()
@@ -1595,7 +1600,16 @@ class InnovationGame(Game):
             for card in pile:
                 draw_cards.append(self.get_card_object(card))
             i = i + 1
+        return draw_cards
 
+    def test_see_all_draw_cards_beginning_of_action(self, draw_value):
+        draw_cards = []
+        i = draw_value
+        while i <= 10:
+            pile = self.piles_at_beginning_of_action[str(i)]
+            for card in pile:
+                draw_cards.append(self.get_card_object(card))
+            i = i + 1
         return draw_cards
 
     def test_see_next_draw_cards(self, draw_value, number_of_cards):
@@ -1850,26 +1864,6 @@ class InnovationGame(Game):
         return self.test_draw_and_meld(5, 1)
 
     # Age 5 tests
-    def test_astronomy(self):
-        universe_original_pile = self.find_card(self.get_card_object('Universe'))
-
-        # Determine which cards should show up
-        all_cards = self.test_see_all_draw_cards(6)
-        cards_to_be_drawn = []
-        for card in all_cards:
-            cards_to_be_drawn.append(card)
-            if card.color == self.blue or card.color == self.green:
-                pass
-            else:
-                break
-
-        self.action_dogma()
-
-        if self.test_astronomy_0(cards_to_be_drawn[:-1]) and self.test_astronomy_1(universe_original_pile):
-            return True
-        else:
-            return False
-
     def test_astronomy_setup(self, card_name):
         self.set_up_test_generic(card_name)
 
@@ -1888,6 +1882,19 @@ class InnovationGame(Game):
 
         self.turn_card = self.get_card_object('Astronomy')
         self.active_card = self.turn_card
+
+    def test_astronomy(self):
+        universe_original_pile = self.test_get_initial_card_pile('Universe')
+        all_cards = self.test_see_all_draw_cards_beginning_of_action(6)
+        cards_to_be_drawn = []
+        for card in all_cards:
+            cards_to_be_drawn.append(card)
+            if card.color == self.blue or card.color == self.green:
+                pass
+            else:
+                break
+
+        return self.test_astronomy_0(cards_to_be_drawn[:-1]) and self.test_astronomy_1(universe_original_pile)
 
     def test_astronomy_0(self, card_list):
         return self.test_meld_multiple_cards(card_list)
@@ -1918,10 +1925,7 @@ class InnovationGame(Game):
             else:
                 return False
         else:
-            if universe_original_pile == self.find_card(universe):
-                return True
-            else:
-                return False
+            return universe_original_pile == self.find_card(universe)
 
     def test_steam_engine(self):
         yellow_stack = self.piles_at_beginning_of_effect[self.active_player.yellow_stack.name]
@@ -2042,4 +2046,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Calendar')
+g.test_a_card('Astronomy')
