@@ -1181,14 +1181,6 @@ class InnovationGame(Game):
 
         return sharing_players
 
-    # def check_if_opponent_shared(self):
-    #     original_state = self.locations_at_beginning_of_action
-    #     current_state = self.record_current_card_locations()
-    #     if original_state != current_state:
-    #         return True
-    #     else:
-    #         return False
-
     def check_if_opponent_shared(self):
         original_state = self.piles_at_beginning_of_effect
         current_state = self.get_pile_state()
@@ -1695,10 +1687,7 @@ class InnovationGame(Game):
         return all(results)
 
     def test_meld_card(self, card):
-        if self.active_player.stacks[card.color].see_top_card() == card:
-            return True
-        else:
-            return False
+        return self.active_player.stacks[card.color].see_top_card() == card
 
     def test_meld_multiple_cards(self, card_list):
         count_by_color = [0, 0, 0, 0, 0]
@@ -1711,6 +1700,24 @@ class InnovationGame(Game):
             else:
                 results.append(False)
             count_by_color[card.color] = count_by_color[card.color] + 1
+
+        return all(results)
+
+    def test_return_card(self, card):
+        return self.get_pile_object(str(card.age)).see_bottom_card == card
+
+    def test_return_multiple_cards(self, card_list):
+        count_by_age = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        results = []
+        card_list.reverse()
+        for card in card_list:
+            index = -1 - count_by_age[(card.age - 1)]
+            if self.get_pile_object(str(card.age)).cards[index] == card:
+                results.append(True)
+            else:
+                results.append(False)
+
+            count_by_age[(card.age - 1)] = count_by_age[(card.age - 1)] + 1
 
         return all(results)
 
@@ -1957,6 +1964,8 @@ class InnovationGame(Game):
         self.set_up_test_generic(card_name)
         self.active_card = self.get_card_object('Astronomy')
         self.meld_card()
+        self.active_card = self.get_card_object('Metalworking')
+        self.meld_card()
         self.active_card = self.get_card_object('Machine Tools')
         self.meld_card()
         self.active_card = self.get_card_object('Experimentation')
@@ -1964,29 +1973,46 @@ class InnovationGame(Game):
 
     def test_electricity(self):
         cards_to_return = []
-        return_correctly = []
-        draw_correctly = []
-        for stack in self.get_player_object(0).stacks:
-            if stack.cards:
-                card = stack.see_top_card()
+        for stack in self.test_get_stacks_at_beginning_of_effect():
+            if stack:
+                card = stack[0]
                 if not card.contains_icon(self.factory):
                     cards_to_return.append(card)
 
         if cards_to_return:
-            draw_cards = self.test_see_next_draw_cards(8, len(cards_to_return))
+            returned_correctly = self.test_return_multiple_cards(cards_to_return)
+            draw_correctly = self.test_draw_cards(8, len(cards_to_return))
+        else:
+            returned_correctly = True
+            draw_correctly = True
 
-        self.action_dogma()
+        return returned_correctly and draw_correctly
 
-        if cards_to_return:
-            for card in cards_to_return:
-                if self.get_pile_object(str(card.age)).see_bottom_card() == card:
-                    return_correctly.append(True)
-                else:
-                    return_correctly.append(False)
-            for card in draw_cards:
-                draw_correctly.append(self.active_player.hand.is_card_in_pile(card))
+        # cards_to_return = []
+        # return_correctly = []
+        # draw_correctly = []
+        # for stack in self.get_player_object(0).stacks:
+        #     if stack.cards:
+        #         card = stack.see_top_card()
+        #         if not card.contains_icon(self.factory):
+        #             cards_to_return.append(card)
+        #
+        # if cards_to_return:
+        #     draw_cards = self.test_see_next_draw_cards(8, len(cards_to_return))
+        #
+        # self.action_dogma()
+        #
+        # if cards_to_return:
+        #     for card in cards_to_return:
+        #         if self.get_pile_object(str(card.age)).see_bottom_card() == card:
+        #             return_correctly.append(True)
+        #         else:
+        #             return_correctly.append(False)
+        #     for card in draw_cards:
+        #         draw_correctly.append(self.active_player.hand.is_card_in_pile(card))
+        #
+        # return all(return_correctly) and all(draw_correctly)
 
-        return all(return_correctly) and all(draw_correctly)
     # Age 8 tests
 
     # Age 9 tests
@@ -2042,4 +2068,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Machine Tools')
+g.test_a_card('Electricity')
