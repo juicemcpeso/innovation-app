@@ -644,6 +644,7 @@ class InnovationGame(Game):
         self.piles_at_beginning_of_action = {}
         self.piles_at_beginning_of_effect = {}
         self.piles_at_beginning_of_no_share = {}
+        self.pile_state_history = []
 
         # Create everything needed for the game
         self.verbose = True
@@ -929,16 +930,26 @@ class InnovationGame(Game):
                 card_list.append(card.name)
                 check_added_cards.append(card)
             pile_state.update({pile.name: card_list})
+
         return pile_state
 
+    def update_pile_state_history(self, pile_state):
+        self.pile_state_history.append(pile_state)
+
     def set_action_pile_state(self):
-        self.piles_at_beginning_of_action = self.get_pile_state()
+        current_state = self.get_pile_state()
+        self.piles_at_beginning_of_action = current_state
+        self.update_pile_state_history(current_state)
 
     def set_effect_pile_state(self):
-        self.piles_at_beginning_of_effect = self.get_pile_state()
+        current_state = self.get_pile_state()
+        self.piles_at_beginning_of_effect = current_state
+        self.update_pile_state_history(current_state)
 
     def set_no_share_pile_state(self):
-        self.piles_at_beginning_of_no_share = self.get_pile_state()
+        current_state = self.get_pile_state()
+        self.piles_at_beginning_of_no_share = current_state
+        self.update_pile_state_history(current_state)
 
     def set_card_location_from_dictionary(self, card_dict):
         for card_info, pile_info in card_dict.items():
