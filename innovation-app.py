@@ -1825,12 +1825,14 @@ class InnovationGame(Game):
         self.locations_at_beginning_of_action = self.record_current_card_locations()
 
     def test_fermenting(self):
+        # TODO - Update to compare against pre-dogma format once the player state is saved with splay information
         total_leaves = 0
         for stack in self.active_player.stacks:
             if stack.contains_icon(self.leaf):
                 total_leaves = total_leaves + 1
 
         return self.test_draw_cards(2, total_leaves)
+
     # Age 3 tests
 
     # Age 4 tests
