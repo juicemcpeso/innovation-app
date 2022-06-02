@@ -1843,8 +1843,6 @@ class InnovationGame(Game):
             if not card.contains_icon(self.crown):
                 break
 
-        self.action_dogma()
-
         return self.test_tuck_multiple_cards(cards_to_be_drawn)
 
     def test_experimentation(self):
@@ -1988,31 +1986,6 @@ class InnovationGame(Game):
 
         return returned_correctly and draw_correctly
 
-        # cards_to_return = []
-        # return_correctly = []
-        # draw_correctly = []
-        # for stack in self.get_player_object(0).stacks:
-        #     if stack.cards:
-        #         card = stack.see_top_card()
-        #         if not card.contains_icon(self.factory):
-        #             cards_to_return.append(card)
-        #
-        # if cards_to_return:
-        #     draw_cards = self.test_see_next_draw_cards(8, len(cards_to_return))
-        #
-        # self.action_dogma()
-        #
-        # if cards_to_return:
-        #     for card in cards_to_return:
-        #         if self.get_pile_object(str(card.age)).see_bottom_card() == card:
-        #             return_correctly.append(True)
-        #         else:
-        #             return_correctly.append(False)
-        #     for card in draw_cards:
-        #         draw_correctly.append(self.active_player.hand.is_card_in_pile(card))
-        #
-        # return all(return_correctly) and all(draw_correctly)
-
     # Age 8 tests
 
     # Age 9 tests
@@ -2068,4 +2041,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Electricity')
+g.test_a_card('Colonialism')
