@@ -1490,7 +1490,7 @@ class InnovationGame(Game):
         for test in self.tests:
             if test.toggle:
                 test.activate()
-                if test.result:
+                if test.result and self.test_cards_and_piles():
                     passed_tests.append(test)
                 else:
                     failed_tests.append(test)
@@ -1525,6 +1525,20 @@ class InnovationGame(Game):
                 print(test.name)
         else:
             print('All tests passed')
+
+    def test_cards_and_piles(self):
+        initial_cards_in_game = self.test_convert_piles_to_card_list(self.piles_at_beginning_of_effect)
+        current_cards_in_game = self.test_convert_piles_to_card_list(self.get_pile_state())
+        return initial_cards_in_game == current_cards_in_game
+
+    def test_convert_piles_to_card_list(self, pile_dict):
+        cards = []
+        for pile in pile_dict:
+            for card in pile_dict[pile]:
+                cards.append(card)
+
+        alphabetical_sorted_cards = sorted(cards)
+        return alphabetical_sorted_cards
 
     def set_up_test_generic(self, card_name):
         self.print_for_testing('Test: {t}'.format(t=card_name))
@@ -2057,4 +2071,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Astronomy')
+g.run_all_tests()
