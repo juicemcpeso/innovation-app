@@ -1535,6 +1535,19 @@ class InnovationGame(Game):
         self.locations_at_beginning_of_action = self.record_current_card_locations()
 
     # Generic tests
+    def test_get_stacks_at_beginning_of_effect(self):
+        player_stack_names = []
+        for stack in self.active_player.stacks:
+            player_stack_names.append(stack.name)
+
+        stacks_at_beginning_of_effect = []
+        for pile_name in self.piles_at_beginning_of_effect:
+            if pile_name in player_stack_names:
+                card_list = self.get_cards_from_list(self.piles_at_beginning_of_effect[pile_name])
+                stacks_at_beginning_of_effect.append(card_list)
+
+        return stacks_at_beginning_of_effect
+
     def test_enough_cards_available_to_draw(self, draw_value, number_of_cards):
         cards_to_draw = self.test_see_all_draw_cards(draw_value)
 
@@ -1709,13 +1722,14 @@ class InnovationGame(Game):
 
     def test_mysticism(self):
         current_colors = []
-        for stack in self.active_player.stacks:
-            if stack.cards:
-                current_colors.append(stack.color)
+        stacks_at_beginning = self.test_get_stacks_at_beginning_of_effect()
+        i = 0
+        for stack in stacks_at_beginning:
+            if stack:
+                current_colors.append(i)
+            i = i + 1
 
         next_cards = self.test_see_next_draw_cards(1, 2)
-
-        self.action_dogma()
 
         if next_cards[0].color in current_colors:
             return self.test_meld_card(next_cards[0]) and self.test_if_card_in_hand(next_cards[1])
@@ -1997,4 +2011,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Steam Engine')
+g.test_a_card('Mysticism')
