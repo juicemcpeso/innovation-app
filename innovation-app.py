@@ -1540,9 +1540,13 @@ class InnovationGame(Game):
 
         return stacks_at_beginning_of_effect
 
-    def test_see_score_pile_at_beginning_of_effect(self):
-        starting_score = self.get_cards_from_list(self.piles_at_beginning_of_action[self.active_player.score_pile.name])
+    def test_see_initial_score_pile(self):
+        starting_score = self.get_cards_from_list(self.piles_at_beginning_of_effect[self.active_player.score_pile.name])
         return starting_score
+
+    def test_see_initial_hand(self):
+        starting_hand = self.get_cards_from_list(self.piles_at_beginning_of_effect[self.active_player.hand.name])
+        return starting_hand
 
     def test_get_initial_highest_cards(self, card_list):
         highest_value = self.test_get_initial_highest_card_value(card_list)
@@ -1560,6 +1564,9 @@ class InnovationGame(Game):
         return highest_value
 
     # Test the functions
+    def test_no_changes(self):
+        return self.piles_at_beginning_of_effect == self.get_pile_state()
+
     def test_enough_cards_available_to_draw(self, draw_value, number_of_cards):
         cards_to_draw = self.test_see_all_draw_cards(draw_value)
 
@@ -1798,24 +1805,16 @@ class InnovationGame(Game):
     def test_calendar_setup(self, card_name):
         """Condition where player has cards in score pile"""
         self.set_up_test_generic(card_name)
-        self.active_player = self.get_player_object(1)
-        self.active_card = self.get_card_object('Fermenting')
-        self.meld_card()
+        self.active_player = self.get_player_object(0)
         self.active_card = self.get_card_object('A.I.')
         self.add_card_to_score_pile()
-        self.active_player = self.get_player_object(0)
         self.active_card = self.get_card_object('Calendar')
 
     def test_calendar(self):
-        cards_to_draw = []
-        results = []
-        if self.active_player.score_pile.get_pile_size() > self.active_player.hand.get_pile_size():
-            cards_to_draw = self.test_see_next_draw_cards(3, 2)
-
-        if cards_to_draw:
-            return self.test_if_multiple_cards_in_hand(cards_to_draw)
+        if len(self.test_see_initial_score_pile()) > len(self.test_see_initial_hand()):
+            return self.test_draw_cards(3, 2)
         else:
-            return self.test_if_cards_still_in_draw_pile(cards_to_draw)
+            return self.test_no_changes()
 
     def test_fermenting_setup(self, card_name):
         self.set_up_test_generic(card_name)
@@ -1952,7 +1951,7 @@ class InnovationGame(Game):
         self.add_card_to_score_pile()
 
     def test_machine_tools(self):
-        initial_score_pile = self.test_see_score_pile_at_beginning_of_effect()
+        initial_score_pile = self.test_see_initial_score_pile()
         highest_card_value = self.test_get_initial_highest_card_value(initial_score_pile)
 
         return self.test_draw_and_score(highest_card_value, 1)
@@ -2041,4 +2040,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Colonialism')
+g.test_a_card('Calendar')
