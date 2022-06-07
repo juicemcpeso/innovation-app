@@ -28,8 +28,6 @@ class InnovationCard(Card):
 
         self.dogma = []
         self.tests = []
-        self.current_pile = None
-        self.current_position = 0
 
         # Set color to an int 0-4, alphabetically with options
         color_options = ['blue', 'green', 'purple', 'red', 'yellow','']
@@ -640,7 +638,6 @@ class InnovationGame(Game):
         # Create dictionaries to find objects
         self.special_achievements = {}
         self.draw_piles = []
-        self.locations_at_beginning_of_action = {}
         self.piles_at_beginning_of_action = {}
         self.piles_at_beginning_of_effect = {}
         self.piles_at_beginning_of_no_share = {}
@@ -745,7 +742,6 @@ class InnovationGame(Game):
     def set_up_game(self):
         """Sets up the game to be played"""
         self.shuffle_piles()
-        self.set_current_card_locations()
         self.remove_cards_used_as_achievements()
         self.set_action_pile_state()
         self.set_effect_pile_state()
@@ -884,41 +880,6 @@ class InnovationGame(Game):
                 self.game_end()
 
     # Save game state
-    def set_current_card_locations(self):
-        for card in self.cards:
-            self.set_current_card_pile(card)
-            self.set_current_card_position(card)
-
-    def set_current_card_pile(self, card):
-        for pile in self.piles:
-            for c in pile.cards:
-                if c == card:
-                    card.current_pile = pile
-
-    def set_current_card_position(self, card):
-        for pile in self.piles:
-            for c in pile.cards:
-                if c == card:
-                    card.current_position = pile.get_card_position(card)
-
-    def record_current_card_locations(self):
-        card_dict = {}
-        for card in self.cards:
-            card_dict.update({card.name: [card.current_pile.name, card.current_position]})
-
-        return card_dict
-
-    def write_current_card_locations(self):
-        # TODO - update this function to write to a file
-        print("{a:16} {b:22} {c:2}".format(a='Card', b='Pile', c='Position'))
-        current_locations = ''
-
-        for card in self.cards:
-            current_locations = current_locations + "{n},{l},{p}\n".format(n=card.name,
-                                                                           l=card.current_pile,
-                                                                           p=card.current_position)
-            print("{a:16} {b:22} {c:2}".format(a=card.name, b=card.current_pile.name, c=card.current_position))
-
     def get_pile_state(self):
         pile_state = {}
         check_added_cards = []
@@ -1024,7 +985,6 @@ class InnovationGame(Game):
         self.active_player.achievement_pile.add_card_to_bottom(self.active_card)
         self.print_for_testing('{p} claims achievement: {c}'.format(p=self.active_player, c=self.active_card.name))
         self.check_game_end()
-        self.set_current_card_locations()
 
     def claim_special_achievement(self, achievement_name):
         card = g.get_card_object(achievement_name)
@@ -1035,47 +995,40 @@ class InnovationGame(Game):
             self.check_game_end()
         else:
             self.print_for_testing('Special achievement {c} already claimed'.format(c=card.name))
-        self.set_current_card_locations()
 
     def add_card_to_hand(self):
         """Moves selected card to active player's hand"""
         self.find_and_remove_card(self.active_card)
         self.active_player.hand.add_card_to_bottom(self.active_card)
         self.print_for_testing('{p} adds {c} to hand'.format(p=self.active_player, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def add_card_to_score_pile(self):
         """Moves selected card to the score pile"""
         self.find_and_remove_card(self.active_card)
         self.base_score(self.active_card)
         self.print_for_testing('{p} adds {c} to score pile'.format(p=self.active_player, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def draw_to_hand(self, draw_value):
         """Draws a card to a players hand of a specified draw value"""
         self.base_draw(draw_value)
         self.print_for_testing('{p} draws {c}'.format(p=self.active_player, c=self.active_card.name))
         self.add_card_to_hand()
-        self.set_current_card_locations()
 
     def draw_and_meld(self, draw_value):
         self.base_draw(draw_value)
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
         self.print_for_testing('{p} draws and melds {c}'.format(p=self.active_player, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def draw_and_reveal(self, draw_value):
         self.base_draw(draw_value)
         # TODO - update to inform card counting module, remove printing
         self.print_for_testing('{p} draws and reveals {c}'.format(p=self.active_player, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def draw_and_score(self, draw_value):
         self.base_draw(draw_value)
         self.print_for_testing('{p} draws and scores an age {c} card'.format(p=self.active_player, c=self.active_card.age))
         self.add_card_to_score_pile()
-        self.set_current_card_locations()
 
     def draw_and_tuck(self, draw_value):
         self.base_draw(draw_value)
@@ -1083,32 +1036,27 @@ class InnovationGame(Game):
         self.base_tuck(self.active_card)
         # TODO - update to inform card counting module
         self.print_for_testing('{p} draws and tucks {c}'.format(p=self.active_player, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def return_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_return(self.active_card)
         self.print_for_testing('{p} returns {c}'.format(p=self.active_player.name, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def score_cards(self, card_list):
         for card in card_list:
             self.find_and_remove_card(card)
             self.base_score(card)
             self.print_for_testing('{p} scores {c}'.format(p=self.active_player.name, c=card.name))
-        self.set_current_card_locations()
 
     def meld_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
         self.print_for_testing('{p} melds {c}'.format(p=self.active_player.name, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def tuck_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_tuck(self.active_card)
         self.print_for_testing('{p} tucks {c}'.format(p=self.active_player.name, c=self.active_card.name))
-        self.set_current_card_locations()
 
     # Actions
     def action_draw(self):
@@ -1213,7 +1161,6 @@ class InnovationGame(Game):
     # Functions to select and simulate actions
     def take_action(self):
         """Function to take an action"""
-        self.locations_at_beginning_of_action = self.record_current_card_locations()
         self.set_action_pile_state()
         self.set_effect_pile_state()
         self.active_player = self.turn_player
@@ -1549,7 +1496,6 @@ class InnovationGame(Game):
         self.turn_card = self.get_card_object(card_name)
         self.active_card = self.turn_card
         self.meld_card()
-        self.locations_at_beginning_of_action = self.record_current_card_locations()
 
     # See cards at beginning of effect
     def test_get_stacks_at_beginning_of_effect(self):
@@ -1861,7 +1807,6 @@ class InnovationGame(Game):
         g.meld_card()
         self.active_card = g.get_card_object('Calendar')
         g.meld_card()
-        self.locations_at_beginning_of_action = self.record_current_card_locations()
 
     def test_fermenting(self):
         # TODO - Update to compare against pre-dogma format once the player state is saved with splay information
