@@ -873,6 +873,7 @@ class InnovationGame(Game):
         while not self.game_over:
             self.play_round()
 
+    # Game end functions
     def game_end(self):
         self.game_over = True
         print('Game over')
@@ -880,13 +881,48 @@ class InnovationGame(Game):
         if not self.testing:
             quit()
 
-    def check_game_end(self):
+    def check_game_end_ai(self):
+        top_cards = self.get_all_top_cards()
+        if (self.get_card_object('Robotics') in top_cards) and (self.get_card_object('Software') in top_cards):
+            lowest_players = self.get_players_with_lowest_score()
+            if len(lowest_players) == 1:
+                lowest_players[0].winner = True
+                self.game_end()
+
+    def check_game_end_achievements(self):
         """Runs when a card is added to an achievement pile. Checks to see if anybody has met goal."""
         for player in self.players:
             self.print_for_testing('{p} has {a} achievements'.format(p=player.name,
                                                                      a=player.achievement_pile.get_pile_size()))
             if player.achievement_pile.get_pile_size() >= self.achievement_goal:
+                player.winner = True
                 self.game_end()
+
+    def get_players_with_lowest_score(self):
+        scores = []
+        lowest_players = []
+        for player in self.players:
+            scores.append(player.get_score())
+        lowest_score = min(scores)
+
+        for player in self.players:
+            if player.get_score() == lowest_score:
+                lowest_players.append(player)
+
+        return lowest_players
+
+    def get_players_with_highest_score(self):
+        scores = []
+        highest_players = []
+        for player in self.players:
+            scores.append(player.get_score())
+        highest_score = max(scores)
+
+        for player in self.players:
+            if player.get_score() == highest_score:
+                highest_players.append(player)
+
+        return highest_players
 
     # Save game state
     def get_pile_state(self):
@@ -993,7 +1029,7 @@ class InnovationGame(Game):
         self.find_and_remove_card(self.active_card)
         self.active_player.achievement_pile.add_card_to_bottom(self.active_card)
         self.print_for_testing('{p} claims achievement: {c}'.format(p=self.active_player, c=self.active_card.name))
-        self.check_game_end()
+        self.check_game_end_achievements()
 
     def claim_special_achievement(self, achievement_name):
         card = g.get_card_object(achievement_name)
@@ -1001,7 +1037,7 @@ class InnovationGame(Game):
             self.find_and_remove_card(card)
             self.active_player.achievement_pile.add_card_to_bottom(card)
             self.print_for_testing('{p} claims special achievement: {c}'.format(p=self.active_player, c=card.name))
-            self.check_game_end()
+            self.check_game_end_achievements()
         else:
             self.print_for_testing('Special achievement {c} already claimed'.format(c=card.name))
 
@@ -1280,6 +1316,15 @@ class InnovationGame(Game):
             associated_card = self.get_card_object(effect.card_name)
             associated_card.dogma.append(effect)
 
+    # Supporting effects functions
+    def get_all_top_cards(self):
+        top_cards = []
+        for stack in self.stacks:
+            if stack.cards:
+                top_cards.append(stack.see_top_card())
+
+        return top_cards
+
     # Age 1 Effects
     def metalworking_effect_0(self):
         while True:
@@ -1403,6 +1448,9 @@ class InnovationGame(Game):
     # Age 10 effects
     def ai_effect_0(self):
         self.draw_and_score(10)
+
+    def ai_effect_1(self):
+        self.check_game_end_ai()
 
     def robotics_effect_0(self):
         if self.active_player.green_stack.cards:
