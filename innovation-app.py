@@ -28,8 +28,6 @@ class InnovationCard(Card):
 
         self.dogma = []
         self.tests = []
-        self.current_pile = None
-        self.current_position = 0
 
         # Set color to an int 0-4, alphabetically with options
         color_options = ['blue', 'green', 'purple', 'red', 'yellow','']
@@ -135,9 +133,10 @@ class SpecialAchievementCard(Card):
 
 class Test:
 
-    def __init__(self, tn, sup, fun, cd=None):
+    def __init__(self, tn, sup, act, fun, cd=None):
         self.name = 'Test: ' + tn
         self.setup = sup
+        self.act = act
         self.function = fun
         self.associated_card = cd
 
@@ -149,6 +148,7 @@ class Test:
             self.setup(self.associated_card.name)
         else:
             self.setup()
+        self.act()
         self.result = False
         self.result = self.function()
 
@@ -557,6 +557,12 @@ class Game:
             card = card_list.pop()
         return card
 
+    def get_cards_from_list(self, card_list):
+        output_list = []
+        for card_name in card_list:
+            output_list.append(self.get_card_object(card_name))
+        return output_list
+
     def add_effect_to_game(self, e):
         if isinstance(e, Effect):
             self.effects.append(e)
@@ -632,7 +638,10 @@ class InnovationGame(Game):
         # Create dictionaries to find objects
         self.special_achievements = {}
         self.draw_piles = []
-        self.locations_at_beginning_of_action = {}
+        self.piles_at_beginning_of_action = {}
+        self.piles_at_beginning_of_effect = {}
+        self.piles_at_beginning_of_no_share = {}
+        self.pile_state_history = []
 
         # Create everything needed for the game
         self.verbose = True
@@ -733,8 +742,9 @@ class InnovationGame(Game):
     def set_up_game(self):
         """Sets up the game to be played"""
         self.shuffle_piles()
-        self.set_current_card_locations()
         self.remove_cards_used_as_achievements()
+        self.set_action_pile_state()
+        self.set_effect_pile_state()
 
     def remove_cards_used_as_achievements(self):
         for i in range(1, 10):
@@ -870,41 +880,37 @@ class InnovationGame(Game):
                 self.game_end()
 
     # Save game state
-    def set_current_card_locations(self):
-        for card in self.cards:
-            self.set_current_card_pile(card)
-            self.set_current_card_position(card)
-
-    def set_current_card_pile(self, card):
+    def get_pile_state(self):
+        pile_state = {}
+        check_added_cards = []
         for pile in self.piles:
-            for c in pile.cards:
-                if c == card:
-                    card.current_pile = pile
+            card_list = []
+            for card in pile.cards:
+                if card in check_added_cards:
+                    raise ValueError("Duplicate card. Card {c} is already in pile {p}".format(c=card.name, p=pile.name))
+                card_list.append(card.name)
+                check_added_cards.append(card)
+            pile_state.update({pile.name: card_list})
 
-    def set_current_card_position(self, card):
-        for pile in self.piles:
-            for c in pile.cards:
-                if c == card:
-                    card.current_position = pile.get_card_position(card)
+        return pile_state
 
-    def record_current_card_locations(self):
-        card_dict = {}
-        for card in self.cards:
-            card_dict.update({card.name: [card.current_pile.name, card.current_position]})
+    def update_pile_state_history(self, pile_state):
+        self.pile_state_history.append(pile_state)
 
-        return card_dict
+    def set_action_pile_state(self):
+        current_state = self.get_pile_state()
+        self.piles_at_beginning_of_action = current_state
+        self.update_pile_state_history(current_state)
 
-    def write_current_card_locations(self):
-        # TODO - update this function to write to a file
-        print("{a:16} {b:22} {c:2}".format(a='Card', b='Pile', c='Position'))
-        current_locations = ''
+    def set_effect_pile_state(self):
+        current_state = self.get_pile_state()
+        self.piles_at_beginning_of_effect = current_state
+        self.update_pile_state_history(current_state)
 
-        for card in self.cards:
-            current_locations = current_locations + "{n},{l},{p}\n".format(n=card.name,
-                                                                           l=card.current_pile,
-                                                                           p=card.current_position)
-            print("{a:16} {b:22} {c:2}".format(a=card.name, b=card.current_pile.name, c=card.current_position))
-
+    def set_no_share_pile_state(self):
+        current_state = self.get_pile_state()
+        self.piles_at_beginning_of_no_share = current_state
+        self.update_pile_state_history(current_state)
 
     def set_card_location_from_dictionary(self, card_dict):
         for card_info, pile_info in card_dict.items():
@@ -979,7 +985,6 @@ class InnovationGame(Game):
         self.active_player.achievement_pile.add_card_to_bottom(self.active_card)
         self.print_for_testing('{p} claims achievement: {c}'.format(p=self.active_player, c=self.active_card.name))
         self.check_game_end()
-        self.set_current_card_locations()
 
     def claim_special_achievement(self, achievement_name):
         card = g.get_card_object(achievement_name)
@@ -990,47 +995,40 @@ class InnovationGame(Game):
             self.check_game_end()
         else:
             self.print_for_testing('Special achievement {c} already claimed'.format(c=card.name))
-        self.set_current_card_locations()
 
     def add_card_to_hand(self):
         """Moves selected card to active player's hand"""
         self.find_and_remove_card(self.active_card)
         self.active_player.hand.add_card_to_bottom(self.active_card)
         self.print_for_testing('{p} adds {c} to hand'.format(p=self.active_player, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def add_card_to_score_pile(self):
         """Moves selected card to the score pile"""
         self.find_and_remove_card(self.active_card)
         self.base_score(self.active_card)
         self.print_for_testing('{p} adds {c} to score pile'.format(p=self.active_player, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def draw_to_hand(self, draw_value):
         """Draws a card to a players hand of a specified draw value"""
         self.base_draw(draw_value)
         self.print_for_testing('{p} draws {c}'.format(p=self.active_player, c=self.active_card.name))
         self.add_card_to_hand()
-        self.set_current_card_locations()
 
     def draw_and_meld(self, draw_value):
         self.base_draw(draw_value)
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
         self.print_for_testing('{p} draws and melds {c}'.format(p=self.active_player, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def draw_and_reveal(self, draw_value):
         self.base_draw(draw_value)
         # TODO - update to inform card counting module, remove printing
         self.print_for_testing('{p} draws and reveals {c}'.format(p=self.active_player, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def draw_and_score(self, draw_value):
         self.base_draw(draw_value)
         self.print_for_testing('{p} draws and scores an age {c} card'.format(p=self.active_player, c=self.active_card.age))
         self.add_card_to_score_pile()
-        self.set_current_card_locations()
 
     def draw_and_tuck(self, draw_value):
         self.base_draw(draw_value)
@@ -1038,32 +1036,27 @@ class InnovationGame(Game):
         self.base_tuck(self.active_card)
         # TODO - update to inform card counting module
         self.print_for_testing('{p} draws and tucks {c}'.format(p=self.active_player, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def return_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_return(self.active_card)
         self.print_for_testing('{p} returns {c}'.format(p=self.active_player.name, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def score_cards(self, card_list):
         for card in card_list:
             self.find_and_remove_card(card)
             self.base_score(card)
             self.print_for_testing('{p} scores {c}'.format(p=self.active_player.name, c=card.name))
-        self.set_current_card_locations()
 
     def meld_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
         self.print_for_testing('{p} melds {c}'.format(p=self.active_player.name, c=self.active_card.name))
-        self.set_current_card_locations()
 
     def tuck_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_tuck(self.active_card)
         self.print_for_testing('{p} tucks {c}'.format(p=self.active_player.name, c=self.active_card.name))
-        self.set_current_card_locations()
 
     # Actions
     def action_draw(self):
@@ -1098,15 +1091,15 @@ class InnovationGame(Game):
         sharing_players = self.determine_who_can_share()
         self.execute_dogma(sharing_players)
 
-        # self.draw_if_opponents_shared(sharing_players)
-
     def execute_dogma(self, sharing_players):
         dogma_was_shared = False
+        self.set_action_pile_state()
         for effect in self.turn_card.dogma:
             if effect.demand:
                 # Demand effects
                 for eligible_player in self.turn_player.share_order:
                     if eligible_player not in sharing_players:
+                        self.set_effect_pile_state()
                         self.active_player = eligible_player
                         self.print_for_testing('{t} DEMANDS {p} resolve {c} dogma'.format(t=self.turn_player,
                                                                                           p=eligible_player.name,
@@ -1116,6 +1109,7 @@ class InnovationGame(Game):
             else:
                 # Standard effects
                 for eligible_player in sharing_players:
+                    self.set_effect_pile_state()
                     self.active_player = eligible_player
                     self.print_for_testing('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
                     effect.activate()
@@ -1129,9 +1123,10 @@ class InnovationGame(Game):
             self.action_draw()
 
     def execute_dogma_for_yourself(self):
+        self.set_no_share_pile_state()
         for effect in self.active_card.dogma:
             if not effect.demand:
-                self.print_for_testing('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
+                self.print_for_testing('{p} resolves {c} dogma'.format(p=self.active_player.name, c=self.active_card.name))
                 effect.activate()
 
     def determine_who_can_share(self):
@@ -1146,8 +1141,8 @@ class InnovationGame(Game):
         return sharing_players
 
     def check_if_opponent_shared(self):
-        original_state = self.locations_at_beginning_of_action
-        current_state = self.record_current_card_locations()
+        original_state = self.piles_at_beginning_of_effect
+        current_state = self.get_pile_state()
         if original_state != current_state:
             return True
         else:
@@ -1166,7 +1161,8 @@ class InnovationGame(Game):
     # Functions to select and simulate actions
     def take_action(self):
         """Function to take an action"""
-        self.locations_at_beginning_of_action = self.record_current_card_locations()
+        self.set_action_pile_state()
+        self.set_effect_pile_state()
         self.active_player = self.turn_player
         available_actions = self.available_actions()
         selected_action = self.select_action(available_actions)
@@ -1411,11 +1407,11 @@ class InnovationGame(Game):
             print(string_to_print)
 
     def create_tests(self):
-        # Test name, setup function, test function, corresponding card
+        # Test name, setup function, action function, evaluation function, corresponding card
         test_list = [['Metalworking', self.set_up_test_generic, self.test_metalworking, self.get_card_object('Metalworking')],
                      ['Mysticism', self.set_up_test_generic, self.test_mysticism, self.get_card_object('Mysticism')],
                      ['Sailing', self.set_up_test_generic, self.test_sailing, self.get_card_object('Sailing')],
-                     ['The Wheel', self.set_up_test_generic, self.test_the_wheel, self.get_card_object('The Wheel')],
+                     ['The Wheel', self.test_the_wheel_setup, self.test_the_wheel, self.get_card_object('The Wheel')],
                      ['Writing', self.set_up_test_generic, self.test_writing, self.get_card_object('Writing')],
                      ['Calendar (no score cards)', self.set_up_test_generic, self.test_calendar, self.get_card_object('Calendar')],
                      ['Calendar (score cards)', self.test_calendar_setup, self.test_calendar, self.get_card_object('Calendar')],
@@ -1430,7 +1426,7 @@ class InnovationGame(Game):
                      ['Robotics', self.set_up_test_generic, self.test_robotics, self.get_card_object('Robotics')]]
 
         for test_to_add in test_list:
-            test = Test(test_to_add[0], test_to_add[1], test_to_add[2], test_to_add[3])
+            test = Test(test_to_add[0], test_to_add[1], self.action_dogma, test_to_add[2], test_to_add[3])
             self.add_test_to_game(test)
             associated_card = test_to_add[3]
             associated_card.tests.append(test)
@@ -1441,7 +1437,7 @@ class InnovationGame(Game):
         for test in self.tests:
             if test.toggle:
                 test.activate()
-                if test.result:
+                if test.result and self.test_cards_and_piles():
                     passed_tests.append(test)
                 else:
                     failed_tests.append(test)
@@ -1461,6 +1457,14 @@ class InnovationGame(Game):
 
         self.determine_pass_or_fail(failed_tests)
 
+    def test_no_share_effect(self, card):
+        # TODO - update to only run tests on non-DEMAND effects
+        results = []
+        for test in card.tests:
+            test.activate()
+            results.append(test.result)
+        return all(results)
+
     def determine_pass_or_fail(self, failed_test_list):
         if failed_test_list:
             print('The following tests failed:')
@@ -1468,6 +1472,20 @@ class InnovationGame(Game):
                 print(test.name)
         else:
             print('All tests passed')
+
+    def test_cards_and_piles(self):
+        initial_cards_in_game = self.test_convert_piles_to_card_list(self.piles_at_beginning_of_effect)
+        current_cards_in_game = self.test_convert_piles_to_card_list(self.get_pile_state())
+        return initial_cards_in_game == current_cards_in_game
+
+    def test_convert_piles_to_card_list(self, pile_dict):
+        cards = []
+        for pile in pile_dict:
+            for card in pile_dict[pile]:
+                cards.append(card)
+
+        alphabetical_sorted_cards = sorted(cards)
+        return alphabetical_sorted_cards
 
     def set_up_test_generic(self, card_name):
         self.print_for_testing('Test: {t}'.format(t=card_name))
@@ -1478,25 +1496,57 @@ class InnovationGame(Game):
         self.turn_card = self.get_card_object(card_name)
         self.active_card = self.turn_card
         self.meld_card()
-        self.locations_at_beginning_of_action = self.record_current_card_locations()
 
-    # Generic tests
-    def test_cards_available_to_draw(self, draw_value):
-        i = draw_value
-        while i <= 10:
-            if self.get_pile_object(str(i)).cards:
-                return True
-            i = i + 1
-        return False
+    # See cards at beginning of effect
+    def test_get_stacks_at_beginning_of_effect(self):
+        player_stack_names = []
+        for stack in self.active_player.stacks:
+            player_stack_names.append(stack.name)
+
+        stacks_at_beginning_of_effect = []
+        for pile_name in self.piles_at_beginning_of_effect:
+            if pile_name in player_stack_names:
+                card_list = self.get_cards_from_list(self.piles_at_beginning_of_effect[pile_name])
+                stacks_at_beginning_of_effect.append(card_list)
+
+        return stacks_at_beginning_of_effect
+
+    def test_see_initial_score_pile(self):
+        starting_score = self.get_cards_from_list(self.piles_at_beginning_of_effect[self.active_player.score_pile.name])
+        return starting_score
+
+    def test_see_initial_hand(self):
+        starting_hand = self.get_cards_from_list(self.piles_at_beginning_of_effect[self.active_player.hand.name])
+        return starting_hand
+
+    def test_get_initial_highest_cards(self, card_list):
+        highest_value = self.test_get_initial_highest_card_value(card_list)
+        highest_cards = []
+        for card in card_list:
+            if card.age == highest_value:
+                highest_cards.append(card)
+        return highest_cards
+
+    def test_get_initial_highest_card_value(self, card_list):
+        highest_value = 0
+        for card in card_list:
+            if card.age > highest_value:
+                highest_value = card.age
+        return highest_value
+
+    def test_get_initial_card_pile(self, card_name):
+        for pile in self.piles_at_beginning_of_effect:
+            if card_name in self.piles_at_beginning_of_effect[pile]:
+                return self.get_pile_object(pile)
+
+    # Test the functions
+    def test_no_changes(self):
+        return self.piles_at_beginning_of_effect == self.get_pile_state()
 
     def test_enough_cards_available_to_draw(self, draw_value, number_of_cards):
-        i = draw_value
-        cards_available = 0
-        while i <= 10:
-            cards_available = cards_available + self.get_pile_object(str(i)).get_pile_size()
-            i = i + 1
+        cards_to_draw = self.test_see_all_draw_cards(draw_value)
 
-        if cards_available > number_of_cards:
+        if len(cards_to_draw) >= number_of_cards:
             return True
         else:
             return False
@@ -1507,9 +1557,9 @@ class InnovationGame(Game):
             i = 1
 
         while i <= 10:
-            pile = self.get_pile_object(str(i))
-            if pile.cards:
-                drawn_card = pile.see_top_card()
+            pile = self.piles_at_beginning_of_effect[str(i)]
+            if pile:
+                drawn_card = self.get_card_object(pile[0])
                 return drawn_card
             i = i + 1
 
@@ -1517,56 +1567,34 @@ class InnovationGame(Game):
         draw_cards = []
         i = draw_value
         while i <= 10:
-            pile = pile = self.get_pile_object(str(i))
-            for card in pile.cards:
-                draw_cards.append(card)
+            pile = self.piles_at_beginning_of_effect[str(i)]
+            for card in pile:
+                draw_cards.append(self.get_card_object(card))
             i = i + 1
+        return draw_cards
 
+    def test_see_all_draw_cards_beginning_of_action(self, draw_value):
+        draw_cards = []
+        i = draw_value
+        while i <= 10:
+            pile = self.piles_at_beginning_of_action[str(i)]
+            for card in pile:
+                draw_cards.append(self.get_card_object(card))
+            i = i + 1
         return draw_cards
 
     def test_see_next_draw_cards(self, draw_value, number_of_cards):
-        i = draw_value
         cards_to_see = []
-        cards_remaining = number_of_cards
+        draw_cards = self.test_see_all_draw_cards(draw_value)
 
-        while i <= 10:
-            pile = self.get_pile_object(str(i))
-            j = 0
-            if pile.get_pile_size() >= cards_remaining:
-                while j < cards_remaining:
-                    cards_to_see.append(pile.cards[j])
-                    j = j + 1
-                cards_remaining = cards_remaining - pile.get_pile_size()
-            else:
-                while j < pile.get_pile_size():
-                    cards_to_see.append(pile.cards[j])
-                    j = j + 1
-                cards_remaining = cards_remaining - pile.get_pile_size()
-            if cards_remaining == 0:
-                break
+        i = 0
+        while i < number_of_cards:
+            cards_to_see.append(draw_cards[i])
             i = i + 1
 
         return cards_to_see
 
-    def test_draw_and_meld(self, draw_value):
-        if self.test_cards_available_to_draw(draw_value):
-            card = self.test_see_draw_card(draw_value)
-
-            self.action_dogma()
-
-            if self.active_player.stacks[card.color].see_top_card() == card \
-                    and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
-                return True
-            else:
-                return False
-        else:
-            self.action_dogma()
-            if self.game_over:
-                return True
-            else:
-                return False
-
-    def test_draw_multiple(self, draw_value, number_of_cards):
+    def test_draw_cards(self, draw_value, number_of_cards):
         results = []
 
         if number_of_cards == 0:
@@ -1574,8 +1602,6 @@ class InnovationGame(Game):
         else:
             if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
                 cards = self.test_see_next_draw_cards(draw_value, number_of_cards)
-
-                self.action_dogma()
 
                 for card in cards:
                     if self.active_player.hand.is_card_in_pile(card) \
@@ -1587,29 +1613,47 @@ class InnovationGame(Game):
                 return all(results)
 
             else:
-                self.action_dogma()
+                # TODO - update game end test function
                 if self.game_over:
                     return True
                 else:
                     return False
 
-    def test_draw_and_meld_multiple(self, draw_value, number_of_cards):
-        cards_to_meld = []
+    def test_draw_and_meld(self, draw_value, number_of_cards):
         if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
-            cards_to_meld.append(self.test_see_draw_card())
+            cards_to_draw = self.test_see_next_draw_cards(draw_value, number_of_cards)
+
+            return self.test_meld_multiple_cards(cards_to_draw)
+
         else:
+            # TODO - update game end test function
             if self.game_over:
                 return True
             else:
                 return False
 
-        if self.test_cards_available_to_draw(draw_value):
-            card = self.test_see_draw_card(draw_value)
+    def test_draw_and_score(self, draw_value, number_of_cards):
+        if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
+            cards_to_draw = self.test_see_next_draw_cards(draw_value, number_of_cards)
 
-            self.action_dogma()
+            return self.test_score_multiple_cards(cards_to_draw)
 
-            if self.active_player.stacks[card.color].see_top_card() == card \
-                    and not self.get_pile_object(str(card.age)).is_card_in_pile(card):
+        else:
+            # TODO - update game end test function
+            if self.game_over:
+                return True
+            else:
+                return False
+
+    def test_draw_and_tuck(self, draw_value, number_of_cards):
+        if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
+            cards_to_draw = self.test_see_next_draw_cards(draw_value, number_of_cards)
+
+            return self.test_tuck_multiple_cards(cards_to_draw)
+
+        else:
+            # TODO - update game end test function
+            if self.game_over:
                 return True
             else:
                 return False
@@ -1635,10 +1679,7 @@ class InnovationGame(Game):
         return all(results)
 
     def test_meld_card(self, card):
-        if self.active_player.stacks[card.color].see_top_card() == card:
-            return True
-        else:
-            return False
+        return self.active_player.stacks[card.color].see_top_card() == card
 
     def test_meld_multiple_cards(self, card_list):
         count_by_color = [0, 0, 0, 0, 0]
@@ -1654,6 +1695,24 @@ class InnovationGame(Game):
 
         return all(results)
 
+    def test_return_card(self, card):
+        return self.get_pile_object(str(card.age)).see_bottom_card == card
+
+    def test_return_multiple_cards(self, card_list):
+        count_by_age = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        results = []
+        card_list.reverse()
+        for card in card_list:
+            index = -1 - count_by_age[(card.age - 1)]
+            if self.get_pile_object(str(card.age)).cards[index] == card:
+                results.append(True)
+            else:
+                results.append(False)
+
+            count_by_age[(card.age - 1)] = count_by_age[(card.age - 1)] + 1
+
+        return all(results)
+
     def test_score_card(self, card):
         return self.active_player.score_pile.is_card_in_pile(card)
 
@@ -1661,7 +1720,6 @@ class InnovationGame(Game):
         results = []
         for card in card_list:
             results.append(self.active_player.score_pile.is_card_in_pile(card))
-        print(results)
         return all(results)
 
     def test_if_card_in_hand(self, card):
@@ -1689,8 +1747,6 @@ class InnovationGame(Game):
             if not card.contains_icon(self.castle):
                 break
 
-        self.action_dogma()
-
         scored_correctly = self.test_score_multiple_cards(cards_that_will_be_drawn[:-1])
         drawn_correctly = self.active_player.hand.is_card_in_pile(cards_that_will_be_drawn[-1])
 
@@ -1698,13 +1754,14 @@ class InnovationGame(Game):
 
     def test_mysticism(self):
         current_colors = []
-        for stack in self.active_player.stacks:
-            if stack.cards:
-                current_colors.append(stack.color)
+        stacks_at_beginning = self.test_get_stacks_at_beginning_of_effect()
+        i = 0
+        for stack in stacks_at_beginning:
+            if stack:
+                current_colors.append(i)
+            i = i + 1
 
         next_cards = self.test_see_next_draw_cards(1, 2)
-
-        self.action_dogma()
 
         if next_cards[0].color in current_colors:
             return self.test_meld_card(next_cards[0]) and self.test_if_card_in_hand(next_cards[1])
@@ -1712,42 +1769,37 @@ class InnovationGame(Game):
             return self.test_if_card_in_hand(next_cards[0])
 
     def test_sailing(self):
-        self.action_dogma()
+        return self.test_draw_and_meld(1, 1)
 
-        card_was_melded = False
-        for stack in self.active_player.stacks:
-            card = stack.see_top_card()
-            if self.active_card != self.get_card_object('Sailing') and card == self.active_card:
-                card_was_melded = True
-
-        return card_was_melded
+    def test_the_wheel_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+        self.active_player = self.get_player_object(1)
+        self.active_card = self.get_card_object('Mysticism')
+        self.meld_card()
+        self.active_card = self.get_card_object('The Wheel')
+        self.active_player = self.get_player_object(0)
+        self.turn_player = self.active_player
 
     def test_the_wheel(self):
-        return self.test_draw_multiple(1, 2)
+        return self.test_draw_cards(1, 2)
 
     def test_writing(self):
-        return self.test_draw_multiple(2, 1)
+        return self.test_draw_cards(2, 1)
 
     # Age 2 tests
     def test_calendar_setup(self, card_name):
         """Condition where player has cards in score pile"""
         self.set_up_test_generic(card_name)
+        self.active_player = self.get_player_object(0)
         self.active_card = self.get_card_object('A.I.')
         self.add_card_to_score_pile()
         self.active_card = self.get_card_object('Calendar')
 
     def test_calendar(self):
-        cards_to_draw = []
-        results = []
-        if self.active_player.score_pile.get_pile_size() > self.active_player.hand.get_pile_size():
-            cards_to_draw = self.test_see_next_draw_cards(3, 2)
-
-        self.action_dogma()
-
-        if cards_to_draw:
-            return self.test_if_multiple_cards_in_hand(cards_to_draw)
+        if len(self.test_see_initial_score_pile()) > len(self.test_see_initial_hand()):
+            return self.test_draw_cards(3, 2)
         else:
-            return self.test_if_cards_still_in_draw_pile(cards_to_draw)
+            return self.test_no_changes()
 
     def test_fermenting_setup(self, card_name):
         self.set_up_test_generic(card_name)
@@ -1755,15 +1807,16 @@ class InnovationGame(Game):
         g.meld_card()
         self.active_card = g.get_card_object('Calendar')
         g.meld_card()
-        self.locations_at_beginning_of_action = self.record_current_card_locations()
 
     def test_fermenting(self):
+        # TODO - Update to compare against pre-dogma format once the player state is saved with splay information
         total_leaves = 0
         for stack in self.active_player.stacks:
             if stack.contains_icon(self.leaf):
                 total_leaves = total_leaves + 1
 
-        return self.test_draw_multiple(2, total_leaves)
+        return self.test_draw_cards(2, total_leaves)
+
     # Age 3 tests
 
     # Age 4 tests
@@ -1775,34 +1828,12 @@ class InnovationGame(Game):
             if not card.contains_icon(self.crown):
                 break
 
-        self.action_dogma()
-
         return self.test_tuck_multiple_cards(cards_to_be_drawn)
 
     def test_experimentation(self):
-        return self.test_draw_and_meld(5)
+        return self.test_draw_and_meld(5, 1)
 
     # Age 5 tests
-    def test_astronomy(self):
-        universe_original_pile = self.find_card(self.get_card_object('Universe'))
-
-        # Determine which cards should show up
-        all_cards = self.test_see_all_draw_cards(6)
-        cards_to_be_drawn = []
-        for card in all_cards:
-            cards_to_be_drawn.append(card)
-            if card.color == self.blue or card.color == self.green:
-                pass
-            else:
-                break
-
-        self.action_dogma()
-
-        if self.test_astronomy_0(cards_to_be_drawn[:-1]) and self.test_astronomy_1(universe_original_pile):
-            return True
-        else:
-            return False
-
     def test_astronomy_setup(self, card_name):
         self.set_up_test_generic(card_name)
 
@@ -1821,6 +1852,19 @@ class InnovationGame(Game):
 
         self.turn_card = self.get_card_object('Astronomy')
         self.active_card = self.turn_card
+
+    def test_astronomy(self):
+        universe_original_pile = self.test_get_initial_card_pile('Universe')
+        all_cards = self.test_see_all_draw_cards_beginning_of_action(6)
+        cards_to_be_drawn = []
+        for card in all_cards:
+            cards_to_be_drawn.append(card)
+            if card.color == self.blue or card.color == self.green:
+                pass
+            else:
+                break
+
+        return self.test_astronomy_0(cards_to_be_drawn[:-1]) and self.test_astronomy_1(universe_original_pile)
 
     def test_astronomy_0(self, card_list):
         return self.test_meld_multiple_cards(card_list)
@@ -1851,16 +1895,12 @@ class InnovationGame(Game):
             else:
                 return False
         else:
-            if universe_original_pile == self.find_card(universe):
-                return True
-            else:
-                return False
+            return universe_original_pile == self.find_card(universe)
 
     def test_steam_engine(self):
+        yellow_stack = self.piles_at_beginning_of_effect[self.active_player.yellow_stack.name]
+        bottom_yellow = self.get_card_object(yellow_stack[-1])
         yellow_cards = []
-        bottom_yellow = self.active_player.yellow_stack.see_bottom_card()
-        tuck_correctly = False
-        score_correctly = False
 
         cards = self.test_see_next_draw_cards(4, 2)
         if len(cards) == 2:
@@ -1869,19 +1909,14 @@ class InnovationGame(Game):
                     cards.remove(card)
                     yellow_cards.append(card)
 
-        self.action_dogma()
-
-        if cards:
-            tuck_correctly = self.test_tuck_multiple_cards(cards)
-        else:
-            tuck_correctly = True
-
         if len(yellow_cards) == 1:
             bottom_yellow = yellow_cards[0]
         elif len(yellow_cards) == 2:
             bottom_yellow = yellow_cards[1]
 
-        score_correctly = self.active_player.score_pile.is_card_in_pile(bottom_yellow)
+        score_correctly = self.test_score_card(bottom_yellow)
+
+        tuck_correctly = self.test_tuck_multiple_cards(cards)
 
         return score_correctly and tuck_correctly
 
@@ -1892,17 +1927,17 @@ class InnovationGame(Game):
         self.add_card_to_score_pile()
 
     def test_machine_tools(self):
-        highest_card = self.active_player.score_pile.highest_card_value()
-        draw_card = self.test_see_draw_card(highest_card)
+        initial_score_pile = self.test_see_initial_score_pile()
+        highest_card_value = self.test_get_initial_highest_card_value(initial_score_pile)
 
-        self.action_dogma()
-
-        return self.active_player.score_pile.is_card_in_pile(draw_card)
+        return self.test_draw_and_score(highest_card_value, 1)
 
     # Age 7 tests
     def test_electricity_setup(self, card_name):
         self.set_up_test_generic(card_name)
         self.active_card = self.get_card_object('Astronomy')
+        self.meld_card()
+        self.active_card = self.get_card_object('Metalworking')
         self.meld_card()
         self.active_card = self.get_card_object('Machine Tools')
         self.meld_card()
@@ -1911,29 +1946,21 @@ class InnovationGame(Game):
 
     def test_electricity(self):
         cards_to_return = []
-        return_correctly = []
-        draw_correctly = []
-        for stack in self.get_player_object(0).stacks:
-            if stack.cards:
-                card = stack.see_top_card()
+        for stack in self.test_get_stacks_at_beginning_of_effect():
+            if stack:
+                card = stack[0]
                 if not card.contains_icon(self.factory):
                     cards_to_return.append(card)
 
         if cards_to_return:
-            draw_cards = self.test_see_next_draw_cards(8, len(cards_to_return))
+            returned_correctly = self.test_return_multiple_cards(cards_to_return)
+            draw_correctly = self.test_draw_cards(8, len(cards_to_return))
+        else:
+            returned_correctly = True
+            draw_correctly = True
 
-        self.action_dogma()
+        return returned_correctly and draw_correctly
 
-        if cards_to_return:
-            for card in cards_to_return:
-                if self.get_pile_object(str(card.age)).see_bottom_card() == card:
-                    return_correctly.append(True)
-                else:
-                    return_correctly.append(False)
-            for card in draw_cards:
-                draw_correctly.append(self.active_player.hand.is_card_in_pile(card))
-
-        return all(return_correctly) and all(draw_correctly)
     # Age 8 tests
 
     # Age 9 tests
@@ -1945,47 +1972,48 @@ class InnovationGame(Game):
         self.meld_card()
 
     def test_genetics(self):
-        melded_card = self.test_see_draw_card(10)
-        cards_to_score = []
-        current_score_pile = self.active_player.score_pile.cards
-        if self.active_player.stacks[melded_card.color].cards:
-            for card in self.active_player.stacks[melded_card.color].cards:
-                cards_to_score.append(card)
+        starting_score = self.get_cards_from_list(self.piles_at_beginning_of_action[self.active_player.score_pile.name])
+        starting_stack = self.get_cards_from_list(self.piles_at_beginning_of_action[self.active_player.stacks[self.active_card.color].name])
 
-        self.action_dogma()
-
-        melded_correctly = self.test_meld_card(melded_card)
-
-        if cards_to_score:
-            scored_correctly = self.test_score_multiple_cards(cards_to_score)
+        if starting_stack:
+            scored_correctly = self.test_score_multiple_cards(starting_stack)
         else:
-            if self.active_player.score_pile.cards == current_score_pile:
+            if starting_score == self.active_player.score_pile.cards:
                 scored_correctly = True
             else:
                 scored_correctly = False
+
+        melded_correctly = self.test_draw_and_meld(10, 1)
+
         return melded_correctly and scored_correctly
 
     # Age 10 tests
     def test_robotics(self):
         card_to_score = None
-        if self.active_player.green_stack.cards:
-            card_to_score = self.active_player.green_stack.see_top_card()
+
+        if self.piles_at_beginning_of_action[self.active_player.green_stack.name]:
+            card_to_score = self.get_card_object(self.piles_at_beginning_of_effect[self.active_player.green_stack.name][0])
 
         card_to_draw = self.test_see_draw_card(10)
 
-        self.action_dogma()
-
         if card_to_score:
-            scored_correctly = self.test_score_card(card_to_score)
+            if card_to_score.name in self.piles_at_beginning_of_no_share[self.active_player.score_pile.name]:
+                scored_correctly = True
+            else:
+                False
         else:
             scored_correctly = True
 
-        melded_correctly = self.test_meld_card(card_to_draw)
-        print(scored_correctly)
-        print(melded_correctly)
-        return scored_correctly and melded_correctly
+        if self.piles_at_beginning_of_no_share[self.active_player.stacks[card_to_draw.color].name][0] == card_to_draw.name:
+            melded_correctly = True
+        else:
+            melded_correctly = False
+
+        no_share_correctly = self.test_no_share_effect(card_to_draw)
+
+        return scored_correctly and melded_correctly and no_share_correctly
 
 
-g = InnovationGame('test', '2022-04-25', 4, None, "Shohei", True, "Mookifer", True, 'Jurdrick', True, "Bartolo", True)
+g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Robotics')
+g.run_all_tests()
