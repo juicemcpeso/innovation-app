@@ -1308,7 +1308,9 @@ class InnovationGame(Game):
                         ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],        # Age 6
                         ['Electricity', 0, 'factory', False, self.electricity_effect_0],            # Age 7
                         ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],                # Age 9
-                        ['Robotics', 0, 'factory', False, self.robotics_effect_0]]                  # Age 10
+                        ['A.I.', 0, 'lightbulb', False, self.ai_effect_0],                          # Age 10
+                        ['A.I.', 0, 'lightbulb', False, self.ai_effect_1],
+                        ['Robotics', 0, 'factory', False, self.robotics_effect_0]]
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1483,6 +1485,9 @@ class InnovationGame(Game):
                      ['Machine Tools', self.test_machine_tools_setup, self.test_machine_tools, self.get_card_object('Machine Tools')],
                      ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')],
                      ['Genetics', self.test_genetics_setup, self.test_genetics, self.get_card_object('Genetics')],
+                     ['A.I. (no robotics/software)', self.set_up_test_generic, self.test_ai, self.get_card_object('A.I.')],
+                     ['A.I. (robotics/software, tied lowest score)', self.test_ai_setup_0, self.test_ai, self.get_card_object('A.I.')],
+                     ['A.I. (robotics/software, winner)', self.test_ai_setup_1, self.test_ai, self.get_card_object('A.I.')],
                      ['Robotics', self.set_up_test_generic, self.test_robotics, self.get_card_object('Robotics')]]
 
         for test_to_add in test_list:
@@ -1575,6 +1580,20 @@ class InnovationGame(Game):
 
         return stacks_at_beginning_of_effect
 
+    def test_get_all_stacks_at_beginning_of_effect(self):
+        player_stack_names = []
+        for player in self.players:
+            for stack in player.stacks:
+                player_stack_names.append(stack.name)
+
+        stacks_at_beginning_of_effect = []
+        for pile_name in self.piles_at_beginning_of_effect:
+            if pile_name in player_stack_names:
+                card_list = self.get_cards_from_list(self.piles_at_beginning_of_effect[pile_name])
+                stacks_at_beginning_of_effect.append(card_list)
+
+        return stacks_at_beginning_of_effect
+
     def test_see_initial_score_pile(self):
         starting_score = self.get_cards_from_list(self.piles_at_beginning_of_effect[self.active_player.score_pile.name])
         return starting_score
@@ -1638,6 +1657,7 @@ class InnovationGame(Game):
             for card in pile:
                 draw_cards.append(self.get_card_object(card))
             i = i + 1
+        print(draw_cards)
         return draw_cards
 
     def test_see_all_draw_cards_beginning_of_action(self, draw_value):
@@ -1694,7 +1714,6 @@ class InnovationGame(Game):
     def test_draw_and_score(self, draw_value, number_of_cards):
         if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
             cards_to_draw = self.test_see_next_draw_cards(draw_value, number_of_cards)
-
             return self.test_score_multiple_cards(cards_to_draw)
 
         else:
@@ -2039,9 +2058,57 @@ class InnovationGame(Game):
         return melded_correctly and scored_correctly
 
     # Age 10 tests
-    def test_AI(self):
-        draw_and_score = self.test_draw_and_score(10, 1)
+    def test_ai_setup_0(self, card_name):
+        """Case where robotics and software are present, but no lowest score"""
+        self.set_up_test_generic(card_name)
+        self.active_player = self.get_player_object(1)
+        self.active_card = self.get_card_object('Robotics')
+        self.meld_card()
+        self.active_player = self.get_player_object(0)
+        self.active_card = self.get_card_object('Software')
+        self.meld_card()
 
+    def test_ai_setup_1(self, card_name):
+        """Case where robotics and software are present, but and lowest score"""
+        self.set_up_test_generic(card_name)
+        self.active_player = self.get_player_object(1)
+        self.active_card = self.get_card_object('Robotics')
+        self.meld_card()
+        self.active_card = self.get_card_object('Calendar')
+        self.add_card_to_score_pile()
+        self.active_player = self.get_player_object(0)
+        self.active_card = self.get_card_object('Software')
+        self.meld_card()
+
+    def test_ai(self):
+        return self.test_ai_0() and self.test_ai_1()
+
+    def test_ai_0(self):
+        # TODO - Fix the dependency on the effect state
+        print(self.piles_at_beginning_of_action['10'])
+        result = self.test_draw_and_score(10, 1)
+        print("Effect 1 pass: {r}".format(r=result))
+        return result
+
+    def test_ai_1(self):
+        robotics_and_software = []
+        robotics = self.get_card_object('Robotics')
+        software = self.get_card_object('Software')
+        game_should_be_over = False
+
+        stacks = self.test_get_all_stacks_at_beginning_of_effect()
+        for stack in stacks:
+            if stack:
+                if stack[0] == robotics or stack[0] == software:
+                    robotics_and_software.append(stack[0])
+
+        if len(robotics_and_software) == 2 and robotics in robotics_and_software and software in robotics_and_software:
+            game_should_be_over = True
+
+        if game_should_be_over:
+            return self.test_game_over()
+        else:
+            return not self.test_game_over()
 
     def test_robotics(self):
         card_to_score = None
@@ -2071,4 +2138,4 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.run_all_tests()
+g.test_a_card('A.I.')
