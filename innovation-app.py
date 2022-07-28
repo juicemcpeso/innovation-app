@@ -1312,7 +1312,9 @@ class InnovationGame(Game):
                         ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],                # Age 9
                         ['A.I.', 0, 'lightbulb', False, self.ai_effect_0],                          # Age 10
                         ['A.I.', 1, 'lightbulb', False, self.ai_effect_1],
-                        ['Robotics', 0, 'factory', False, self.robotics_effect_0]]
+                        ['Robotics', 0, 'factory', False, self.robotics_effect_0],
+                        ['Software', 0, 'clock', False, self.software_effect_0],
+                        ['Software', 1, 'clock', False, self.software_effect_1]]
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1465,6 +1467,14 @@ class InnovationGame(Game):
 
         self.execute_dogma_for_yourself()
 
+    def software_effect_0(self):
+        self.draw_and_score(10)
+
+    def software_effect_1(self):
+        self.draw_and_meld(10)
+        self.draw_and_meld(10)
+        self.execute_dogma_for_yourself()
+
     # Tests
     def print_for_testing(self, string_to_print):
         if self.verbose:
@@ -1490,7 +1500,8 @@ class InnovationGame(Game):
                      ['A.I. (no robotics/software)', self.set_up_test_generic, self.test_ai, self.get_card_object('A.I.')],
                      ['A.I. (robotics/software, tied lowest score)', self.test_ai_setup_0, self.test_ai, self.get_card_object('A.I.')],
                      ['A.I. (robotics/software, winner)', self.test_ai_setup_1, self.test_ai, self.get_card_object('A.I.')],
-                     ['Robotics', self.set_up_test_generic, self.test_robotics, self.get_card_object('Robotics')]]
+                     ['Robotics', self.set_up_test_generic, self.test_robotics, self.get_card_object('Robotics')],
+                     ['Software', self.set_up_test_generic, self.test_software, self.get_card_object('Software')]]
 
         for test_to_add in test_list:
             test = Test(test_to_add[0], test_to_add[1], self.action_dogma, test_to_add[2], test_to_add[3])
@@ -2172,7 +2183,28 @@ class InnovationGame(Game):
 
         return scored_correctly and melded_correctly and no_share_correctly
 
+    def test_software(self):
+        return self.test_software_0() and self.test_software_1()
+
+    def test_software_0(self):
+        return self.test_draw_and_score_beginning_of_action(10, 1)
+
+    def test_software_1(self):
+        draw_and_meld_correctly = self.test_draw_and_meld(10, 2)
+        melded_cards = self.test_see_next_draw_cards(10, 2)
+        if len(melded_cards) == 2:
+            no_share_card = melded_cards[1]
+
+        no_share_correctly = self.test_no_share_effect(no_share_card)
+
+        if len(melded_cards) == 2:
+            return draw_and_meld_correctly and no_share_correctly
+        elif len(melded_cards) < 2 and self.game_over:
+            return True
+        else:
+            return False
+
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.run_all_tests()
+g.test_a_card('Software')
