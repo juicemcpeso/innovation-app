@@ -1353,8 +1353,6 @@ class InnovationGame(Game):
             # TODO - write function for a human to select an action
             pass
 
-        self.print_for_testing(self.active_player.selected_option.name)
-
     def execute_option(self):
         if self.active_player.selected_option.type == 'splay':
             self.execute_option_splay()
@@ -1389,7 +1387,9 @@ class InnovationGame(Game):
                         ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],              # Age 5
                         ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
                         ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
-                        ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],        # Age 6
+                        ['Atomic Theory', 0, 'lightbulb', False, self.atomic_theory_effect_0],      # Age 6
+                        ['Atomic Theory', 1, 'lightbulb', False, self.atomic_theory_effect_1],
+                        ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],
                         ['Electricity', 0, 'factory', False, self.electricity_effect_0],            # Age 7
                         ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],                # Age 9
                         ['A.I.', 0, 'lightbulb', False, self.ai_effect_0],                          # Age 10
@@ -2301,9 +2301,5 @@ g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", Tr
 # g.test_a_card('Software')
 g.create_game()
 g.active_player = g.get_player_object(0)
-g.active_card = g.get_card_object('Calendar')
-g.meld_card()
-g.active_card = g.get_card_object('Bioengineering')
-g.meld_card()
-g.atomic_theory_effect_0()
-print(g.get_player_object(0).stacks[0].get_splay_type())
+g.active_card = g.get_card_object('Atomic Theory')
+g.execute_dogma_for_yourself()
