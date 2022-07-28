@@ -158,6 +158,7 @@ class Test:
     def __str__(self):
         return self.name
 
+
 class Effect:
     """Class for a card effect"""
 
@@ -714,6 +715,7 @@ class InnovationGame(Game):
         self.add_pile(Pile('reveal', self.seed))
 
     def create_players(self):
+        self.players = []
         for i in range(self.number_of_players):
             # Create an achievement pile, score_pile, and hand for each player, add to master list
             achievement_pile = Pile((self.player_names[i] + " achievement pile"), self.seed)
@@ -1309,7 +1311,7 @@ class InnovationGame(Game):
                         ['Electricity', 0, 'factory', False, self.electricity_effect_0],            # Age 7
                         ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],                # Age 9
                         ['A.I.', 0, 'lightbulb', False, self.ai_effect_0],                          # Age 10
-                        ['A.I.', 0, 'lightbulb', False, self.ai_effect_1],
+                        ['A.I.', 1, 'lightbulb', False, self.ai_effect_1],
                         ['Robotics', 0, 'factory', False, self.robotics_effect_0]]
 
         for effect_to_add in effects_list:
@@ -1637,6 +1639,12 @@ class InnovationGame(Game):
         else:
             return False
 
+    def test_enough_cards_available_to_draw_given_pile(self, pile, number_of_cards):
+        if len(pile) >= number_of_cards:
+            return True
+        else:
+            return False
+
     def test_see_draw_card(self, draw_value):
         i = draw_value
         if i == 0:
@@ -1657,7 +1665,6 @@ class InnovationGame(Game):
             for card in pile:
                 draw_cards.append(self.get_card_object(card))
             i = i + 1
-        print(draw_cards)
         return draw_cards
 
     def test_see_all_draw_cards_beginning_of_action(self, draw_value):
@@ -1677,6 +1684,15 @@ class InnovationGame(Game):
         i = 0
         while i < number_of_cards:
             cards_to_see.append(draw_cards[i])
+            i = i + 1
+
+        return cards_to_see
+
+    def test_see_next_draw_cards_given_pile(self, pile, number_of_cards):
+        cards_to_see = []
+        i = 0
+        while i < number_of_cards:
+            cards_to_see.append(pile[i])
             i = i + 1
 
         return cards_to_see
@@ -1714,6 +1730,15 @@ class InnovationGame(Game):
     def test_draw_and_score(self, draw_value, number_of_cards):
         if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
             cards_to_draw = self.test_see_next_draw_cards(draw_value, number_of_cards)
+            return self.test_score_multiple_cards(cards_to_draw)
+
+        else:
+            return self.test_game_over()
+
+    def test_draw_and_score_beginning_of_action(self, draw_value, number_of_cards):
+        initial_draw_pile = self.test_see_all_draw_cards_beginning_of_action(draw_value)
+        if self.test_enough_cards_available_to_draw_given_pile(initial_draw_pile, number_of_cards):
+            cards_to_draw = self.test_see_next_draw_cards_given_pile(initial_draw_pile, number_of_cards)
             return self.test_score_multiple_cards(cards_to_draw)
 
         else:
@@ -2064,12 +2089,16 @@ class InnovationGame(Game):
         self.active_player = self.get_player_object(1)
         self.active_card = self.get_card_object('Robotics')
         self.meld_card()
+        self.active_card = self.get_card_object('Astronomy')
+        self.add_card_to_score_pile()
+        self.active_card = self.get_card_object('Steam Engine')
+        self.add_card_to_score_pile()
         self.active_player = self.get_player_object(0)
         self.active_card = self.get_card_object('Software')
         self.meld_card()
 
     def test_ai_setup_1(self, card_name):
-        """Case where robotics and software are present, but and lowest score"""
+        """Case where robotics and software are present, and lowest score"""
         self.set_up_test_generic(card_name)
         self.active_player = self.get_player_object(1)
         self.active_card = self.get_card_object('Robotics')
@@ -2085,15 +2114,15 @@ class InnovationGame(Game):
 
     def test_ai_0(self):
         # TODO - Fix the dependency on the effect state
-        print(self.piles_at_beginning_of_action['10'])
-        result = self.test_draw_and_score(10, 1)
-        print("Effect 1 pass: {r}".format(r=result))
+        result = self.test_draw_and_score_beginning_of_action(10, 1)
         return result
 
     def test_ai_1(self):
         robotics_and_software = []
         robotics = self.get_card_object('Robotics')
         software = self.get_card_object('Software')
+        scores = []
+        lowest_score_counter = 0
         game_should_be_over = False
 
         stacks = self.test_get_all_stacks_at_beginning_of_effect()
@@ -2103,7 +2132,15 @@ class InnovationGame(Game):
                     robotics_and_software.append(stack[0])
 
         if len(robotics_and_software) == 2 and robotics in robotics_and_software and software in robotics_and_software:
-            game_should_be_over = True
+            for player in self.players:
+                scores.append(player.get_score())
+                min_score = min(scores)
+            for score in scores:
+                if score == min_score:
+                    lowest_score_counter += 1
+
+            if lowest_score_counter == 1:
+                game_should_be_over = True
 
         if game_should_be_over:
             return self.test_game_over()
@@ -2136,6 +2173,6 @@ class InnovationGame(Game):
         return scored_correctly and melded_correctly and no_share_correctly
 
 
-g = InnovationGame('test', '2022-04-25', 4, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('A.I.')
+g.run_all_tests()
