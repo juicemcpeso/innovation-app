@@ -1170,8 +1170,6 @@ class InnovationGame(Game):
             self.action_draw()
 
     def execute_dogma_for_yourself(self):
-        print('test - gets to execute dogma for self')
-        print(self.active_card.name)
         self.set_no_share_pile_state()
         for effect in self.active_card.dogma:
             if not effect.demand:
@@ -2186,7 +2184,25 @@ class InnovationGame(Game):
         return scored_correctly and melded_correctly and no_share_correctly
 
     def test_software(self):
-        pass
+        return self.test_software_0() and self.test_software_1()
+
+    def test_software_0(self):
+        return self.test_draw_and_score_beginning_of_action(10, 1)
+
+    def test_software_1(self):
+        draw_and_meld_correctly = self.test_draw_and_meld(10, 2)
+        melded_cards = self.test_see_next_draw_cards(10, 2)
+        if len(melded_cards) == 2:
+            no_share_card = melded_cards[1]
+
+        no_share_correctly = self.test_no_share_effect(no_share_card)
+
+        if len(melded_cards) == 2:
+            return draw_and_meld_correctly and no_share_correctly
+        elif len(melded_cards) < 2 and self.game_over:
+            return True
+        else:
+            return False
 
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
