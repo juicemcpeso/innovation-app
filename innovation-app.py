@@ -315,12 +315,13 @@ class InnovationStack(Pile):
             raise ValueError("Error setting splay. Splay must be left, right, or up.")
 
         self.cancel_splay()
-        if splay_direction == 'left':
-            self.splay_left = True
-        elif splay_direction == 'right':
-            self.splay_right = True
-        elif splay_direction == 'up':
-            self.splay_up = True
+        if len(self.cards) > 1:
+            if splay_direction == 'left':
+                self.splay_left = True
+            elif splay_direction == 'right':
+                self.splay_right = True
+            elif splay_direction == 'up':
+                self.splay_up = True
 
     def cancel_splay(self):
         """Sets all splays to false"""
@@ -380,6 +381,17 @@ class InnovationStack(Pile):
 
         return total_icons
 
+    def get_splay_type(self):
+        if self.splay_left and not self.splay_right and not self.splay_up:
+            return 'left'
+        elif not self.splay_left and self.splay_right and not self.splay_up:
+            return 'right'
+        elif not self.splay_left and not self.splay_right and self.splay_up:
+            return 'up'
+        if not self.splay_left and not self.splay_right and not self.splay_up:
+            return 'none'
+        else:
+            raise ValueError("Multiple splay types")
 
 class Player:
     """Base class for a player in a game"""
@@ -421,6 +433,9 @@ class InnovationPlayer(Player):
         self.yellow_stack = s_yellow
         self.stacks = [self.blue_stack, self.green_stack, self.purple_stack, self.red_stack, self.yellow_stack]
 
+        self.options = []
+        self.selected_option = None
+
         self.table_position = 0
         self.share_order = []
 
@@ -460,6 +475,9 @@ class InnovationPlayer(Player):
                 current_colors.append(stack.color)
         return current_colors
 
+    def clear_options(self):
+        self.options = []
+
 
 class Action:
     def __init__(self, t, p, c=None):
@@ -483,6 +501,30 @@ class Action:
 
     def __str__(self):
         return self.name
+
+
+class Option:
+    def __init__(self, n, t):
+        self.name = n
+        self.type = t
+
+    def __repr__(self):
+        return "<%s>" % self.name
+
+    def __str__(self):
+        return self.name
+
+
+class PassOption(Option):
+    def __init__(self):
+        Option.__init__(self, 'Pass', 'pass')
+
+
+class SplayOption(Option):
+    def __init__(self, n, t, c, d):
+        Option.__init__(self, n, t)
+        self.color = c
+        self.direction = d
 
 
 class Game:
@@ -618,6 +660,7 @@ class InnovationGame(Game):
         self.clock = 5
 
         # Variables for each of the colors
+        self.colors = ['blue', 'green', 'purple', 'red', 'yellow']
         self.blue = 0
         self.green = 1
         self.purple = 2
@@ -1292,6 +1335,45 @@ class InnovationGame(Game):
 
         return action_list[selection]
 
+    def ai_select_random_option(self):
+        index = random.randrange(len(self.active_player.options))
+        return self.active_player.options[index]
+
+    # Options
+    def take_option(self):
+        self.select_option()
+        self.execute_option()
+
+    def select_option(self):
+        self.active_player.selected_option = None
+        if self.active_player.ai_flag:
+            # TODO - write function for AI to select an action
+            self.active_player.selected_option = self.ai_select_random_option()
+        else:
+            # TODO - write function for a human to select an action
+            pass
+
+        self.print_for_testing(self.active_player.selected_option.name)
+
+    def execute_option(self):
+        if self.active_player.selected_option.type == 'splay':
+            self.execute_option_splay()
+
+        self.print_for_testing("{p} chooses to {s}".format(p=self.active_player.name,
+                                                           s=self.active_player.selected_option.name.lower()))
+
+    def execute_option_splay(self):
+        selected_option = self.active_player.selected_option
+        self.active_player.stacks[selected_option.color].set_splay(selected_option.direction)
+
+    # Create options
+    def create_pass_option(self):
+        self.active_player.options.append(PassOption())
+
+    def create_splay_option(self, splay_color, splay_direction):
+        name = "Splay {c} cards {d}".format(c=self.colors[splay_color], d=splay_direction)
+        self.active_player.options.append(SplayOption(name, 'splay', splay_color, splay_direction))
+
     # Effects
     def create_effects(self):
         # [Card name, effect number, effect type (str), demand_flag, function]
@@ -1422,6 +1504,15 @@ class InnovationGame(Game):
             self.add_card_to_score_pile()
 
     # Age 6 effects
+    def atomic_theory_effect_0(self):
+        self.active_player.clear_options()
+        self.create_splay_option(self.blue, 'right')
+        self.create_pass_option()
+        self.take_option()
+
+    def atomic_theory_effect_1(self):
+        self.draw_and_meld(7)
+
     def machine_tools_effect_0(self):
         highest_value = self.active_player.score_pile.highest_card_value()
         self.draw_and_score(highest_value)
@@ -2206,5 +2297,13 @@ class InnovationGame(Game):
 
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
-g.create_tests()
-g.test_a_card('Software')
+# g.create_tests()
+# g.test_a_card('Software')
+g.create_game()
+g.active_player = g.get_player_object(0)
+g.active_card = g.get_card_object('Calendar')
+g.meld_card()
+g.active_card = g.get_card_object('Bioengineering')
+g.meld_card()
+g.atomic_theory_effect_0()
+print(g.get_player_object(0).stacks[0].get_splay_type())
