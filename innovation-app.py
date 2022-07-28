@@ -1170,6 +1170,8 @@ class InnovationGame(Game):
             self.action_draw()
 
     def execute_dogma_for_yourself(self):
+        print('test - gets to execute dogma for self')
+        print(self.active_card.name)
         self.set_no_share_pile_state()
         for effect in self.active_card.dogma:
             if not effect.demand:
@@ -1312,7 +1314,9 @@ class InnovationGame(Game):
                         ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],                # Age 9
                         ['A.I.', 0, 'lightbulb', False, self.ai_effect_0],                          # Age 10
                         ['A.I.', 1, 'lightbulb', False, self.ai_effect_1],
-                        ['Robotics', 0, 'factory', False, self.robotics_effect_0]]
+                        ['Robotics', 0, 'factory', False, self.robotics_effect_0],
+                        ['Software', 0, 'clock', False, self.software_effect_0],
+                        ['Software', 1, 'clock', False, self.software_effect_1]]
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1465,6 +1469,14 @@ class InnovationGame(Game):
 
         self.execute_dogma_for_yourself()
 
+    def software_effect_0(self):
+        self.draw_and_score(10)
+
+    def software_effect_1(self):
+        self.draw_and_meld(10)
+        self.draw_and_meld(10)
+        self.execute_dogma_for_yourself()
+
     # Tests
     def print_for_testing(self, string_to_print):
         if self.verbose:
@@ -1490,7 +1502,8 @@ class InnovationGame(Game):
                      ['A.I. (no robotics/software)', self.set_up_test_generic, self.test_ai, self.get_card_object('A.I.')],
                      ['A.I. (robotics/software, tied lowest score)', self.test_ai_setup_0, self.test_ai, self.get_card_object('A.I.')],
                      ['A.I. (robotics/software, winner)', self.test_ai_setup_1, self.test_ai, self.get_card_object('A.I.')],
-                     ['Robotics', self.set_up_test_generic, self.test_robotics, self.get_card_object('Robotics')]]
+                     ['Robotics', self.set_up_test_generic, self.test_robotics, self.get_card_object('Robotics')],
+                     ['Software', self.set_up_test_generic, self.test_software, self.get_card_object('Software')]]
 
         for test_to_add in test_list:
             test = Test(test_to_add[0], test_to_add[1], self.action_dogma, test_to_add[2], test_to_add[3])
@@ -2172,7 +2185,10 @@ class InnovationGame(Game):
 
         return scored_correctly and melded_correctly and no_share_correctly
 
+    def test_software(self):
+        pass
+
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.run_all_tests()
+g.test_a_card('Software')
