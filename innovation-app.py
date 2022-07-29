@@ -478,6 +478,19 @@ class InnovationPlayer(Player):
     def clear_options(self):
         self.options = []
 
+    def is_color_splayed(self, color, direction):
+        if self.stacks[color].get_splay_type() == direction:
+            return True
+        else:
+            return False
+
+    def get_colors_splayed_a_direction(self, direction):
+        splayed_stacks = []
+        for stack in self.stacks:
+            if stack.get_splay_type() == direction:
+                splayed_stacks.append(stack.color)
+
+        return splayed_stacks
 
 class Action:
     def __init__(self, t, p, c=None):
@@ -668,6 +681,11 @@ class InnovationGame(Game):
         self.yellow = 4
 
         self.stacks = []
+
+        # Variables for each of the directions
+        self.left = 'left'
+        self.right = 'right'
+        self.up = 'up'
 
         for i in range(self.number_of_players):
             self.player_names.append(possible_player_names[i])
@@ -1459,6 +1477,15 @@ class InnovationGame(Game):
             self.draw_to_hand(2)
             i += 1
     # Age 3 effects
+    def paper_effect_0(self):
+        self.active_player.clear_options()
+        self.create_splay_option(self.blue, 'left')
+        self.create_splay_option(self.green, 'left')
+        self.create_pass_option()
+        self.take_option()
+
+    def paper_effect_1(self):
+        pass
 
     # Age 4 effects
     def colonialism_effect_0(self):
@@ -2331,9 +2358,17 @@ class InnovationGame(Game):
 
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
-g.create_tests()
-g.test_a_card('Atomic Theory')
-# g.create_game()
-# g.active_player = g.get_player_object(0)
-# g.active_card = g.get_card_object('Atomic Theory')
+# g.create_tests()
+# g.test_a_card('Atomic Theory')
+g.create_game()
+g.active_player = g.get_player_object(0)
+g.active_card = g.get_card_object('City States')
+g.meld_card()
+g.active_card = g.get_card_object('Code of Laws')
+g.meld_card()
+g.active_player.purple_stack.set_splay(g.left)
+print(g.active_player.is_color_splayed(g.purple, g.left))
+print(g.active_player.get_colors_splayed_a_direction(g.left))
+
+g.active_card = g.get_card_object('Paper')
 # g.execute_dogma_for_yourself()
