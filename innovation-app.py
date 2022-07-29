@@ -492,6 +492,10 @@ class InnovationPlayer(Player):
 
         return splayed_stacks
 
+    def get_number_colors_splayed_a_direction(self, direction):
+        return len(self.get_colors_splayed_a_direction(direction))
+
+
 class Action:
     def __init__(self, t, p, c=None):
         action_type_options = ['draw', 'meld', 'achieve', 'dogma']
@@ -1122,6 +1126,11 @@ class InnovationGame(Game):
         self.print_for_testing('{p} draws {c}'.format(p=self.active_player, c=self.active_card.name))
         self.add_card_to_hand()
 
+    def draw_to_hand_multiple(self, draw_value, number_of_cards):
+        for i in range(number_of_cards):
+            self.draw_to_hand(draw_value)
+            i = i + 1
+
     def draw_and_meld(self, draw_value):
         self.base_draw(draw_value)
         self.find_and_remove_card(self.active_card)
@@ -1400,6 +1409,8 @@ class InnovationGame(Game):
                         ['Writing', 0, 'lightbulb', False, self.writing_effect_0],
                         ['Calendar', 0, 'leaf', False, self.calendar_effect_0],                     # Age 2
                         ['Fermenting', 0, 'leaf', False, self.fermenting_effect_0],
+                        ['Paper', 0, 'lightbulb', False, self.paper_effect_0],                      # Age 3
+                        ['Paper', 0, 'lightbulb', False, self.paper_effect_1],
                         ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],            # Age 4
                         ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
                         ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],              # Age 5
@@ -1485,7 +1496,8 @@ class InnovationGame(Game):
         self.take_option()
 
     def paper_effect_1(self):
-        pass
+        colors_splayed_left = self.active_player.get_number_colors_splayed_a_direction(self.left)
+        self.draw_to_hand_multiple(4, colors_splayed_left)
 
     # Age 4 effects
     def colonialism_effect_0(self):
@@ -1608,6 +1620,7 @@ class InnovationGame(Game):
                      ['Calendar (no score cards)', self.set_up_test_generic, self.test_calendar, self.get_card_object('Calendar')],
                      ['Calendar (score cards)', self.test_calendar_setup, self.test_calendar, self.get_card_object('Calendar')],
                      ['Fermenting', self.test_fermenting_setup, self.test_fermenting, self.get_card_object('Fermenting')],
+                     ['Paper', self.set_up_test_generic, self.test_paper, self.get_card_object('Paper')],
                      ['Colonialism', self.set_up_test_generic, self.test_colonialism, self.get_card_object('Colonialism')],
                      ['Experimentation', self.set_up_test_generic, self.test_experimentation, self.get_card_object('Experimentation')],
                      ['Astronomy', self.test_astronomy_setup, self.test_astronomy, self.get_card_object('Astronomy')],
@@ -2053,6 +2066,19 @@ class InnovationGame(Game):
         return self.test_draw_cards(2, total_leaves)
 
     # Age 3 tests
+    def test_paper(self):
+        return self.test_paper_0() and self.test_paper_1()
+
+    def test_paper_0(self):
+        if self.active_player.selected_option.type == 'splay':
+            selected_color = self.active_player.selected_option.color
+            return self.test_splay(selected_color, self.left)
+        else:
+            return True
+
+    def test_paper_1(self):
+        colors_splayed_left = self.active_player.get_number_colors_splayed_a_direction(self.left)
+        return self.test_draw_cards(4, colors_splayed_left)
 
     # Age 4 tests
     def test_colonialism(self):
@@ -2358,17 +2384,14 @@ class InnovationGame(Game):
 
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
-# g.create_tests()
-# g.test_a_card('Atomic Theory')
-g.create_game()
-g.active_player = g.get_player_object(0)
-g.active_card = g.get_card_object('City States')
-g.meld_card()
-g.active_card = g.get_card_object('Code of Laws')
-g.meld_card()
-g.active_player.purple_stack.set_splay(g.left)
-print(g.active_player.is_color_splayed(g.purple, g.left))
-print(g.active_player.get_colors_splayed_a_direction(g.left))
-
-g.active_card = g.get_card_object('Paper')
+g.create_tests()
+g.test_a_card('Paper')
+# g.create_game()
+# g.active_player = g.get_player_object(0)
+# g.active_card = g.get_card_object('Clothing')
+# g.meld_card()
+# g.active_card = g.get_card_object('Sailing')
+# g.meld_card()
+#
+# g.active_card = g.get_card_object('Paper')
 # g.execute_dogma_for_yourself()
