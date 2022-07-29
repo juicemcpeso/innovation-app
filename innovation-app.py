@@ -1585,6 +1585,8 @@ class InnovationGame(Game):
                      ['Experimentation', self.set_up_test_generic, self.test_experimentation, self.get_card_object('Experimentation')],
                      ['Astronomy', self.test_astronomy_setup, self.test_astronomy, self.get_card_object('Astronomy')],
                      ['Steam Engine', self.set_up_test_generic, self.test_steam_engine, self.get_card_object('Steam Engine')],
+                     ['Atomic Theory', self.set_up_test_generic, self.test_atomic_theory, self.get_card_object('Atomic Theory')],
+                     ['Atomic Theory (cards to splay)', self.test_atomic_theory_setup, self.test_atomic_theory, self.get_card_object('Atomic Theory')],
                      ['Machine Tools', self.test_machine_tools_setup, self.test_machine_tools, self.get_card_object('Machine Tools')],
                      ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')],
                      ['Genetics', self.test_genetics_setup, self.test_genetics, self.get_card_object('Genetics')],
@@ -1934,6 +1936,15 @@ class InnovationGame(Game):
             results.append(self.get_pile_object(str(card.age)).is_card_in_pile(card))
         return all(results)
 
+    def test_splay(self, color, direction):
+        if self.active_player.stacks[color].get_pile_size() > 1:
+            if self.active_player.stacks[color].get_splay_type == direction:
+                return True
+            else:
+                return False
+        else:
+            return True
+
     # Age 1 tests
     def test_metalworking(self):
         deck = self.test_see_all_draw_cards(1)
@@ -2118,6 +2129,29 @@ class InnovationGame(Game):
         return score_correctly and tuck_correctly
 
     # Age 6 tests
+    def test_atomic_theory_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+
+        self.active_player = self.get_player_object(0)
+        self.active_card = g.get_card_object('Calendar')
+        self.meld_card()
+        self.active_card = g.get_card_object('Alchemy')
+        self.meld_card()
+        self.active_card = g.get_card_object('Atomic Theory')
+        self.meld_card()
+
+    def test_atomic_theory(self):
+        return self.test_atomic_theory_0() and self.test_atomic_theory_1()
+
+    def test_atomic_theory_0(self):
+        if self.active_player.selected_option == 'splay':
+            return self.test_splay(self.blue, 'right')
+        else:
+            return True
+
+    def test_atomic_theory_1(self):
+        return self.test_draw_and_meld(7, 1)
+
     def test_machine_tools_setup(self, card_name):
         self.set_up_test_generic(card_name)
         self.active_card = self.get_card_object('Steam Engine')
@@ -2297,9 +2331,9 @@ class InnovationGame(Game):
 
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
-# g.create_tests()
-# g.test_a_card('Software')
-g.create_game()
-g.active_player = g.get_player_object(0)
-g.active_card = g.get_card_object('Atomic Theory')
-g.execute_dogma_for_yourself()
+g.create_tests()
+g.test_a_card('Atomic Theory')
+# g.create_game()
+# g.active_player = g.get_player_object(0)
+# g.active_card = g.get_card_object('Atomic Theory')
+# g.execute_dogma_for_yourself()
