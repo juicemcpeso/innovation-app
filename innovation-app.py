@@ -1493,13 +1493,9 @@ class InnovationGame(Game):
         while i < stacks_with_leaves:
             self.draw_to_hand(2)
             i += 1
+
     # Age 3 effects
     def paper_effect_0(self):
-        # self.active_player.clear_options()
-        # self.create_splay_option(self.blue, 'left')
-        # self.create_splay_option(self.green, 'left')
-        # self.create_pass_option()
-        # self.take_option()
         self.create_splay_option_suite([self.blue, self.green], self.left)
         self.take_option()
 
