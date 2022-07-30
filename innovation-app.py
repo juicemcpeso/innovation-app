@@ -1703,6 +1703,7 @@ class InnovationGame(Game):
                      ['Machine Tools', self.test_machine_tools_setup, self.test_machine_tools, self.get_card_object('Machine Tools')],
                      ['Metric System', self.set_up_test_generic, self.test_metric_system,self.get_card_object('Metric System')],
                      ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')],
+                     ['Flight', self.set_up_test_generic, self.test_flight, self.get_card_object('Flight')],
                      ['Genetics', self.test_genetics_setup, self.test_genetics, self.get_card_object('Genetics')],
                      ['A.I. (no robotics/software)', self.set_up_test_generic, self.test_ai, self.get_card_object('A.I.')],
                      ['A.I. (robotics/software, tied lowest score)', self.test_ai_setup_0, self.test_ai, self.get_card_object('A.I.')],
@@ -2367,7 +2368,7 @@ class InnovationGame(Game):
 
     def test_metric_system_1(self):
         if self.active_player.selected_option == 'splay':
-            return self.test_splay(self.blue, 'right')
+            return self.test_splay(self.blue, self.right)
         else:
             return True
 
@@ -2401,6 +2402,20 @@ class InnovationGame(Game):
         return returned_correctly and draw_correctly
 
     # Age 8 tests
+    def test_flight(self):
+        return self.test_flight_0() and self.test_flight_1()
+
+    def test_flight_0(self):
+        if self.active_player.selected_option.type == 'splay':
+            return self.test_splay(self.active_player.selected_option.color, self.up)
+        else:
+            return True
+
+    def test_flight_1(self):
+        if self.active_player.selected_option == 'splay':
+            return self.test_splay(self.red, self.up)
+        else:
+            return True
 
     # Age 9 tests
     def test_genetics_setup(self, card_name):
@@ -2540,7 +2555,7 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Metric System')
+g.test_a_card('Flight')
 # g.create_game()
 # g.active_player = g.get_player_object(0)
 # g.active_card = g.get_card_object('Clothing')
