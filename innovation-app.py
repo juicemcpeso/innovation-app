@@ -1399,6 +1399,12 @@ class InnovationGame(Game):
         name = "Splay {c} cards {d}".format(c=self.colors[splay_color], d=splay_direction)
         self.active_player.options.append(SplayOption(name, 'splay', splay_color, splay_direction))
 
+    def create_splay_option_suite(self, color_list, splay_direction):
+        self.active_player.clear_options()
+        for color in color_list:
+            self.create_splay_option(color, splay_direction)
+        self.create_pass_option()
+
     # Effects
     def create_effects(self):
         # [Card name, effect number, effect type (str), demand_flag, function]
@@ -1489,10 +1495,12 @@ class InnovationGame(Game):
             i += 1
     # Age 3 effects
     def paper_effect_0(self):
-        self.active_player.clear_options()
-        self.create_splay_option(self.blue, 'left')
-        self.create_splay_option(self.green, 'left')
-        self.create_pass_option()
+        # self.active_player.clear_options()
+        # self.create_splay_option(self.blue, 'left')
+        # self.create_splay_option(self.green, 'left')
+        # self.create_pass_option()
+        # self.take_option()
+        self.create_splay_option_suite([self.blue, self.green], self.left)
         self.take_option()
 
     def paper_effect_1(self):
@@ -2384,14 +2392,16 @@ class InnovationGame(Game):
 
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
-g.create_tests()
-g.test_a_card('Paper')
-# g.create_game()
-# g.active_player = g.get_player_object(0)
-# g.active_card = g.get_card_object('Clothing')
-# g.meld_card()
-# g.active_card = g.get_card_object('Sailing')
-# g.meld_card()
-#
-# g.active_card = g.get_card_object('Paper')
-# g.execute_dogma_for_yourself()
+# g.create_tests()
+# g.test_a_card('Paper')
+g.create_game()
+g.active_player = g.get_player_object(0)
+g.active_card = g.get_card_object('Clothing')
+g.meld_card()
+g.active_card = g.get_card_object('Sailing')
+g.meld_card()
+print(g.active_player.total_icons_on_board())
+
+g.active_card = g.get_card_object('Paper')
+g.execute_dogma_for_yourself()
+print(g.active_player.total_icons_on_board())
