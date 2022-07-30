@@ -2120,6 +2120,15 @@ class InnovationGame(Game):
     def test_experimentation(self):
         return self.test_draw_and_meld(5, 1)
 
+    def test_invention(self):
+        return self.test_invention_0() and self.test_invention_1()
+
+    def test_invention_0(self):
+        pass
+
+    def test_invention_1(self):
+        pass
+
     # Age 5 tests
     def test_astronomy_setup(self, card_name):
         self.set_up_test_generic(card_name)
