@@ -1155,6 +1155,11 @@ class InnovationGame(Game):
         self.base_meld(self.active_card)
         self.print_for_testing('{p} draws and melds {c}'.format(p=self.active_player, c=self.active_card.name))
 
+    def draw_and_meld_multiple(self, draw_value, number_of_cards):
+        for i in range(number_of_cards):
+            self.draw_and_meld(draw_value)
+            i = i + 1
+
     def draw_and_reveal(self, draw_value):
         self.base_draw(draw_value)
         # TODO - update to inform card counting module, remove printing
@@ -1684,6 +1689,16 @@ class InnovationGame(Game):
         self.draw_and_meld(10)
         self.draw_and_meld(10)
         self.execute_dogma_for_yourself()
+
+    def the_internet_effect_0(self):
+        self.create_splay_option_suite([self.green], self.up)
+
+    def the_internet_effect_1(self):
+        self.draw_and_score(10)
+
+    def the_internet_effect_2(self):
+        total_clocks = self.active_player.count_icons_on_board(self.clock) // 2
+        self.draw_and_meld_multiple(10, total_clocks)
 
     # Tests
     def print_for_testing(self, string_to_print):
