@@ -1678,6 +1678,7 @@ class InnovationGame(Game):
                      ['Steam Engine', self.set_up_test_generic, self.test_steam_engine, self.get_card_object('Steam Engine')],
                      ['Atomic Theory', self.set_up_test_generic, self.test_atomic_theory, self.get_card_object('Atomic Theory')],
                      ['Atomic Theory (cards to splay)', self.test_atomic_theory_setup, self.test_atomic_theory, self.get_card_object('Atomic Theory')],
+                     ['Industrialization', self.set_up_test_generic, self.test_industrialization, self.get_card_object('Industrialization')],
                      ['Machine Tools', self.test_machine_tools_setup, self.test_machine_tools, self.get_card_object('Machine Tools')],
                      ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')],
                      ['Genetics', self.test_genetics_setup, self.test_genetics, self.get_card_object('Genetics')],
@@ -1943,6 +1944,15 @@ class InnovationGame(Game):
         if self.test_enough_cards_available_to_draw(draw_value, number_of_cards):
             cards_to_draw = self.test_see_next_draw_cards(draw_value, number_of_cards)
 
+            return self.test_tuck_multiple_cards(cards_to_draw)
+
+        else:
+            return self.test_game_over()
+
+    def test_draw_and_tuck_beginning_of_action(self, draw_value, number_of_cards):
+        initial_draw_pile = self.test_see_all_draw_cards_beginning_of_action(draw_value)
+        if self.test_enough_cards_available_to_draw_given_pile(initial_draw_pile, number_of_cards):
+            cards_to_draw = self.test_see_next_draw_cards_given_pile(initial_draw_pile, number_of_cards)
             return self.test_tuck_multiple_cards(cards_to_draw)
 
         else:
@@ -2304,6 +2314,20 @@ class InnovationGame(Game):
         self.active_card = self.get_card_object('Steam Engine')
         self.add_card_to_score_pile()
 
+    def test_industrialization(self):
+        return self.test_industrialization_0() and self.test_industrialization_1()
+
+    def test_industrialization_0(self):
+        colors_with_factories = self.active_player.count_colors_with_one_or_more_icon(self.factory)
+        return self.test_draw_and_tuck_beginning_of_action(6, colors_with_factories)
+
+    def test_industrialization_1(self):
+        if self.active_player.selected_option.type == 'splay':
+            selected_color = self.active_player.selected_option.color
+            return self.test_splay(selected_color, self.right)
+        else:
+            return True
+
     def test_machine_tools(self):
         initial_score_pile = self.test_see_initial_score_pile()
         highest_card_value = self.test_get_initial_highest_card_value(initial_score_pile)
@@ -2479,7 +2503,7 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Invention')
+g.test_a_card('Industrialization')
 # g.create_game()
 # g.active_player = g.get_player_object(0)
 # g.active_card = g.get_card_object('Clothing')
