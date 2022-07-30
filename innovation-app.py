@@ -460,6 +460,13 @@ class InnovationPlayer(Player):
 
         return total_icons
 
+    def count_colors_with_one_or_more_icon(self, icon_type):
+        colors_with_icon = 0
+        for stack in self.stacks:
+            if stack.count_icons_in_stack(icon_type) > 0:
+                colors_with_icon += 1
+        return colors_with_icon
+
     def get_score(self):
         """Returns the total value of cards in a players score pile"""
         total_score = 0
@@ -505,6 +512,7 @@ class InnovationPlayer(Player):
 
     def get_number_stacks_splayed_any_direction(self):
         return len(self.get_stacks_splayed_any_direction())
+
 
 class Action:
     def __init__(self, t, p, c=None):
@@ -1164,6 +1172,11 @@ class InnovationGame(Game):
         # TODO - update to inform card counting module
         self.print_for_testing('{p} draws and tucks {c}'.format(p=self.active_player, c=self.active_card.name))
 
+    def draw_and_tuck_multiple(self, draw_value, number_of_cards):
+        for i in range(number_of_cards):
+            self.draw_and_tuck(draw_value)
+            i = i + 1
+
     def return_card(self):
         self.find_and_remove_card(self.active_card)
         self.base_return(self.active_card)
@@ -1581,6 +1594,14 @@ class InnovationGame(Game):
     def machine_tools_effect_0(self):
         highest_value = self.active_player.score_pile.highest_card_value()
         self.draw_and_score(highest_value)
+
+    def industrialization_effect_0(self):
+        colors_with_factories = self.active_player.count_colors_with_one_or_more_icon(self.factory)
+        self.draw_and_tuck_multiple(6, colors_with_factories)
+
+    def industrialization_effect_1(self):
+        self.create_splay_option_suite([self.red, self.purple], self.right)
+        self.take_option()
 
     # Age 7 effects
     def electricity_effect_0(self):
