@@ -1457,7 +1457,9 @@ class InnovationGame(Game):
                         ['Electricity', 0, 'factory', False, self.electricity_effect_0],            # Age 7
                         ['Flight', 0, 'crown', False, self.flight_effect_0],                        # Age 8
                         ['Flight', 1, 'crown', False, self.flight_effect_1],
-                        ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],                # Age 9
+                        ['Computers', 0, 'clock', False, self.computers_effect_0],                  # Age 9
+                        ['Computers', 1, 'clock', False, self.computers_effect_1],
+                        ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],
                         ['A.I.', 0, 'lightbulb', False, self.ai_effect_0],                          # Age 10
                         ['A.I.', 1, 'lightbulb', False, self.ai_effect_1],
                         ['Robotics', 0, 'factory', False, self.robotics_effect_0],
@@ -1645,6 +1647,14 @@ class InnovationGame(Game):
         self.take_option()
 
     # Age 9 effects
+    def computers_effect_0(self):
+        self.create_splay_option_suite([self.green, self.red], self.up)
+        self.take_option()
+
+    def computers_effect_1(self):
+        self.draw_and_meld(10)
+        self.execute_dogma_for_yourself()
+
     def genetics_effect_0(self):
         self.draw_and_meld(10)
         active_stack = self.active_player.stacks[self.active_card.color].cards
