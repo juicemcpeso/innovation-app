@@ -2309,11 +2309,6 @@ class InnovationGame(Game):
     def test_atomic_theory_1(self):
         return self.test_draw_and_meld(7, 1)
 
-    def test_machine_tools_setup(self, card_name):
-        self.set_up_test_generic(card_name)
-        self.active_card = self.get_card_object('Steam Engine')
-        self.add_card_to_score_pile()
-
     def test_industrialization(self):
         return self.test_industrialization_0() and self.test_industrialization_1()
 
@@ -2327,6 +2322,11 @@ class InnovationGame(Game):
             return self.test_splay(selected_color, self.right)
         else:
             return True
+
+    def test_machine_tools_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+        self.active_card = self.get_card_object('Steam Engine')
+        self.add_card_to_score_pile()
 
     def test_machine_tools(self):
         initial_score_pile = self.test_see_initial_score_pile()
