@@ -495,6 +495,16 @@ class InnovationPlayer(Player):
     def get_number_colors_splayed_a_direction(self, direction):
         return len(self.get_colors_splayed_a_direction(direction))
 
+    def get_stacks_splayed_any_direction(self):
+        stacks_splayed = []
+        for stack in self.stacks:
+            if stack.get_splay_type != 'none':
+                stacks_splayed.append(stack)
+
+        return stacks_splayed
+
+    def get_number_stacks_splayed_any_direction(self):
+        return len(self.get_stacks_splayed_any_direction())
 
 class Action:
     def __init__(self, t, p, c=None):
@@ -1419,6 +1429,8 @@ class InnovationGame(Game):
                         ['Paper', 0, 'lightbulb', False, self.paper_effect_1],
                         ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],            # Age 4
                         ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
+                        ['Invention', 0, 'lightbulb', False, self.invention_effect_0],
+                        ['Invention', 1, 'lightbulb', False, self.invention_effect_1],
                         ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],              # Age 5
                         ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
                         ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
@@ -1512,6 +1524,18 @@ class InnovationGame(Game):
 
     def experimentation_effect_0(self):
         self.draw_and_meld(5)
+
+    def invention_effect_0(self):
+        splayed_left = self.active_player.get_colors_splayed_a_direction()
+        self.create_splay_option_suite(splayed_left, self.right)
+        self.take_option()
+        if self.active_player.selected_option.type == 'splay':
+            self.draw_and_score(4)
+
+    def invention_effect_1(self):
+        stacks_splayed = self.active_player.get_number_stacks_splayed_any_direction()
+        if stacks_splayed == '5':
+            self.claim_special_achievement('Universe')
 
     # Age 5 effects
     def astronomy_effect_0(self):
