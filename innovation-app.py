@@ -1548,9 +1548,7 @@ class InnovationGame(Game):
 
     # Age 6 effects
     def atomic_theory_effect_0(self):
-        self.active_player.clear_options()
-        self.create_splay_option(self.blue, 'right')
-        self.create_pass_option()
+        self.create_splay_option_suite([self.blue], self.right)
         self.take_option()
 
     def atomic_theory_effect_1(self):
@@ -2388,16 +2386,16 @@ class InnovationGame(Game):
 
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
-# g.create_tests()
-# g.test_a_card('Paper')
-g.create_game()
-g.active_player = g.get_player_object(0)
-g.active_card = g.get_card_object('Clothing')
-g.meld_card()
-g.active_card = g.get_card_object('Sailing')
-g.meld_card()
-print(g.active_player.total_icons_on_board())
-
-g.active_card = g.get_card_object('Paper')
-g.execute_dogma_for_yourself()
-print(g.active_player.total_icons_on_board())
+g.create_tests()
+g.test_a_card('Atomic Theory')
+# g.create_game()
+# g.active_player = g.get_player_object(0)
+# g.active_card = g.get_card_object('Clothing')
+# g.meld_card()
+# g.active_card = g.get_card_object('Sailing')
+# g.meld_card()
+# print(g.active_player.total_icons_on_board())
+#
+# g.active_card = g.get_card_object('Paper')
+# g.execute_dogma_for_yourself()
+# print(g.active_player.total_icons_on_board())
