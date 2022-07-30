@@ -1526,7 +1526,7 @@ class InnovationGame(Game):
         self.draw_and_meld(5)
 
     def invention_effect_0(self):
-        splayed_left = self.active_player.get_colors_splayed_a_direction()
+        splayed_left = self.active_player.get_colors_splayed_a_direction(self.left)
         self.create_splay_option_suite(splayed_left, self.right)
         self.take_option()
         if self.active_player.selected_option.type == 'splay':
@@ -1649,6 +1649,8 @@ class InnovationGame(Game):
                      ['Paper', self.set_up_test_generic, self.test_paper, self.get_card_object('Paper')],
                      ['Colonialism', self.set_up_test_generic, self.test_colonialism, self.get_card_object('Colonialism')],
                      ['Experimentation', self.set_up_test_generic, self.test_experimentation, self.get_card_object('Experimentation')],
+                     ['Invention', self.set_up_test_generic, self.test_invention, self.get_card_object('Invention')],
+                     ['Invention (cards are splayed)', self.test_invention_setup, self.test_invention, self.get_card_object('Invention')],
                      ['Astronomy', self.test_astronomy_setup, self.test_astronomy, self.get_card_object('Astronomy')],
                      ['Steam Engine', self.set_up_test_generic, self.test_steam_engine, self.get_card_object('Steam Engine')],
                      ['Atomic Theory', self.set_up_test_generic, self.test_atomic_theory, self.get_card_object('Atomic Theory')],
@@ -2004,7 +2006,7 @@ class InnovationGame(Game):
 
     def test_splay(self, color, direction):
         if self.active_player.stacks[color].get_pile_size() > 1:
-            if self.active_player.stacks[color].get_splay_type == direction:
+            if self.active_player.stacks[color].get_splay_type() == direction:
                 return True
             else:
                 return False
@@ -2120,14 +2122,48 @@ class InnovationGame(Game):
     def test_experimentation(self):
         return self.test_draw_and_meld(5, 1)
 
+    def test_invention_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+
+        self.active_player = self.get_player_object(0)
+        self.active_card = g.get_card_object('Sailing')
+        self.meld_card()
+        self.active_card = g.get_card_object('The Wheel')
+        self.meld_card()
+        self.active_player.green_stack.set_splay(self.left)
+        self.active_card = g.get_card_object('Invention')
+        self.meld_card()
+
     def test_invention(self):
         return self.test_invention_0() and self.test_invention_1()
 
     def test_invention_0(self):
-        pass
+        if self.active_player.selected_option.type == 'splay':
+            splayed_correctly = self.test_splay(self.active_player.selected_option.color, 'right')
+        else:
+            splayed_correctly = True
+
+        if self.active_player.selected_option.type != 'pass':
+            draw_and_scored_correctly = self.test_draw_and_score_beginning_of_action(4, 1)
+        else:
+            draw_and_scored_correctly = True
+
+        return splayed_correctly and draw_and_scored_correctly
 
     def test_invention_1(self):
-        pass
+        if 'Wonder' in self.piles_at_beginning_of_effect['special achievements']:
+            if self.active_player.get_number_stacks_splayed_any_direction == 5:
+                if self.get_pile_object('Wonder') in self.active_player.achievement_pile:
+                    return True
+                else:
+                    return False
+            else:
+                if 'Wonder' in self.piles_at_beginning_of_effect['special achievements']:
+                    return True
+                else:
+                    return False
+        else:
+            return True
 
     # Age 5 tests
     def test_astronomy_setup(self, card_name):
@@ -2420,7 +2456,7 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Atomic Theory')
+g.test_a_card('Invention')
 # g.create_game()
 # g.active_player = g.get_player_object(0)
 # g.active_card = g.get_card_object('Clothing')
