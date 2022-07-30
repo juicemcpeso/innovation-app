@@ -1711,9 +1711,10 @@ class InnovationGame(Game):
                      ['Atomic Theory (cards to splay)', self.test_atomic_theory_setup, self.test_atomic_theory, self.get_card_object('Atomic Theory')],
                      ['Industrialization', self.set_up_test_generic, self.test_industrialization, self.get_card_object('Industrialization')],
                      ['Machine Tools', self.test_machine_tools_setup, self.test_machine_tools, self.get_card_object('Machine Tools')],
-                     ['Metric System', self.set_up_test_generic, self.test_metric_system,self.get_card_object('Metric System')],
+                     ['Metric System', self.set_up_test_generic, self.test_metric_system, self.get_card_object('Metric System')],
                      ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')],
                      ['Flight', self.set_up_test_generic, self.test_flight, self.get_card_object('Flight')],
+                     ['Computers', self.set_up_test_generic, self.test_computers, self.get_card_object('Computers')],
                      ['Genetics', self.test_genetics_setup, self.test_genetics, self.get_card_object('Genetics')],
                      ['A.I. (no robotics/software)', self.set_up_test_generic, self.test_ai, self.get_card_object('A.I.')],
                      ['A.I. (robotics/software, tied lowest score)', self.test_ai_setup_0, self.test_ai, self.get_card_object('A.I.')],
@@ -2428,6 +2429,21 @@ class InnovationGame(Game):
             return True
 
     # Age 9 tests
+    def test_computers(self):
+        return self.test_computers_0() and self.test_computers_1()
+
+    def test_computers_0(self):
+        if self.active_player.selected_option.type == 'splay':
+            selected_color = self.active_player.selected_option.color
+            return self.test_splay(selected_color, self.up)
+        else:
+            return True
+
+    def test_computers_1(self):
+        draw_and_meld_correctly = self.test_draw_and_meld(10, 1)
+        non_demand_correctly = self.test_no_share_effect(self.active_card)
+        return draw_and_meld_correctly and non_demand_correctly
+
     def test_genetics_setup(self, card_name):
         self.set_up_test_generic(card_name)
         self.active_card = self.get_card_object('Mysticism')
@@ -2565,7 +2581,7 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Flight')
+g.test_a_card('Computers')
 # g.create_game()
 # g.active_player = g.get_player_object(0)
 # g.active_card = g.get_card_object('Clothing')
