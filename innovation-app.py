@@ -1593,10 +1593,6 @@ class InnovationGame(Game):
     def atomic_theory_effect_1(self):
         self.draw_and_meld(7)
 
-    def machine_tools_effect_0(self):
-        highest_value = self.active_player.score_pile.highest_card_value()
-        self.draw_and_score(highest_value)
-
     def industrialization_effect_0(self):
         colors_with_factories = self.active_player.count_colors_with_one_or_more_icon(self.factory)
         self.draw_and_tuck_multiple(6, colors_with_factories)
@@ -1604,6 +1600,10 @@ class InnovationGame(Game):
     def industrialization_effect_1(self):
         self.create_splay_option_suite([self.red, self.purple], self.right)
         self.take_option()
+
+    def machine_tools_effect_0(self):
+        highest_value = self.active_player.score_pile.highest_card_value()
+        self.draw_and_score(highest_value)
 
     # Age 7 effects
     def electricity_effect_0(self):
