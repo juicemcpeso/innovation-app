@@ -1452,6 +1452,8 @@ class InnovationGame(Game):
                         ['Industrialization', 0, 'factory', False, self.industrialization_effect_0],
                         ['Industrialization', 1, 'factory', False, self.industrialization_effect_1],
                         ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],
+                        ['Metric System', 0, 'crown', False, self.metric_system_effect_0],
+                        ['Metric System', 1, 'crown', False, self.metric_system_effect_1],
                         ['Electricity', 0, 'factory', False, self.electricity_effect_0],            # Age 7
                         ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],                # Age 9
                         ['A.I.', 0, 'lightbulb', False, self.ai_effect_0],                          # Age 10
@@ -1604,6 +1606,15 @@ class InnovationGame(Game):
     def machine_tools_effect_0(self):
         highest_value = self.active_player.score_pile.highest_card_value()
         self.draw_and_score(highest_value)
+
+    def metric_system_effect_0(self):
+        if self.active_player.is_color_splayed(self.green, self.right):
+            self.create_splay_option_suite([self.blue, self.red, self.purple, self.yellow], self.right)
+            self.take_option()
+
+    def metric_system_effect_1(self):
+        self.create_splay_option_suite([self.green], self.right)
+        self.take_option()
 
     # Age 7 effects
     def electricity_effect_0(self):
