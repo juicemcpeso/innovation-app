@@ -1449,6 +1449,8 @@ class InnovationGame(Game):
                         ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
                         ['Atomic Theory', 0, 'lightbulb', False, self.atomic_theory_effect_0],      # Age 6
                         ['Atomic Theory', 1, 'lightbulb', False, self.atomic_theory_effect_1],
+                        ['Industrialization', 0, 'factory', False, self.industrialization_effect_0],
+                        ['Industrialization', 1, 'factory', False, self.industrialization_effect_1],
                         ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],
                         ['Electricity', 0, 'factory', False, self.electricity_effect_0],            # Age 7
                         ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],                # Age 9
