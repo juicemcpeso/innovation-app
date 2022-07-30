@@ -1691,6 +1691,7 @@ class InnovationGame(Game):
                      ['Atomic Theory (cards to splay)', self.test_atomic_theory_setup, self.test_atomic_theory, self.get_card_object('Atomic Theory')],
                      ['Industrialization', self.set_up_test_generic, self.test_industrialization, self.get_card_object('Industrialization')],
                      ['Machine Tools', self.test_machine_tools_setup, self.test_machine_tools, self.get_card_object('Machine Tools')],
+                     ['Metric System', self.set_up_test_generic, self.test_metric_system,self.get_card_object('Metric System')],
                      ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')],
                      ['Genetics', self.test_genetics_setup, self.test_genetics, self.get_card_object('Genetics')],
                      ['A.I. (no robotics/software)', self.set_up_test_generic, self.test_ai, self.get_card_object('A.I.')],
@@ -2345,6 +2346,21 @@ class InnovationGame(Game):
 
         return self.test_draw_and_score(highest_card_value, 1)
 
+    def test_metric_system(self):
+        return self.test_metric_system_0() and self.test_metric_system_1()
+
+    def test_metric_system_0(self):
+        if self.active_player.selected_option.type == 'splay':
+            return self.test_splay(self.active_player.selected_option.color, self.right)
+        else:
+            return True
+
+    def test_metric_system_1(self):
+        if self.active_player.selected_option == 'splay':
+            return self.test_splay(self.blue, 'right')
+        else:
+            return True
+
     # Age 7 tests
     def test_electricity_setup(self, card_name):
         self.set_up_test_generic(card_name)
@@ -2514,7 +2530,7 @@ class InnovationGame(Game):
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Industrialization')
+g.test_a_card('Metric System')
 # g.create_game()
 # g.active_player = g.get_player_object(0)
 # g.active_card = g.get_card_object('Clothing')
