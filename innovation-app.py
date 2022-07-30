@@ -1455,6 +1455,8 @@ class InnovationGame(Game):
                         ['Metric System', 0, 'crown', False, self.metric_system_effect_0],
                         ['Metric System', 1, 'crown', False, self.metric_system_effect_1],
                         ['Electricity', 0, 'factory', False, self.electricity_effect_0],            # Age 7
+                        ['Flight', 0, 'crown', False, self.flight_effect_0],                        # Age 8
+                        ['Flight', 1, 'crown', False, self.flight_effect_1],
                         ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],                # Age 9
                         ['A.I.', 0, 'lightbulb', False, self.ai_effect_0],                          # Age 10
                         ['A.I.', 1, 'lightbulb', False, self.ai_effect_1],
@@ -1633,6 +1635,14 @@ class InnovationGame(Game):
             i += 1
 
     # Age 8 effects
+    def flight_effect_0(self):
+        if self.active_player.is_color_splayed(self.red, self.up):
+            self.create_splay_option_suite([self.blue, self.green, self.purple, self.yellow], self.up)
+            self.take_option()
+
+    def flight_effect_1(self):
+        self.create_splay_option_suite([self.red], self.up)
+        self.take_option()
 
     # Age 9 effects
     def genetics_effect_0(self):
