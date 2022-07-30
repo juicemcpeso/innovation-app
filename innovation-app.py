@@ -1469,7 +1469,10 @@ class InnovationGame(Game):
                         ['A.I.', 1, 'lightbulb', False, self.ai_effect_1],
                         ['Robotics', 0, 'factory', False, self.robotics_effect_0],
                         ['Software', 0, 'clock', False, self.software_effect_0],
-                        ['Software', 1, 'clock', False, self.software_effect_1]]
+                        ['Software', 1, 'clock', False, self.software_effect_1],
+                        ['The Internet', 0, 'clock', False, self.the_internet_effect_0],
+                        ['The Internet', 1, 'clock', False, self.the_internet_effect_1],
+                        ['The Internet', 2, 'clock', False, self.the_internet_effect_2]]
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
