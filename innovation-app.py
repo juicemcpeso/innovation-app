@@ -1738,7 +1738,8 @@ class InnovationGame(Game):
                      ['A.I. (robotics/software, tied lowest score)', self.test_ai_setup_0, self.test_ai, self.get_card_object('A.I.')],
                      ['A.I. (robotics/software, winner)', self.test_ai_setup_1, self.test_ai, self.get_card_object('A.I.')],
                      ['Robotics', self.set_up_test_generic, self.test_robotics, self.get_card_object('Robotics')],
-                     ['Software', self.set_up_test_generic, self.test_software, self.get_card_object('Software')]]
+                     ['Software', self.set_up_test_generic, self.test_software, self.get_card_object('Software')],
+                     ['The Internet', self.set_up_test_generic, self.test_the_internet, self.get_card_object('The Internet')]]
 
         for test_to_add in test_list:
             test = Test(test_to_add[0], test_to_add[1], self.action_dogma, test_to_add[2], test_to_add[3])
@@ -2596,10 +2597,25 @@ class InnovationGame(Game):
         else:
             return False
 
+    def test_the_internet(self):
+        return self.test_the_internet_0() and self.test_the_internet_1() and self.test_the_internet_2()
+
+    def test_the_internet_0(self):
+        if self.active_player.selected_option == 'splay':
+            return self.test_splay(self.green, self.up)
+        else:
+            return True
+
+    def test_the_internet_1(self):
+        return self.test_draw_and_score_beginning_of_action(10, 1)
+
+    def test_the_internet_2(self):
+        #TODO - update this as current methods do not allow to test stacks in the middle of a dogma
+        return True
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 g.create_tests()
-g.test_a_card('Computers')
+g.test_a_card('The Internet')
 # g.create_game()
 # g.active_player = g.get_player_object(0)
 # g.active_card = g.get_card_object('Clothing')
