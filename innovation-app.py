@@ -685,12 +685,12 @@ class Game:
             raise ValueError("Could not add effect " + str(e) + " to card game " + str(self.name) + ".")
 
     def get_effect_object(self, card, effect_number):
-        """Given a card name (string), returns the card object"""
         effect = None
-        effect_list = card.dogma
+        effect_name = card.name + ' Effect ' + str(effect_number)
+        effect_list = list(filter(lambda x: x.name == effect_name, self.effects))
         if len(effect_list):
-            effect = effect_list[effect_number]
-        return card
+            effect = effect_list.pop()
+        return effect
 
     def add_test_to_game(self, t):
         if isinstance(t, Test):
@@ -2700,6 +2700,7 @@ class InnovationGame(Game):
             self.add_aaatest_to_game(test)
             associated_effect = self.get_effect_object(test_to_add[4], test_to_add[5])
             associated_effect.tests.append(test)
+            print(associated_effect.name)
 
     def aaa_run_test(self):
         self.test_build_game()
@@ -2718,21 +2719,19 @@ class InnovationGame(Game):
         self.active_card = self.turn_card
         self.meld_card()
 
-    def test_engineering_0_arrange(self):
-        pass
-
-    def test_engineering_0_assess(self):
-        return False
-
     def aaa_test_an_effect(self, card_name, effect_number):
         passed_tests = []
         failed_tests = []
         card = self.get_card_object(card_name)
-        print(card.dogma)
-        effect = card.dogma[effect_number]
+        effect = self.get_effect_object(card, effect_number)
+        # print(card.dogma[0].name)
+        # effect = card.dogma[effect_number]
+        print(effect)
+        print(effect.tests)
         for test in effect.tests:
-            test.activate()
-            if test.result:
+            self.active_test = test
+            self.aaa_run_test()
+            if self.active_test.result:
                 passed_tests.append(test)
             else:
                 failed_tests.append(test)
@@ -2740,7 +2739,20 @@ class InnovationGame(Game):
         self.determine_pass_or_fail(failed_tests)
 
     def aaa_run_all_tests(self):
-        pass
+        for test in self.tests:
+            pass
+
+    def test_engineering_0_arrange(self):
+        self.active_player = self.get_player_object(1)
+        self.active_card = self.get_card_object('City States')
+        self.meld_card()
+        self.active_player = self.get_player_object(0)
+        self.active_card = self.get_card_object('The Wheel')
+        self.meld_card()
+        self.test_general_setup()
+
+    def test_engineering_0_assess(self):
+        return False
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 # g.create_tests()
@@ -2770,4 +2782,7 @@ g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", Tr
 # print(g.active_player.total_icons_on_board())
 print(g.get_card_object('Engineering').dogma)
 g.aaa_create_tests()
+a = g.get_effect_object(g.get_card_object('Engineering'), 0)
+print(a.tests)
 g.aaa_test_an_effect('Engineering', 0)
+g.aaa_test_an_effect('Engineering', 1)
