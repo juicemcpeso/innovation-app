@@ -138,16 +138,42 @@ class Test:
         self.setup = sup
         self.act = act
         self.function = fun
-        self.associated_card = cd
+        self.card = cd
 
         self.toggle = True
         self.result = False
 
     def activate(self):
-        if self.associated_card:
-            self.setup(self.associated_card.name)
+        if self.card:
+            self.setup(self.card.name)
         else:
             self.setup()
+        self.act()
+        self.result = False
+        self.result = self.function()
+
+    def __repr__(self):
+        return "<%s>" % self.name
+
+    def __str__(self):
+        return self.name
+
+
+class AAATest:
+
+    def __init__(self, tn, sup, act, fun, cd=None, en=None):
+        self.name = 'Test: ' + tn
+        self.setup = sup
+        self.act = act
+        self.function = fun
+        self.card = cd
+        self.effect_number = en
+
+        self.toggle = True
+        self.result = False
+
+    def activate(self):
+        self.setup()
         self.act()
         self.result = False
         self.result = self.function()
@@ -186,6 +212,8 @@ class Effect:
         self.demand = d
 
         self.function = f
+
+        self.tests = []
 
     def activate(self):
         self.function()
@@ -656,8 +684,22 @@ class Game:
         else:
             raise ValueError("Could not add effect " + str(e) + " to card game " + str(self.name) + ".")
 
+    def get_effect_object(self, card, effect_number):
+        """Given a card name (string), returns the card object"""
+        effect = None
+        effect_list = card.dogma
+        if len(effect_list):
+            effect = effect_list[effect_number]
+        return card
+
     def add_test_to_game(self, t):
         if isinstance(t, Test):
+            self.tests.append(t)
+        else:
+            raise ValueError("Could not add effect " + str(t) + " to card game " + str(self.name) + ".")
+
+    def add_aaatest_to_game(self, t):
+        if isinstance(t, AAATest):
             self.tests.append(t)
         else:
             raise ValueError("Could not add effect " + str(t) + " to card game " + str(self.name) + ".")
@@ -742,6 +784,7 @@ class InnovationGame(Game):
         # Create everything needed for the game
         self.verbose = True
         self.testing = False
+        self.active_test = None
 
         # Play a game (Play Ball!)
         self.create_game()
@@ -1468,7 +1511,7 @@ class InnovationGame(Game):
                         ['Calendar', 0, 'leaf', False, self.calendar_effect_0],                     # Age 2
                         ['Fermenting', 0, 'leaf', False, self.fermenting_effect_0],
                         ['Engineering', 0, 'castle', True, self.engineering_effect_0],              # Age 3
-                        ['Engineering', 1, 'castle', True, self.engineering_effect_1],
+                        ['Engineering', 1, 'castle', False, self.engineering_effect_1],
                         ['Paper', 0, 'lightbulb', False, self.paper_effect_0],
                         ['Paper', 0, 'lightbulb', False, self.paper_effect_1],
                         ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],            # Age 4
@@ -2647,24 +2690,76 @@ class InnovationGame(Game):
         #TODO - update this as current methods do not allow to test stacks in the middle of a dogma
         return True
 
+    # New test style tests
+    def aaa_create_tests(self):
+        # Test name, setup function, action function, evaluation function, corresponding card, effect number
+        aaa_tests = [['Engineering', self.test_engineering_0_arrange, self.engineering_effect_0, self.test_engineering_0_assess, self.get_card_object('Engineering'), 0]]
+
+        for test_to_add in aaa_tests:
+            test = AAATest(test_to_add[0], test_to_add[1], test_to_add[2], test_to_add[3], test_to_add[4], test_to_add[5])
+            self.add_aaatest_to_game(test)
+            associated_effect = self.get_effect_object(test_to_add[4], test_to_add[5])
+            associated_effect.tests.append(test)
+
+    def aaa_run_test(self):
+        self.test_build_game()
+        self.active_test.activate()
+
+    def test_build_game(self):
+        self.print_for_testing(self.active_test.name)
+        self.create_game()
+        self.shuffle_piles()
+        self.testing = True
+
+    def test_general_setup(self):
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        self.turn_card = self.active_test.card
+        self.active_card = self.turn_card
+        self.meld_card()
+
+    def test_engineering_0_arrange(self):
+        pass
+
+    def test_engineering_0_assess(self):
+        return False
+
+    def aaa_test_an_effect(self, card_name, effect_number):
+        passed_tests = []
+        failed_tests = []
+        card = self.get_card_object(card_name)
+        print(card.dogma)
+        effect = card.dogma[effect_number]
+        for test in effect.tests:
+            test.activate()
+            if test.result:
+                passed_tests.append(test)
+            else:
+                failed_tests.append(test)
+
+        self.determine_pass_or_fail(failed_tests)
+
+    def aaa_run_all_tests(self):
+        pass
+
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 # g.create_tests()
 # g.test_a_card('The Internet')
-g.create_game()
-g.active_player = g.get_player_object(1)
-g.active_card = g.get_card_object('Masonry')
-g.meld_card()
-
-g.active_player = g.get_player_object(0)
-g.active_card = g.get_card_object('Mysticism')
-g.meld_card()
-g.active_card = g.get_card_object('Engineering')
-g.meld_card()
-
-g.turn_player = g.active_player = g.get_player_object(1)
-g.active_player = g.active_player = g.get_player_object(1)
-g.effect_player = g.active_player = g.get_player_object(0)
-g.engineering_effect_0()
+# g.create_game()
+# g.active_player = g.get_player_object(1)
+# g.active_card = g.get_card_object('Masonry')
+# g.meld_card()
+#
+# g.active_player = g.get_player_object(0)
+# g.active_card = g.get_card_object('Mysticism')
+# g.meld_card()
+# g.active_card = g.get_card_object('Engineering')
+# g.meld_card()
+#
+# g.turn_player = g.get_player_object(0)
+# g.turn_card = g.get_card_object('Engineering')
+#
+# g.action_dogma()
 
 # g.active_card = g.get_card_object('Sailing')
 # g.meld_card()
@@ -2673,3 +2768,6 @@ g.engineering_effect_0()
 # g.active_card = g.get_card_object('Paper')
 # g.execute_dogma_for_yourself()
 # print(g.active_player.total_icons_on_board())
+print(g.get_card_object('Engineering').dogma)
+g.aaa_create_tests()
+g.aaa_test_an_effect('Engineering', 0)
