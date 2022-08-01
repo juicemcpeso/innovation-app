@@ -513,6 +513,15 @@ class InnovationPlayer(Player):
     def get_number_stacks_splayed_any_direction(self):
         return len(self.get_stacks_splayed_any_direction())
 
+    def get_top_cards_with_icon(self, icon):
+        top_cards_with_icon = []
+        for stack in self.stacks:
+            top_card = stack.see_top_card()
+            if top_card and top_card.contains_icon(icon):
+                top_cards_with_icon.append(top_card)
+
+        return top_cards_with_icon
+
 
 class Action:
     def __init__(self, t, p, c=None):
@@ -683,6 +692,7 @@ class InnovationGame(Game):
         self.active_card = None
         self.turn_player = None
         self.turn_card = None
+        self.effect_player = None
 
         self.ordered_players = []
 
@@ -1138,6 +1148,18 @@ class InnovationGame(Game):
         self.base_score(self.active_card)
         self.print_for_testing('{p} adds {c} to score pile'.format(p=self.active_player, c=self.active_card.name))
 
+    def demand_transfer_card_from_board_to_score_pile(self):
+        self.find_and_remove_card(self.active_card)
+        self.active_player = self.turn_player
+        self.base_score(self.active_card)
+        self.print_for_testing('{p} adds {c} to score pile'.format(p=self.active_player, c=self.active_card.name))
+        self.active_player = self.effect_player
+
+    def demand_transfer_multiple_cards_from_board_to_score_pile(self, list_of_cards):
+        for card in list_of_cards:
+            self.active_card = card
+            self.demand_transfer_card_from_board_to_score_pile()
+
     def draw_to_hand(self, draw_value):
         """Draws a card to a players hand of a specified draw value"""
         self.base_draw(draw_value)
@@ -1246,6 +1268,7 @@ class InnovationGame(Game):
                     if eligible_player not in sharing_players:
                         self.set_effect_pile_state()
                         self.active_player = eligible_player
+                        self.effect_player = eligible_player
                         self.print_for_testing('{t} DEMANDS {p} resolve {c} dogma'.format(t=self.turn_player,
                                                                                           p=eligible_player.name,
                                                                                           c=self.turn_card.name))
@@ -1256,6 +1279,7 @@ class InnovationGame(Game):
                 for eligible_player in sharing_players:
                     self.set_effect_pile_state()
                     self.active_player = eligible_player
+                    self.effect_player = eligible_player
                     self.print_for_testing('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
                     effect.activate()
 
@@ -1443,7 +1467,9 @@ class InnovationGame(Game):
                         ['Writing', 0, 'lightbulb', False, self.writing_effect_0],
                         ['Calendar', 0, 'leaf', False, self.calendar_effect_0],                     # Age 2
                         ['Fermenting', 0, 'leaf', False, self.fermenting_effect_0],
-                        ['Paper', 0, 'lightbulb', False, self.paper_effect_0],                      # Age 3
+                        ['Engineering', 0, 'castle', True, self.engineering_effect_0],              # Age 3
+                        ['Engineering', 1, 'castle', True, self.engineering_effect_1],
+                        ['Paper', 0, 'lightbulb', False, self.paper_effect_0],
                         ['Paper', 0, 'lightbulb', False, self.paper_effect_1],
                         ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],            # Age 4
                         ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
@@ -1536,6 +1562,14 @@ class InnovationGame(Game):
             i += 1
 
     # Age 3 effects
+    def engineering_effect_0(self):
+        cards_with_castles = self.active_player.get_top_cards_with_icon(self.castle)
+        self.demand_transfer_multiple_cards_from_board_to_score_pile(cards_with_castles)
+
+    def engineering_effect_1(self):
+        self.create_splay_option_suite([self.red], self.left)
+        self.take_option()
+
     def paper_effect_0(self):
         self.create_splay_option_suite([self.blue, self.green], self.left)
         self.take_option()
@@ -2614,12 +2648,24 @@ class InnovationGame(Game):
         return True
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
-g.create_tests()
-g.test_a_card('The Internet')
-# g.create_game()
-# g.active_player = g.get_player_object(0)
-# g.active_card = g.get_card_object('Clothing')
-# g.meld_card()
+# g.create_tests()
+# g.test_a_card('The Internet')
+g.create_game()
+g.active_player = g.get_player_object(1)
+g.active_card = g.get_card_object('Masonry')
+g.meld_card()
+
+g.active_player = g.get_player_object(0)
+g.active_card = g.get_card_object('Mysticism')
+g.meld_card()
+g.active_card = g.get_card_object('Engineering')
+g.meld_card()
+
+g.turn_player = g.active_player = g.get_player_object(1)
+g.active_player = g.active_player = g.get_player_object(1)
+g.effect_player = g.active_player = g.get_player_object(0)
+g.engineering_effect_0()
+
 # g.active_card = g.get_card_object('Sailing')
 # g.meld_card()
 # print(g.active_player.total_icons_on_board())
