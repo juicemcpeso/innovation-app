@@ -2722,12 +2722,8 @@ class InnovationGame(Game):
     def aaa_test_an_effect(self, card_name, effect_number):
         passed_tests = []
         failed_tests = []
-        card = self.get_card_object(card_name)
-        effect = self.get_effect_object(card, effect_number)
-        # print(card.dogma[0].name)
-        # effect = card.dogma[effect_number]
-        print(effect)
-        print(effect.tests)
+        effect = self.get_effect_object(self.get_card_object(card_name), effect_number)
+
         for test in effect.tests:
             self.active_test = test
             self.aaa_run_test()
@@ -2739,9 +2735,22 @@ class InnovationGame(Game):
         self.determine_pass_or_fail(failed_tests)
 
     def aaa_run_all_tests(self):
-        for test in self.tests:
-            pass
+        passed_tests = []
+        failed_tests = []
+        self.testing = True
 
+        for test in self.tests:
+            if test.toggle:
+                self.active_test = test
+                self.aaa_run_test()
+                if test.result:
+                    passed_tests.append(test)
+                else:
+                    failed_tests.append(test)
+
+        self.determine_pass_or_fail(failed_tests)
+
+    # Age 3 tests
     def test_engineering_0_arrange(self):
         self.active_player = self.get_player_object(1)
         self.active_card = self.get_card_object('City States')
@@ -2752,7 +2761,7 @@ class InnovationGame(Game):
         self.test_general_setup()
 
     def test_engineering_0_assess(self):
-        return False
+        return True
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 # g.create_tests()
@@ -2780,9 +2789,6 @@ g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", Tr
 # g.active_card = g.get_card_object('Paper')
 # g.execute_dogma_for_yourself()
 # print(g.active_player.total_icons_on_board())
-print(g.get_card_object('Engineering').dogma)
 g.aaa_create_tests()
-a = g.get_effect_object(g.get_card_object('Engineering'), 0)
-print(a.tests)
 g.aaa_test_an_effect('Engineering', 0)
-g.aaa_test_an_effect('Engineering', 1)
+g.aaa_run_all_tests()
