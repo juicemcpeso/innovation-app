@@ -2697,13 +2697,13 @@ class InnovationGame(Game):
     # New test style tests
     def aaa_create_tests(self):
         # Test name, setup function, action function, evaluation function, corresponding card, effect number
-        aaa_tests = [['Engineering 0', self.test_engineering_0_arrange, self.engineering_effect_0, self.test_engineering_0_assess, self.get_card_object('Engineering'), 0],
-                     ['Engineering 1', self.test_engineering_0_arrange, self.engineering_effect_1, self.test_engineering_1_assess, self.get_card_object('Engineering'), 1]]
+        aaa_tests = [['Engineering 0', self.test_engineering_0_arrange, self.test_engineering_0_assess, self.get_card_object('Engineering'), 0],
+                     ['Engineering 1', self.test_engineering_0_arrange, self.test_engineering_1_assess, self.get_card_object('Engineering'), 1]]
 
         for test_to_add in aaa_tests:
-            test = AAATest(test_to_add[0], test_to_add[1], test_to_add[2], test_to_add[3], test_to_add[4], test_to_add[5])
+            test = AAATest(test_to_add[0], test_to_add[1], self.get_effect_object(test_to_add[3], test_to_add[4]), test_to_add[2], test_to_add[3], test_to_add[4])
             self.add_aaatest_to_game(test)
-            associated_effect = self.get_effect_object(test_to_add[4], test_to_add[5])
+            associated_effect = self.get_effect_object(test_to_add[3], test_to_add[4])
             associated_effect.tests.append(test)
 
     def aaa_run_test(self):
@@ -2785,6 +2785,7 @@ class InnovationGame(Game):
                     passed_tests.append(test)
                 else:
                     failed_tests.append(test)
+                print(test.result)
 
         self.determine_pass_or_fail(failed_tests)
 
