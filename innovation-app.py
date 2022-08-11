@@ -1536,6 +1536,8 @@ class InnovationGame(Game):
                         ['Invention', 1, 'lightbulb', False, self.invention_effect_1],
                         ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],              # Age 5
                         ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
+                        ['Statistics', 0, 'leaf', True, self.statistics_effect_0],
+                        ['Statistics', 1, 'leaf', False, self.statistics_effect_1],
                         ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
                         ['Atomic Theory', 0, 'lightbulb', False, self.atomic_theory_effect_0],      # Age 6
                         ['Atomic Theory', 1, 'lightbulb', False, self.atomic_theory_effect_1],
@@ -2719,7 +2721,9 @@ class InnovationGame(Game):
     def aaa_create_tests(self):
         # Test name, setup function, action function, evaluation function, corresponding card, effect number
         aaa_tests = [['Engineering 0', self.test_engineering_0_arrange, self.test_engineering_0_assess, self.get_card_object('Engineering'), 0],
-                     ['Engineering 1', self.test_engineering_0_arrange, self.test_engineering_1_assess, self.get_card_object('Engineering'), 1]]
+                     ['Engineering 1', self.test_engineering_0_arrange, self.test_engineering_1_assess, self.get_card_object('Engineering'), 1],
+                     ['Statistics 0', self.test_statistics_0_arrange, self.test_statistics_0_assess, self.get_card_object('Statistics'), 0],
+                     ['Statistics 1', self.test_statistics_1_arrange, self.test_statistics_1_assess, self.get_card_object('Statistics'), 1]]
 
         for test_to_add in aaa_tests:
             test = AAATest(test_to_add[0], test_to_add[1], self.get_effect_object(test_to_add[3], test_to_add[4]), test_to_add[2], test_to_add[3], test_to_add[4])
@@ -2891,35 +2895,11 @@ class InnovationGame(Game):
         self.test_statistics_0_arrange()
 
     def test_statistics_1_assess(self):
-        return self.aaa_test_splay(self.yellow, self.right, [0, 2, 1, 1, 0, 0], [0, 2, 1, 0, 0, 0])
+        return self.aaa_test_splay(self.yellow, self.right, [0, 4, 1, 0, 0, 0], [0, 2, 1, 0, 0, 0])
 
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
-# g.create_tests()
-# g.test_a_card('The Internet')
-# g.create_game()
-# g.active_player = g.get_player_object(1)
-# g.active_card = g.get_card_object('Masonry')
-# g.meld_card()
-#
-# g.active_player = g.get_player_object(0)
-# g.active_card = g.get_card_object('Mysticism')
-# g.meld_card()
-# g.active_card = g.get_card_object('Engineering')
-# g.meld_card()
-#
-# g.turn_player = g.get_player_object(0)
-# g.turn_card = g.get_card_object('Engineering')
-#
-# g.action_dogma()
 
-# g.active_card = g.get_card_object('Sailing')
-# g.meld_card()
-# print(g.active_player.total_icons_on_board())
-#
-# g.active_card = g.get_card_object('Paper')
-# g.execute_dogma_for_yourself()
-# print(g.active_player.total_icons_on_board())
 g.aaa_create_tests()
 # g.aaa_test_an_effect('Engineering', 1)
 g.aaa_run_all_tests()
