@@ -312,6 +312,14 @@ class Pile:
 
         return highest_value
 
+    def get_cards_of_value(self, value):
+        cards_of_value = []
+        for card in self.cards:
+            if card.age == value:
+                cards_of_value.append(card)
+
+        return cards_of_value
+
     def __repr__(self):
         string = "<CardPile: %s>\n" % self.name
         for card in self.cards:
@@ -1165,6 +1173,10 @@ class InnovationGame(Game):
         self.find_and_remove_card(card)
         pile.add_card_to_bottom(card)
 
+    def transfer_cards_to_your_hand(self, card_list):
+        for card in card_list:
+            self.move_card_to_pile(card, self.active_player.hand)
+
     # Combination functions used as card actions
     def add_card_to_achievement_pile(self):
         """Moves selected card to a player's achievement pile"""
@@ -1671,6 +1683,15 @@ class InnovationGame(Game):
 
         if all(do_cards_meet_criteria):
             self.claim_special_achievement('Universe')
+
+    def statistics_effect_0(self):
+        highest_value = self.active_player.score_pile.highest_card_value()
+        highest_value_cards = self.active_player.score_pile.get_cards_of_value(highest_value)
+        self.transfer_cards_to_your_hand(highest_value_cards)
+
+    def statistics_effect_1(self):
+        self.create_splay_option_suite([self.yellow], self.right)
+        self.take_option()
 
     def steam_engine_effect_0(self):
         self.draw_and_tuck(4)
