@@ -2697,16 +2697,17 @@ class InnovationGame(Game):
     # New test style tests
     def aaa_create_tests(self):
         # Test name, setup function, action function, evaluation function, corresponding card, effect number
-        aaa_tests = [['Engineering', self.test_engineering_0_arrange, self.engineering_effect_0, self.test_engineering_0_assess, self.get_card_object('Engineering'), 0]]
+        aaa_tests = [['Engineering 0', self.test_engineering_0_arrange, self.engineering_effect_0, self.test_engineering_0_assess, self.get_card_object('Engineering'), 0],
+                     ['Engineering 1', self.test_engineering_0_arrange, self.engineering_effect_1, self.test_engineering_1_assess, self.get_card_object('Engineering'), 1]]
 
         for test_to_add in aaa_tests:
             test = AAATest(test_to_add[0], test_to_add[1], test_to_add[2], test_to_add[3], test_to_add[4], test_to_add[5])
             self.add_aaatest_to_game(test)
             associated_effect = self.get_effect_object(test_to_add[4], test_to_add[5])
             associated_effect.tests.append(test)
-            print(associated_effect.name)
 
     def aaa_run_test(self):
+        self.print_for_testing(self.active_test.name)
         self.test_build_game()
         self.active_test.setup()
         self.aaa_test_dogma()
@@ -2745,7 +2746,6 @@ class InnovationGame(Game):
                     dogma_was_shared = self.check_if_opponent_shared()
 
     def test_build_game(self):
-        self.print_for_testing(self.active_test.name)
         self.create_game()
         self.shuffle_piles()
         self.testing = True
@@ -2814,6 +2814,16 @@ class InnovationGame(Game):
         else:
             return False
 
+    def test_engineering_1_assess(self):
+        if self.get_player_object(0).selected_option.name == "Splay red cards left":
+            return True if self.get_player_object(0).red_stack.get_splay_type() == 'left' \
+                           and self.get_player_object(0).count_icons_on_board(self.castle) == 6 else False
+        elif self.get_player_object(0).selected_option.name == "Pass":
+            return True if self.get_player_object(0).red_stack.get_splay_type() == 'none' \
+                           and self.get_player_object(0).count_icons_on_board(self.castle) == 5 else False
+        else:
+            return False
+
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 # g.create_tests()
 # g.test_a_card('The Internet')
@@ -2841,5 +2851,5 @@ g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", Tr
 # g.execute_dogma_for_yourself()
 # print(g.active_player.total_icons_on_board())
 g.aaa_create_tests()
-g.aaa_test_an_effect('Engineering', 0)
-# g.aaa_run_all_tests()
+# g.aaa_test_an_effect('Engineering', 1)
+g.aaa_run_all_tests()
