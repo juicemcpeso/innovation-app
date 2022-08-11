@@ -138,17 +138,47 @@ class Test:
         self.setup = sup
         self.act = act
         self.function = fun
-        self.associated_card = cd
+        self.card = cd
 
         self.toggle = True
         self.result = False
 
     def activate(self):
-        if self.associated_card:
-            self.setup(self.associated_card.name)
+        if self.card:
+            self.setup(self.card.name)
         else:
             self.setup()
         self.act()
+        self.result = False
+        self.result = self.function()
+
+    def __repr__(self):
+        return "<%s>" % self.name
+
+    def __str__(self):
+        return self.name
+
+
+class AAATest:
+
+    def __init__(self, tn, sup, act, fun, cd=None, en=None):
+        self.name = 'Test: ' + tn
+        self.setup = sup
+        self.act = act
+        self.function = fun
+        self.card = cd
+        self.effect_number = en
+
+        self.toggle = True
+        self.result = False
+
+    def activate(self):
+        self.setup()
+        self.act()
+        self.result = False
+        self.result = self.function()
+
+    def evaluate(self):
         self.result = False
         self.result = self.function()
 
@@ -186,6 +216,8 @@ class Effect:
         self.demand = d
 
         self.function = f
+
+        self.tests = []
 
     def activate(self):
         self.function()
@@ -280,6 +312,14 @@ class Pile:
 
         return highest_value
 
+    def get_cards_of_value(self, value):
+        cards_of_value = []
+        for card in self.cards:
+            if card.age == value:
+                cards_of_value.append(card)
+
+        return cards_of_value
+
     def __repr__(self):
         string = "<CardPile: %s>\n" % self.name
         for card in self.cards:
@@ -315,12 +355,13 @@ class InnovationStack(Pile):
             raise ValueError("Error setting splay. Splay must be left, right, or up.")
 
         self.cancel_splay()
-        if splay_direction == 'left':
-            self.splay_left = True
-        elif splay_direction == 'right':
-            self.splay_right = True
-        elif splay_direction == 'up':
-            self.splay_up = True
+        if len(self.cards) > 1:
+            if splay_direction == 'left':
+                self.splay_left = True
+            elif splay_direction == 'right':
+                self.splay_right = True
+            elif splay_direction == 'up':
+                self.splay_up = True
 
     def cancel_splay(self):
         """Sets all splays to false"""
@@ -380,6 +421,17 @@ class InnovationStack(Pile):
 
         return total_icons
 
+    def get_splay_type(self):
+        if self.splay_left and not self.splay_right and not self.splay_up:
+            return 'left'
+        elif not self.splay_left and self.splay_right and not self.splay_up:
+            return 'right'
+        elif not self.splay_left and not self.splay_right and self.splay_up:
+            return 'up'
+        if not self.splay_left and not self.splay_right and not self.splay_up:
+            return 'none'
+        else:
+            raise ValueError("Multiple splay types")
 
 class Player:
     """Base class for a player in a game"""
@@ -421,6 +473,9 @@ class InnovationPlayer(Player):
         self.yellow_stack = s_yellow
         self.stacks = [self.blue_stack, self.green_stack, self.purple_stack, self.red_stack, self.yellow_stack]
 
+        self.options = []
+        self.selected_option = None
+
         self.table_position = 0
         self.share_order = []
 
@@ -445,6 +500,13 @@ class InnovationPlayer(Player):
 
         return total_icons
 
+    def count_colors_with_one_or_more_icon(self, icon_type):
+        colors_with_icon = 0
+        for stack in self.stacks:
+            if stack.count_icons_in_stack(icon_type) > 0:
+                colors_with_icon += 1
+        return colors_with_icon
+
     def get_score(self):
         """Returns the total value of cards in a players score pile"""
         total_score = 0
@@ -459,6 +521,46 @@ class InnovationPlayer(Player):
             if stack.get_pile_size() > 0:
                 current_colors.append(stack.color)
         return current_colors
+
+    def clear_options(self):
+        self.options = []
+
+    def is_color_splayed(self, color, direction):
+        if self.stacks[color].get_splay_type() == direction:
+            return True
+        else:
+            return False
+
+    def get_colors_splayed_a_direction(self, direction):
+        splayed_stacks = []
+        for stack in self.stacks:
+            if stack.get_splay_type() == direction:
+                splayed_stacks.append(stack.color)
+
+        return splayed_stacks
+
+    def get_number_colors_splayed_a_direction(self, direction):
+        return len(self.get_colors_splayed_a_direction(direction))
+
+    def get_stacks_splayed_any_direction(self):
+        stacks_splayed = []
+        for stack in self.stacks:
+            if stack.get_splay_type != 'none':
+                stacks_splayed.append(stack)
+
+        return stacks_splayed
+
+    def get_number_stacks_splayed_any_direction(self):
+        return len(self.get_stacks_splayed_any_direction())
+
+    def get_top_cards_with_icon(self, icon):
+        top_cards_with_icon = []
+        for stack in self.stacks:
+            top_card = stack.see_top_card()
+            if top_card and top_card.contains_icon(icon):
+                top_cards_with_icon.append(top_card)
+
+        return top_cards_with_icon
 
 
 class Action:
@@ -483,6 +585,30 @@ class Action:
 
     def __str__(self):
         return self.name
+
+
+class Option:
+    def __init__(self, n, t):
+        self.name = n
+        self.type = t
+
+    def __repr__(self):
+        return "<%s>" % self.name
+
+    def __str__(self):
+        return self.name
+
+
+class PassOption(Option):
+    def __init__(self):
+        Option.__init__(self, 'Pass', 'pass')
+
+
+class SplayOption(Option):
+    def __init__(self, n, t, c, d):
+        Option.__init__(self, n, t)
+        self.color = c
+        self.direction = d
 
 
 class Game:
@@ -570,8 +696,22 @@ class Game:
         else:
             raise ValueError("Could not add effect " + str(e) + " to card game " + str(self.name) + ".")
 
+    def get_effect_object(self, card, effect_number):
+        effect = None
+        effect_name = card.name + ' Effect ' + str(effect_number)
+        effect_list = list(filter(lambda x: x.name == effect_name, self.effects))
+        if len(effect_list):
+            effect = effect_list.pop()
+        return effect
+
     def add_test_to_game(self, t):
         if isinstance(t, Test):
+            self.tests.append(t)
+        else:
+            raise ValueError("Could not add effect " + str(t) + " to card game " + str(self.name) + ".")
+
+    def add_aaatest_to_game(self, t):
+        if isinstance(t, AAATest):
             self.tests.append(t)
         else:
             raise ValueError("Could not add effect " + str(t) + " to card game " + str(self.name) + ".")
@@ -606,6 +746,7 @@ class InnovationGame(Game):
         self.active_card = None
         self.turn_player = None
         self.turn_card = None
+        self.effect_player = None
 
         self.ordered_players = []
 
@@ -618,6 +759,7 @@ class InnovationGame(Game):
         self.clock = 5
 
         # Variables for each of the colors
+        self.colors = ['blue', 'green', 'purple', 'red', 'yellow']
         self.blue = 0
         self.green = 1
         self.purple = 2
@@ -625,6 +767,11 @@ class InnovationGame(Game):
         self.yellow = 4
 
         self.stacks = []
+
+        # Variables for each of the directions
+        self.left = 'left'
+        self.right = 'right'
+        self.up = 'up'
 
         for i in range(self.number_of_players):
             self.player_names.append(possible_player_names[i])
@@ -649,6 +796,7 @@ class InnovationGame(Game):
         # Create everything needed for the game
         self.verbose = True
         self.testing = False
+        self.active_test = None
 
         # Play a game (Play Ball!)
         self.create_game()
@@ -1025,6 +1173,10 @@ class InnovationGame(Game):
         self.find_and_remove_card(card)
         pile.add_card_to_bottom(card)
 
+    def transfer_cards_to_your_hand(self, card_list):
+        for card in card_list:
+            self.move_card_to_pile(card, self.active_player.hand)
+
     # Combination functions used as card actions
     def add_card_to_achievement_pile(self):
         """Moves selected card to a player's achievement pile"""
@@ -1055,17 +1207,39 @@ class InnovationGame(Game):
         self.base_score(self.active_card)
         self.print_for_testing('{p} adds {c} to score pile'.format(p=self.active_player, c=self.active_card.name))
 
+    def demand_transfer_card_from_board_to_score_pile(self):
+        self.find_and_remove_card(self.active_card)
+        self.active_player = self.turn_player
+        self.base_score(self.active_card)
+        self.print_for_testing('{p} adds {c} to score pile'.format(p=self.active_player, c=self.active_card.name))
+        self.active_player = self.effect_player
+
+    def demand_transfer_multiple_cards_from_board_to_score_pile(self, list_of_cards):
+        for card in list_of_cards:
+            self.active_card = card
+            self.demand_transfer_card_from_board_to_score_pile()
+
     def draw_to_hand(self, draw_value):
         """Draws a card to a players hand of a specified draw value"""
         self.base_draw(draw_value)
         self.print_for_testing('{p} draws {c}'.format(p=self.active_player, c=self.active_card.name))
         self.add_card_to_hand()
 
+    def draw_to_hand_multiple(self, draw_value, number_of_cards):
+        for i in range(number_of_cards):
+            self.draw_to_hand(draw_value)
+            i = i + 1
+
     def draw_and_meld(self, draw_value):
         self.base_draw(draw_value)
         self.find_and_remove_card(self.active_card)
         self.base_meld(self.active_card)
         self.print_for_testing('{p} draws and melds {c}'.format(p=self.active_player, c=self.active_card.name))
+
+    def draw_and_meld_multiple(self, draw_value, number_of_cards):
+        for i in range(number_of_cards):
+            self.draw_and_meld(draw_value)
+            i = i + 1
 
     def draw_and_reveal(self, draw_value):
         self.base_draw(draw_value)
@@ -1083,6 +1257,11 @@ class InnovationGame(Game):
         self.base_tuck(self.active_card)
         # TODO - update to inform card counting module
         self.print_for_testing('{p} draws and tucks {c}'.format(p=self.active_player, c=self.active_card.name))
+
+    def draw_and_tuck_multiple(self, draw_value, number_of_cards):
+        for i in range(number_of_cards):
+            self.draw_and_tuck(draw_value)
+            i = i + 1
 
     def return_card(self):
         self.find_and_remove_card(self.active_card)
@@ -1148,6 +1327,7 @@ class InnovationGame(Game):
                     if eligible_player not in sharing_players:
                         self.set_effect_pile_state()
                         self.active_player = eligible_player
+                        self.effect_player = eligible_player
                         self.print_for_testing('{t} DEMANDS {p} resolve {c} dogma'.format(t=self.turn_player,
                                                                                           p=eligible_player.name,
                                                                                           c=self.turn_card.name))
@@ -1158,6 +1338,7 @@ class InnovationGame(Game):
                 for eligible_player in sharing_players:
                     self.set_effect_pile_state()
                     self.active_player = eligible_player
+                    self.effect_player = eligible_player
                     self.print_for_testing('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
                     effect.activate()
 
@@ -1292,6 +1473,49 @@ class InnovationGame(Game):
 
         return action_list[selection]
 
+    def ai_select_random_option(self):
+        index = random.randrange(len(self.active_player.options))
+        return self.active_player.options[index]
+
+    # Options
+    def take_option(self):
+        self.select_option()
+        self.execute_option()
+
+    def select_option(self):
+        self.active_player.selected_option = None
+        if self.active_player.ai_flag:
+            # TODO - write function for AI to select an action
+            self.active_player.selected_option = self.ai_select_random_option()
+        else:
+            # TODO - write function for a human to select an action
+            pass
+
+    def execute_option(self):
+        if self.active_player.selected_option.type == 'splay':
+            self.execute_option_splay()
+
+        self.print_for_testing("{p} chooses to {s}".format(p=self.active_player.name,
+                                                           s=self.active_player.selected_option.name.lower()))
+
+    def execute_option_splay(self):
+        selected_option = self.active_player.selected_option
+        self.active_player.stacks[selected_option.color].set_splay(selected_option.direction)
+
+    # Create options
+    def create_pass_option(self):
+        self.active_player.options.append(PassOption())
+
+    def create_splay_option(self, splay_color, splay_direction):
+        name = "Splay {c} cards {d}".format(c=self.colors[splay_color], d=splay_direction)
+        self.active_player.options.append(SplayOption(name, 'splay', splay_color, splay_direction))
+
+    def create_splay_option_suite(self, color_list, splay_direction):
+        self.active_player.clear_options()
+        for color in color_list:
+            self.create_splay_option(color, splay_direction)
+        self.create_pass_option()
+
     # Effects
     def create_effects(self):
         # [Card name, effect number, effect type (str), demand_flag, function]
@@ -1302,19 +1526,40 @@ class InnovationGame(Game):
                         ['Writing', 0, 'lightbulb', False, self.writing_effect_0],
                         ['Calendar', 0, 'leaf', False, self.calendar_effect_0],                     # Age 2
                         ['Fermenting', 0, 'leaf', False, self.fermenting_effect_0],
+                        ['Engineering', 0, 'castle', True, self.engineering_effect_0],              # Age 3
+                        ['Engineering', 1, 'castle', False, self.engineering_effect_1],
+                        ['Paper', 0, 'lightbulb', False, self.paper_effect_0],
+                        ['Paper', 0, 'lightbulb', False, self.paper_effect_1],
                         ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],            # Age 4
                         ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
+                        ['Invention', 0, 'lightbulb', False, self.invention_effect_0],
+                        ['Invention', 1, 'lightbulb', False, self.invention_effect_1],
                         ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],              # Age 5
                         ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
+                        ['Statistics', 0, 'leaf', True, self.statistics_effect_0],
+                        ['Statistics', 1, 'leaf', False, self.statistics_effect_1],
                         ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
-                        ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],        # Age 6
+                        ['Atomic Theory', 0, 'lightbulb', False, self.atomic_theory_effect_0],      # Age 6
+                        ['Atomic Theory', 1, 'lightbulb', False, self.atomic_theory_effect_1],
+                        ['Industrialization', 0, 'factory', False, self.industrialization_effect_0],
+                        ['Industrialization', 1, 'factory', False, self.industrialization_effect_1],
+                        ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],
+                        ['Metric System', 0, 'crown', False, self.metric_system_effect_0],
+                        ['Metric System', 1, 'crown', False, self.metric_system_effect_1],
                         ['Electricity', 0, 'factory', False, self.electricity_effect_0],            # Age 7
-                        ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],                # Age 9
+                        ['Flight', 0, 'crown', False, self.flight_effect_0],                        # Age 8
+                        ['Flight', 1, 'crown', False, self.flight_effect_1],
+                        ['Computers', 0, 'clock', False, self.computers_effect_0],                  # Age 9
+                        ['Computers', 1, 'clock', False, self.computers_effect_1],
+                        ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],
                         ['A.I.', 0, 'lightbulb', False, self.ai_effect_0],                          # Age 10
                         ['A.I.', 1, 'lightbulb', False, self.ai_effect_1],
                         ['Robotics', 0, 'factory', False, self.robotics_effect_0],
                         ['Software', 0, 'clock', False, self.software_effect_0],
-                        ['Software', 1, 'clock', False, self.software_effect_1]]
+                        ['Software', 1, 'clock', False, self.software_effect_1],
+                        ['The Internet', 0, 'clock', False, self.the_internet_effect_0],
+                        ['The Internet', 1, 'clock', False, self.the_internet_effect_1],
+                        ['The Internet', 2, 'clock', False, self.the_internet_effect_2]]
 
         for effect_to_add in effects_list:
             effect = Effect(effect_to_add[0], effect_to_add[1], effect_to_add[2], effect_to_add[3], effect_to_add[4])
@@ -1376,7 +1621,23 @@ class InnovationGame(Game):
         while i < stacks_with_leaves:
             self.draw_to_hand(2)
             i += 1
+
     # Age 3 effects
+    def engineering_effect_0(self):
+        cards_with_castles = self.active_player.get_top_cards_with_icon(self.castle)
+        self.demand_transfer_multiple_cards_from_board_to_score_pile(cards_with_castles)
+
+    def engineering_effect_1(self):
+        self.create_splay_option_suite([self.red], self.left)
+        self.take_option()
+
+    def paper_effect_0(self):
+        self.create_splay_option_suite([self.blue, self.green], self.left)
+        self.take_option()
+
+    def paper_effect_1(self):
+        colors_splayed_left = self.active_player.get_number_colors_splayed_a_direction(self.left)
+        self.draw_to_hand_multiple(4, colors_splayed_left)
 
     # Age 4 effects
     def colonialism_effect_0(self):
@@ -1387,6 +1648,18 @@ class InnovationGame(Game):
 
     def experimentation_effect_0(self):
         self.draw_and_meld(5)
+
+    def invention_effect_0(self):
+        splayed_left = self.active_player.get_colors_splayed_a_direction(self.left)
+        self.create_splay_option_suite(splayed_left, self.right)
+        self.take_option()
+        if self.active_player.selected_option.type == 'splay':
+            self.draw_and_score(4)
+
+    def invention_effect_1(self):
+        stacks_splayed = self.active_player.get_number_stacks_splayed_any_direction()
+        if stacks_splayed == '5':
+            self.claim_special_achievement('Universe')
 
     # Age 5 effects
     def astronomy_effect_0(self):
@@ -1413,6 +1686,15 @@ class InnovationGame(Game):
         if all(do_cards_meet_criteria):
             self.claim_special_achievement('Universe')
 
+    def statistics_effect_0(self):
+        highest_value = self.active_player.score_pile.highest_card_value()
+        highest_value_cards = self.active_player.score_pile.get_cards_of_value(highest_value)
+        self.transfer_cards_to_your_hand(highest_value_cards)
+
+    def statistics_effect_1(self):
+        self.create_splay_option_suite([self.yellow], self.right)
+        self.take_option()
+
     def steam_engine_effect_0(self):
         self.draw_and_tuck(4)
         self.draw_and_tuck(4)
@@ -1422,9 +1704,33 @@ class InnovationGame(Game):
             self.add_card_to_score_pile()
 
     # Age 6 effects
+    def atomic_theory_effect_0(self):
+        self.create_splay_option_suite([self.blue], self.right)
+        self.take_option()
+
+    def atomic_theory_effect_1(self):
+        self.draw_and_meld(7)
+
+    def industrialization_effect_0(self):
+        colors_with_factories = self.active_player.count_colors_with_one_or_more_icon(self.factory)
+        self.draw_and_tuck_multiple(6, colors_with_factories)
+
+    def industrialization_effect_1(self):
+        self.create_splay_option_suite([self.red, self.purple], self.right)
+        self.take_option()
+
     def machine_tools_effect_0(self):
         highest_value = self.active_player.score_pile.highest_card_value()
         self.draw_and_score(highest_value)
+
+    def metric_system_effect_0(self):
+        if self.active_player.is_color_splayed(self.green, self.right):
+            self.create_splay_option_suite([self.blue, self.red, self.purple, self.yellow], self.right)
+            self.take_option()
+
+    def metric_system_effect_1(self):
+        self.create_splay_option_suite([self.green], self.right)
+        self.take_option()
 
     # Age 7 effects
     def electricity_effect_0(self):
@@ -1443,8 +1749,24 @@ class InnovationGame(Game):
             i += 1
 
     # Age 8 effects
+    def flight_effect_0(self):
+        if self.active_player.is_color_splayed(self.red, self.up):
+            self.create_splay_option_suite([self.blue, self.green, self.purple, self.yellow], self.up)
+            self.take_option()
+
+    def flight_effect_1(self):
+        self.create_splay_option_suite([self.red], self.up)
+        self.take_option()
 
     # Age 9 effects
+    def computers_effect_0(self):
+        self.create_splay_option_suite([self.green, self.red], self.up)
+        self.take_option()
+
+    def computers_effect_1(self):
+        self.draw_and_meld(10)
+        self.execute_dogma_for_yourself()
+
     def genetics_effect_0(self):
         self.draw_and_meld(10)
         active_stack = self.active_player.stacks[self.active_card.color].cards
@@ -1475,6 +1797,16 @@ class InnovationGame(Game):
         self.draw_and_meld(10)
         self.execute_dogma_for_yourself()
 
+    def the_internet_effect_0(self):
+        self.create_splay_option_suite([self.green], self.up)
+
+    def the_internet_effect_1(self):
+        self.draw_and_score(10)
+
+    def the_internet_effect_2(self):
+        total_clocks = self.active_player.count_icons_on_board(self.clock) // 2
+        self.draw_and_meld_multiple(10, total_clocks)
+
     # Tests
     def print_for_testing(self, string_to_print):
         if self.verbose:
@@ -1490,18 +1822,28 @@ class InnovationGame(Game):
                      ['Calendar (no score cards)', self.set_up_test_generic, self.test_calendar, self.get_card_object('Calendar')],
                      ['Calendar (score cards)', self.test_calendar_setup, self.test_calendar, self.get_card_object('Calendar')],
                      ['Fermenting', self.test_fermenting_setup, self.test_fermenting, self.get_card_object('Fermenting')],
+                     ['Paper', self.set_up_test_generic, self.test_paper, self.get_card_object('Paper')],
                      ['Colonialism', self.set_up_test_generic, self.test_colonialism, self.get_card_object('Colonialism')],
                      ['Experimentation', self.set_up_test_generic, self.test_experimentation, self.get_card_object('Experimentation')],
+                     ['Invention', self.set_up_test_generic, self.test_invention, self.get_card_object('Invention')],
+                     ['Invention (cards are splayed)', self.test_invention_setup, self.test_invention, self.get_card_object('Invention')],
                      ['Astronomy', self.test_astronomy_setup, self.test_astronomy, self.get_card_object('Astronomy')],
                      ['Steam Engine', self.set_up_test_generic, self.test_steam_engine, self.get_card_object('Steam Engine')],
+                     ['Atomic Theory', self.set_up_test_generic, self.test_atomic_theory, self.get_card_object('Atomic Theory')],
+                     ['Atomic Theory (cards to splay)', self.test_atomic_theory_setup, self.test_atomic_theory, self.get_card_object('Atomic Theory')],
+                     ['Industrialization', self.set_up_test_generic, self.test_industrialization, self.get_card_object('Industrialization')],
                      ['Machine Tools', self.test_machine_tools_setup, self.test_machine_tools, self.get_card_object('Machine Tools')],
+                     ['Metric System', self.set_up_test_generic, self.test_metric_system, self.get_card_object('Metric System')],
                      ['Electricity', self.test_electricity_setup, self.test_electricity, self.get_card_object('Electricity')],
+                     ['Flight', self.set_up_test_generic, self.test_flight, self.get_card_object('Flight')],
+                     ['Computers', self.set_up_test_generic, self.test_computers, self.get_card_object('Computers')],
                      ['Genetics', self.test_genetics_setup, self.test_genetics, self.get_card_object('Genetics')],
                      ['A.I. (no robotics/software)', self.set_up_test_generic, self.test_ai, self.get_card_object('A.I.')],
                      ['A.I. (robotics/software, tied lowest score)', self.test_ai_setup_0, self.test_ai, self.get_card_object('A.I.')],
                      ['A.I. (robotics/software, winner)', self.test_ai_setup_1, self.test_ai, self.get_card_object('A.I.')],
                      ['Robotics', self.set_up_test_generic, self.test_robotics, self.get_card_object('Robotics')],
-                     ['Software', self.set_up_test_generic, self.test_software, self.get_card_object('Software')]]
+                     ['Software', self.set_up_test_generic, self.test_software, self.get_card_object('Software')],
+                     ['The Internet', self.set_up_test_generic, self.test_the_internet, self.get_card_object('The Internet')]]
 
         for test_to_add in test_list:
             test = Test(test_to_add[0], test_to_add[1], self.action_dogma, test_to_add[2], test_to_add[3])
@@ -1764,6 +2106,15 @@ class InnovationGame(Game):
         else:
             return self.test_game_over()
 
+    def test_draw_and_tuck_beginning_of_action(self, draw_value, number_of_cards):
+        initial_draw_pile = self.test_see_all_draw_cards_beginning_of_action(draw_value)
+        if self.test_enough_cards_available_to_draw_given_pile(initial_draw_pile, number_of_cards):
+            cards_to_draw = self.test_see_next_draw_cards_given_pile(initial_draw_pile, number_of_cards)
+            return self.test_tuck_multiple_cards(cards_to_draw)
+
+        else:
+            return self.test_game_over()
+
     def test_tuck_card(self, card):
         if self.active_player.stacks[card.color].see_bottom_card() == card:
             return True
@@ -1842,6 +2193,15 @@ class InnovationGame(Game):
         for card in card_list:
             results.append(self.get_pile_object(str(card.age)).is_card_in_pile(card))
         return all(results)
+
+    def test_splay(self, color, direction):
+        if self.active_player.stacks[color].get_pile_size() > 1:
+            if self.active_player.stacks[color].get_splay_type() == direction:
+                return True
+            else:
+                return False
+        else:
+            return True
 
     # Age 1 tests
     def test_metalworking(self):
@@ -1924,6 +2284,19 @@ class InnovationGame(Game):
         return self.test_draw_cards(2, total_leaves)
 
     # Age 3 tests
+    def test_paper(self):
+        return self.test_paper_0() and self.test_paper_1()
+
+    def test_paper_0(self):
+        if self.active_player.selected_option.type == 'splay':
+            selected_color = self.active_player.selected_option.color
+            return self.test_splay(selected_color, self.left)
+        else:
+            return True
+
+    def test_paper_1(self):
+        colors_splayed_left = self.active_player.get_number_colors_splayed_a_direction(self.left)
+        return self.test_draw_cards(4, colors_splayed_left)
 
     # Age 4 tests
     def test_colonialism(self):
@@ -1938,6 +2311,49 @@ class InnovationGame(Game):
 
     def test_experimentation(self):
         return self.test_draw_and_meld(5, 1)
+
+    def test_invention_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+
+        self.active_player = self.get_player_object(0)
+        self.active_card = g.get_card_object('Sailing')
+        self.meld_card()
+        self.active_card = g.get_card_object('The Wheel')
+        self.meld_card()
+        self.active_player.green_stack.set_splay(self.left)
+        self.active_card = g.get_card_object('Invention')
+        self.meld_card()
+
+    def test_invention(self):
+        return self.test_invention_0() and self.test_invention_1()
+
+    def test_invention_0(self):
+        if self.active_player.selected_option.type == 'splay':
+            splayed_correctly = self.test_splay(self.active_player.selected_option.color, 'right')
+        else:
+            splayed_correctly = True
+
+        if self.active_player.selected_option.type != 'pass':
+            draw_and_scored_correctly = self.test_draw_and_score_beginning_of_action(4, 1)
+        else:
+            draw_and_scored_correctly = True
+
+        return splayed_correctly and draw_and_scored_correctly
+
+    def test_invention_1(self):
+        if 'Wonder' in self.piles_at_beginning_of_effect['special achievements']:
+            if self.active_player.get_number_stacks_splayed_any_direction == 5:
+                if self.get_pile_object('Wonder') in self.active_player.achievement_pile:
+                    return True
+                else:
+                    return False
+            else:
+                if 'Wonder' in self.piles_at_beginning_of_effect['special achievements']:
+                    return True
+                else:
+                    return False
+        else:
+            return True
 
     # Age 5 tests
     def test_astronomy_setup(self, card_name):
@@ -2027,6 +2443,43 @@ class InnovationGame(Game):
         return score_correctly and tuck_correctly
 
     # Age 6 tests
+    def test_atomic_theory_setup(self, card_name):
+        self.set_up_test_generic(card_name)
+
+        self.active_player = self.get_player_object(0)
+        self.active_card = g.get_card_object('Calendar')
+        self.meld_card()
+        self.active_card = g.get_card_object('Alchemy')
+        self.meld_card()
+        self.active_card = g.get_card_object('Atomic Theory')
+        self.meld_card()
+
+    def test_atomic_theory(self):
+        return self.test_atomic_theory_0() and self.test_atomic_theory_1()
+
+    def test_atomic_theory_0(self):
+        if self.active_player.selected_option == 'splay':
+            return self.test_splay(self.blue, 'right')
+        else:
+            return True
+
+    def test_atomic_theory_1(self):
+        return self.test_draw_and_meld(7, 1)
+
+    def test_industrialization(self):
+        return self.test_industrialization_0() and self.test_industrialization_1()
+
+    def test_industrialization_0(self):
+        colors_with_factories = self.active_player.count_colors_with_one_or_more_icon(self.factory)
+        return self.test_draw_and_tuck_beginning_of_action(6, colors_with_factories)
+
+    def test_industrialization_1(self):
+        if self.active_player.selected_option.type == 'splay':
+            selected_color = self.active_player.selected_option.color
+            return self.test_splay(selected_color, self.right)
+        else:
+            return True
+
     def test_machine_tools_setup(self, card_name):
         self.set_up_test_generic(card_name)
         self.active_card = self.get_card_object('Steam Engine')
@@ -2037,6 +2490,21 @@ class InnovationGame(Game):
         highest_card_value = self.test_get_initial_highest_card_value(initial_score_pile)
 
         return self.test_draw_and_score(highest_card_value, 1)
+
+    def test_metric_system(self):
+        return self.test_metric_system_0() and self.test_metric_system_1()
+
+    def test_metric_system_0(self):
+        if self.active_player.selected_option.type == 'splay':
+            return self.test_splay(self.active_player.selected_option.color, self.right)
+        else:
+            return True
+
+    def test_metric_system_1(self):
+        if self.active_player.selected_option == 'splay':
+            return self.test_splay(self.blue, self.right)
+        else:
+            return True
 
     # Age 7 tests
     def test_electricity_setup(self, card_name):
@@ -2068,8 +2536,37 @@ class InnovationGame(Game):
         return returned_correctly and draw_correctly
 
     # Age 8 tests
+    def test_flight(self):
+        return self.test_flight_0() and self.test_flight_1()
+
+    def test_flight_0(self):
+        if self.active_player.selected_option.type == 'splay':
+            return self.test_splay(self.active_player.selected_option.color, self.up)
+        else:
+            return True
+
+    def test_flight_1(self):
+        if self.active_player.selected_option == 'splay':
+            return self.test_splay(self.red, self.up)
+        else:
+            return True
 
     # Age 9 tests
+    def test_computers(self):
+        return self.test_computers_0() and self.test_computers_1()
+
+    def test_computers_0(self):
+        if self.active_player.selected_option.type == 'splay':
+            selected_color = self.active_player.selected_option.color
+            return self.test_splay(selected_color, self.up)
+        else:
+            return True
+
+    def test_computers_1(self):
+        draw_and_meld_correctly = self.test_draw_and_meld(10, 1)
+        non_demand_correctly = self.test_no_share_effect(self.active_card)
+        return draw_and_meld_correctly and non_demand_correctly
+
     def test_genetics_setup(self, card_name):
         self.set_up_test_generic(card_name)
         self.active_card = self.get_card_object('Mysticism')
@@ -2204,7 +2701,205 @@ class InnovationGame(Game):
         else:
             return False
 
+    def test_the_internet(self):
+        return self.test_the_internet_0() and self.test_the_internet_1() and self.test_the_internet_2()
+
+    def test_the_internet_0(self):
+        if self.active_player.selected_option == 'splay':
+            return self.test_splay(self.green, self.up)
+        else:
+            return True
+
+    def test_the_internet_1(self):
+        return self.test_draw_and_score_beginning_of_action(10, 1)
+
+    def test_the_internet_2(self):
+        #TODO - update this as current methods do not allow to test stacks in the middle of a dogma
+        return True
+
+    # New test style tests
+    def aaa_create_tests(self):
+        # Test name, setup function, action function, evaluation function, corresponding card, effect number
+        aaa_tests = [['Engineering 0', self.test_engineering_0_arrange, self.test_engineering_0_assess, self.get_card_object('Engineering'), 0],
+                     ['Engineering 1', self.test_engineering_0_arrange, self.test_engineering_1_assess, self.get_card_object('Engineering'), 1],
+                     ['Statistics 0', self.test_statistics_0_arrange, self.test_statistics_0_assess, self.get_card_object('Statistics'), 0],
+                     ['Statistics 1', self.test_statistics_1_arrange, self.test_statistics_1_assess, self.get_card_object('Statistics'), 1]]
+
+        for test_to_add in aaa_tests:
+            test = AAATest(test_to_add[0], test_to_add[1], self.get_effect_object(test_to_add[3], test_to_add[4]), test_to_add[2], test_to_add[3], test_to_add[4])
+            self.add_aaatest_to_game(test)
+            associated_effect = self.get_effect_object(test_to_add[3], test_to_add[4])
+            associated_effect.tests.append(test)
+
+    def aaa_run_test(self):
+        self.print_for_testing(self.active_test.name)
+        self.test_build_game()
+        self.active_test.setup()
+        self.aaa_test_dogma()
+        self.active_test.evaluate()
+
+    def aaa_test_dogma(self):
+        """Function to execute the dogma effects"""
+        sharing_players = self.determine_who_can_share()
+        self.aaa_execute_a_dogma_effect(sharing_players, self.get_effect_object(self.active_test.card, self.active_test.effect_number))
+
+    def aaa_execute_a_dogma_effect(self, sharing_players, effect):
+        if effect.demand:
+            # Demand effects
+            for eligible_player in self.turn_player.share_order:
+                if eligible_player not in sharing_players:
+                    self.set_effect_pile_state()
+                    self.active_player = eligible_player
+                    self.effect_player = eligible_player
+                    self.print_for_testing('{t} DEMANDS {p} resolve {c} dogma'.format(t=self.turn_player,
+                                                                                      p=eligible_player.name,
+                                                                                      c=self.turn_card.name))
+                    effect.activate()
+
+        else:
+            # Standard effects
+            for eligible_player in sharing_players:
+                self.set_effect_pile_state()
+                self.active_player = eligible_player
+                self.effect_player = eligible_player
+                self.print_for_testing('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
+                effect.activate()
+
+                # Only run sharing code if it's not the turn player and nobody has shared yet.
+                if eligible_player != self.turn_player and not dogma_was_shared:
+                    dogma_was_shared = self.check_if_opponent_shared()
+
+    def test_build_game(self):
+        self.create_game()
+        self.shuffle_piles()
+        self.testing = True
+
+    def test_general_setup(self):
+        self.turn_player = self.get_player_object(0)
+        self.active_player = self.get_player_object(0)
+        self.turn_card = self.active_test.card
+        self.active_card = self.turn_card
+        self.meld_card()
+
+    def aaa_test_setup_meld(self, card_name):
+        self.active_card = self.get_card_object(card_name)
+        self.meld_card()
+
+    def aaa_test_setup_score(self, card_name):
+        self.active_card = self.get_card_object(card_name)
+        self.add_card_to_score_pile()
+
+    def aaa_test_an_effect(self, card_name, effect_number):
+        passed_tests = []
+        failed_tests = []
+        effect = self.get_effect_object(self.get_card_object(card_name), effect_number)
+
+        for test in effect.tests:
+            self.active_test = test
+            self.aaa_run_test()
+            if self.active_test.result:
+                passed_tests.append(test)
+            else:
+                failed_tests.append(test)
+
+        self.determine_pass_or_fail(failed_tests)
+
+    def aaa_run_all_tests(self):
+        passed_tests = []
+        failed_tests = []
+        self.testing = True
+
+        for test in self.tests:
+            if test.toggle:
+                self.active_test = test
+                self.aaa_run_test()
+                if test.result:
+                    passed_tests.append(test)
+                else:
+                    failed_tests.append(test)
+                print(test.result)
+
+        self.determine_pass_or_fail(failed_tests)
+
+    def aaa_test_splay(self, splay_color, splay_direction, splayed_icons_list, non_splayed_icons_list):
+        splay_name = "Splay {c} cards {d}".format(c=self.colors[splay_color], d=splay_direction)
+        if self.active_player.selected_option.name == splay_name:
+            return True if self.active_player.stacks[splay_color].get_splay_type() == splay_direction \
+                           and self.active_player.total_icons_on_board() == splayed_icons_list else False
+        elif self.active_player.selected_option.name == "Pass":
+            return True if self.active_player.stacks[splay_color].get_splay_type() == 'none' \
+                           and self.active_player.total_icons_on_board() == non_splayed_icons_list else False
+        else:
+            return False
+
+    # Age 3 tests
+    def test_engineering_0_arrange(self):
+        self.active_player = self.get_player_object(1)
+        self.active_card = self.get_card_object('City States')
+        self.meld_card()
+        self.active_card = self.get_card_object('Mysticism')
+        self.meld_card()
+        self.active_card = self.get_card_object('Sailing')
+        self.meld_card()
+        self.active_player = self.get_player_object(0)
+        self.active_card = self.get_card_object('Metalworking')
+        self.meld_card()
+        self.active_card = self.get_card_object('The Wheel')
+        self.meld_card()
+        self.test_general_setup()
+
+    def test_engineering_0_arrange(self):
+        self.active_player = self.get_player_object(1)
+        self.aaa_test_setup_meld('City States')
+        self.aaa_test_setup_meld('Mysticism')
+        self.aaa_test_setup_meld('Sailing')
+
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_meld('Metalworking')
+        self.aaa_test_setup_meld('The Wheel')
+
+        self.test_general_setup()
+
+    def test_engineering_0_assess(self):
+        mysticism_correct = self.get_player_object(0).score_pile.is_card_in_pile(self.get_card_object('Mysticism'))
+        city_states_correct = self.get_player_object(1).purple_stack.is_card_in_pile(self.get_card_object('City States'))
+        sailing_correct = self.get_player_object(1).green_stack.is_card_in_pile(self.get_card_object('Sailing'))
+
+        if mysticism_correct and city_states_correct and sailing_correct:
+            return True
+        else:
+            return False
+
+    def test_engineering_1_assess(self):
+        return self.aaa_test_splay(self.red, self.left, [0,0,1,6,0,0], [0,0,1,5,0,0])
+
+    # Age 5 tests
+    def test_statistics_0_arrange(self):
+        self.active_player = self.get_player_object(1)
+        self.aaa_test_setup_score('Mysticism')
+        self.aaa_test_setup_score('Colonialism')
+        self.aaa_test_setup_score('Experimentation')
+
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_meld('Fermenting')
+
+        self.test_general_setup()
+
+    def test_statistics_0_assess(self):
+        colonialism = self.get_player_object(1).hand.is_card_in_pile(self.get_card_object('Colonialism'))
+        experimentation = self.get_player_object(1).hand.is_card_in_pile(self.get_card_object('Experimentation'))
+        mysticism = self.get_player_object(1).score_pile.is_card_in_pile(self.get_card_object('Mysticism'))
+        return True if colonialism and experimentation and mysticism else False
+
+    def test_statistics_1_arrange(self):
+        self.test_statistics_0_arrange()
+
+    def test_statistics_1_assess(self):
+        return self.aaa_test_splay(self.yellow, self.right, [0, 4, 1, 0, 0, 0], [0, 2, 1, 0, 0, 0])
+
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
-g.create_tests()
-g.test_a_card('Software')
+
+g.aaa_create_tests()
+# g.aaa_test_an_effect('Engineering', 1)
+g.aaa_run_all_tests()
