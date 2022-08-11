@@ -2866,8 +2866,12 @@ class InnovationGame(Game):
         mysticism = self.get_player_object(1).score_pile.is_card_in_pile(self.get_card_object('Mysticism'))
         return True if colonialism and experimentation and mysticism else False
 
+    def test_statistics_1_arrange(self):
+        self.test_statistics_0_arrange()
+
     def test_statistics_1_assess(self):
-        pass
+        return self.aaa_test_splay(self.yellow, self.right, [0, 2, 1, 1, 0, 0], [0, 2, 1, 0, 0, 0])
+
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 # g.create_tests()
