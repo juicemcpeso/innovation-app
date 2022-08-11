@@ -178,6 +178,10 @@ class AAATest:
         self.result = False
         self.result = self.function()
 
+    def evaluate(self):
+        self.result = False
+        self.result = self.function()
+
     def __repr__(self):
         return "<%s>" % self.name
 
@@ -2704,7 +2708,41 @@ class InnovationGame(Game):
 
     def aaa_run_test(self):
         self.test_build_game()
-        self.active_test.activate()
+        self.active_test.setup()
+        self.aaa_test_dogma()
+        self.active_test.evaluate()
+        # self.active_test.activate()
+
+    def aaa_test_dogma(self):
+        """Function to execute the dogma effects"""
+        sharing_players = self.determine_who_can_share()
+        self.aaa_execute_a_dogma_effect(sharing_players, self.get_effect_object(self.active_test.card, self.active_test.effect_number))
+
+    def aaa_execute_a_dogma_effect(self, sharing_players, effect):
+        if effect.demand:
+            # Demand effects
+            for eligible_player in self.turn_player.share_order:
+                if eligible_player not in sharing_players:
+                    self.set_effect_pile_state()
+                    self.active_player = eligible_player
+                    self.effect_player = eligible_player
+                    self.print_for_testing('{t} DEMANDS {p} resolve {c} dogma'.format(t=self.turn_player,
+                                                                                      p=eligible_player.name,
+                                                                                      c=self.turn_card.name))
+                    effect.activate()
+
+        else:
+            # Standard effects
+            for eligible_player in sharing_players:
+                self.set_effect_pile_state()
+                self.active_player = eligible_player
+                self.effect_player = eligible_player
+                self.print_for_testing('{p} resolves {c} dogma'.format(p=eligible_player.name, c=self.turn_card.name))
+                effect.activate()
+
+                # Only run sharing code if it's not the turn player and nobody has shared yet.
+                if eligible_player != self.turn_player and not dogma_was_shared:
+                    dogma_was_shared = self.check_if_opponent_shared()
 
     def test_build_game(self):
         self.print_for_testing(self.active_test.name)
@@ -2755,13 +2793,26 @@ class InnovationGame(Game):
         self.active_player = self.get_player_object(1)
         self.active_card = self.get_card_object('City States')
         self.meld_card()
+        self.active_card = self.get_card_object('Mysticism')
+        self.meld_card()
+        self.active_card = self.get_card_object('Sailing')
+        self.meld_card()
         self.active_player = self.get_player_object(0)
+        self.active_card = self.get_card_object('Metalworking')
+        self.meld_card()
         self.active_card = self.get_card_object('The Wheel')
         self.meld_card()
         self.test_general_setup()
 
     def test_engineering_0_assess(self):
-        return True
+        mysticism_correct = self.get_player_object(0).score_pile.is_card_in_pile(self.get_card_object('Mysticism'))
+        city_states_correct = self.get_player_object(1).purple_stack.is_card_in_pile(self.get_card_object('City States'))
+        sailing_correct = self.get_player_object(1).green_stack.is_card_in_pile(self.get_card_object('Sailing'))
+
+        if mysticism_correct and city_states_correct and sailing_correct:
+            return True
+        else:
+            return False
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 # g.create_tests()
@@ -2791,4 +2842,4 @@ g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", Tr
 # print(g.active_player.total_icons_on_board())
 g.aaa_create_tests()
 g.aaa_test_an_effect('Engineering', 0)
-g.aaa_run_all_tests()
+# g.aaa_run_all_tests()
