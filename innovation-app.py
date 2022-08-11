@@ -2760,6 +2760,10 @@ class InnovationGame(Game):
         self.active_card = self.get_card_object(card_name)
         self.meld_card()
 
+    def aaa_test_setup_score(self, card_name):
+        self.active_card = self.get_card_object(card_name)
+        self.add_card_to_score_pile()
+
     def aaa_test_an_effect(self, card_name, effect_number):
         passed_tests = []
         failed_tests = []
@@ -2791,6 +2795,17 @@ class InnovationGame(Game):
                 print(test.result)
 
         self.determine_pass_or_fail(failed_tests)
+
+    def aaa_test_splay(self, splay_color, splay_direction, splayed_icons_list, non_splayed_icons_list):
+        splay_name = "Splay {c} cards {d}".format(c=self.colors[splay_color], d=splay_direction)
+        if self.active_player.selected_option.name == splay_name:
+            return True if self.active_player.stacks[splay_color].get_splay_type() == splay_direction \
+                           and self.active_player.total_icons_on_board() == splayed_icons_list else False
+        elif self.active_player.selected_option.name == "Pass":
+            return True if self.active_player.stacks[splay_color].get_splay_type() == 'none' \
+                           and self.active_player.total_icons_on_board() == non_splayed_icons_list else False
+        else:
+            return False
 
     # Age 3 tests
     def test_engineering_0_arrange(self):
@@ -2831,16 +2846,28 @@ class InnovationGame(Game):
             return False
 
     def test_engineering_1_assess(self):
-        if self.get_player_object(0).selected_option.name == "Splay red cards left":
-            return True if self.get_player_object(0).red_stack.get_splay_type() == 'left' \
-                           and self.get_player_object(0).count_icons_on_board(self.castle) == 6 else False
-        elif self.get_player_object(0).selected_option.name == "Pass":
-            return True if self.get_player_object(0).red_stack.get_splay_type() == 'none' \
-                           and self.get_player_object(0).count_icons_on_board(self.castle) == 5 else False
-        else:
-            return False
+        return self.aaa_test_splay(self.red, self.left, [0,0,1,6,0,0], [0,0,1,5,0,0])
 
     # Age 5 tests
+    def test_statistics_0_arrange(self):
+        self.active_player = self.get_player_object(1)
+        self.aaa_test_setup_score('Mysticism')
+        self.aaa_test_setup_score('Colonialism')
+        self.aaa_test_setup_score('Experimentation')
+
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_meld('Fermenting')
+
+        self.test_general_setup()
+
+    def test_statistics_0_assess(self):
+        colonialism = self.get_player_object(1).hand.is_card_in_pile(self.get_card_object('Colonialism'))
+        experimentation = self.get_player_object(1).hand.is_card_in_pile(self.get_card_object('Experimentation'))
+        mysticism = self.get_player_object(1).score_pile.is_card_in_pile(self.get_card_object('Mysticism'))
+        return True if colonialism and experimentation and mysticism else False
+
+    def test_statistics_1_assess(self):
+        pass
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 # g.create_tests()
