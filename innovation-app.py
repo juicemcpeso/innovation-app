@@ -2712,7 +2712,6 @@ class InnovationGame(Game):
         self.active_test.setup()
         self.aaa_test_dogma()
         self.active_test.evaluate()
-        # self.active_test.activate()
 
     def aaa_test_dogma(self):
         """Function to execute the dogma effects"""
@@ -2755,6 +2754,10 @@ class InnovationGame(Game):
         self.active_player = self.get_player_object(0)
         self.turn_card = self.active_test.card
         self.active_card = self.turn_card
+        self.meld_card()
+
+    def aaa_test_setup_meld(self, card_name):
+        self.active_card = self.get_card_object(card_name)
         self.meld_card()
 
     def aaa_test_an_effect(self, card_name, effect_number):
@@ -2805,6 +2808,18 @@ class InnovationGame(Game):
         self.meld_card()
         self.test_general_setup()
 
+    def test_engineering_0_arrange(self):
+        self.active_player = self.get_player_object(1)
+        self.aaa_test_setup_meld('City States')
+        self.aaa_test_setup_meld('Mysticism')
+        self.aaa_test_setup_meld('Sailing')
+
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_meld('Metalworking')
+        self.aaa_test_setup_meld('The Wheel')
+
+        self.test_general_setup()
+
     def test_engineering_0_assess(self):
         mysticism_correct = self.get_player_object(0).score_pile.is_card_in_pile(self.get_card_object('Mysticism'))
         city_states_correct = self.get_player_object(1).purple_stack.is_card_in_pile(self.get_card_object('City States'))
@@ -2824,6 +2839,8 @@ class InnovationGame(Game):
                            and self.get_player_object(0).count_icons_on_board(self.castle) == 5 else False
         else:
             return False
+
+    # Age 5 tests
 
 g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 # g.create_tests()
