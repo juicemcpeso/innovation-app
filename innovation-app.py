@@ -1462,7 +1462,7 @@ class InnovationGame(Game):
             i = i + 1
 
     def print_available_options(self):
-        print("Available actions")
+        print("Available options")
         i = 0
         while i < len(self.active_player.options):
             formatted_string = "{n} | {o}".format(n=(i + 1), o=self.active_player.options[i].name)
