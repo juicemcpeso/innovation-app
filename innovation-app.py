@@ -576,9 +576,11 @@ class Action:
         self.card = c
 
         if self.card:
-            self.name = "{p}'s action: {t} - {c}".format(p=self.player.name, t=self.type.upper(), c=self.card.name)
+            self.ui_name = "{p}'s action: {t} - {c}".format(p=self.player.name, t=self.type.upper(), c=self.card.name)
+            self.name = "{t} - {c}".format(t=self.type.upper(), c=self.card.name)
         else:
-            self.name = "{p}'s action: {t}".format(p=self.player.name, t=self.type.upper())
+            self.ui_name = "{p}'s action: {t}".format(p=self.player.name, t=self.type.upper())
+            self.name = "{t}".format(t=self.type.upper())
 
     def __repr__(self):
         return "<%s>" % self.name
@@ -1428,10 +1430,10 @@ class InnovationGame(Game):
             # TODO - write function for AI to select an action
             selected_action = self.ai_select_action_random_always_achieve(action_list)
         else:
-            # TODO - write function for a human to select an action
-            pass
+            selected_action = self.input_select_action(action_list)
 
-        self.print_for_testing(selected_action.name)
+        # self.print_for_testing(selected_action.name)
+        self.print_for_testing("{p} chooses {s}".format(p=self.active_player.name, s=selected_action.name))
 
         return selected_action
 
@@ -1449,6 +1451,40 @@ class InnovationGame(Game):
             self.action_achieve()
         elif action.type == 'dogma':
             self.action_dogma()
+
+    # Humans
+    def print_available_actions(self, action_list):
+        print("Available actions")
+        i = 0
+        while i < len(action_list):
+            formatted_string = "{n} | {a}".format(n=(i + 1), a=action_list[i].name)
+            print(formatted_string)
+            i = i + 1
+
+    def print_available_options(self):
+        print("Available options")
+        i = 0
+        while i < len(self.active_player.options):
+            formatted_string = "{n} | {o}".format(n=(i + 1), o=self.active_player.options[i].name)
+            print(formatted_string)
+            i = i + 1
+
+    def input_select_action(self, action_list):
+        self.print_available_actions(action_list)
+
+        while True:
+            selected_number = int(input("Select an action: "))
+            if selected_number in range(1, (len(action_list) + 1)):
+                return action_list[(selected_number - 1)]
+
+    def input_select_option(self):
+        self.print_available_options()
+
+        while True:
+            selected_number = int(input("Select an option: "))
+            if selected_number in range(1, (len(self.active_player.options) + 1)):
+                self.active_player.selected_option = self.active_player.options[(selected_number - 1)]
+                break
 
     # AIs
     def ai_select_action_random(self, action_list):
@@ -1488,8 +1524,7 @@ class InnovationGame(Game):
             # TODO - write function for AI to select an action
             self.active_player.selected_option = self.ai_select_random_option()
         else:
-            # TODO - write function for a human to select an action
-            pass
+            self.input_select_option()
 
     def execute_option(self):
         if self.active_player.selected_option.type == 'splay':
@@ -2898,8 +2933,13 @@ class InnovationGame(Game):
         return self.aaa_test_splay(self.yellow, self.right, [0, 4, 1, 0, 0, 0], [0, 2, 1, 0, 0, 0])
 
 
-g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", False, 'Jurdrick', True, "Blanch", True)
 
-g.aaa_create_tests()
-# g.aaa_test_an_effect('Engineering', 1)
-g.aaa_run_all_tests()
+# g.aaa_create_tests()
+# # g.aaa_test_an_effect('Engineering', 1)
+# g.aaa_run_all_tests()
+
+g.create_game()
+g.set_up_game()
+g.play_game()
+
