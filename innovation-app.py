@@ -1453,7 +1453,7 @@ class InnovationGame(Game):
             self.action_dogma()
 
     # Humans
-    def print_action_options(self, action_list):
+    def print_available_actions(self, action_list):
         print("Available actions")
         i = 0
         while i < len(action_list):
@@ -1461,13 +1461,30 @@ class InnovationGame(Game):
             print(formatted_string)
             i = i + 1
 
+    def print_available_options(self):
+        print("Available actions")
+        i = 0
+        while i < len(self.active_player.options):
+            formatted_string = "{n} | {o}".format(n=(i + 1), o=self.active_player.options[i].name)
+            print(formatted_string)
+            i = i + 1
+
     def input_select_action(self, action_list):
-        self.print_action_options(action_list)
+        self.print_available_actions(action_list)
 
         while True:
             selected_number = int(input("Select an action: "))
             if selected_number in range(1, (len(action_list) + 1)):
                 return action_list[(selected_number - 1)]
+
+    def input_select_option(self):
+        self.print_available_options()
+
+        while True:
+            selected_number = int(input("Select an option: "))
+            if selected_number in range(1, (len(self.active_player.options) + 1)):
+                self.active_player.selected_option = self.active_player.options[(selected_number - 1)]
+                break
 
     # AIs
     def ai_select_action_random(self, action_list):
@@ -1507,8 +1524,7 @@ class InnovationGame(Game):
             # TODO - write function for AI to select an action
             self.active_player.selected_option = self.ai_select_random_option()
         else:
-            # TODO - write function for a human to select an action
-            pass
+            self.input_select_option()
 
     def execute_option(self):
         if self.active_player.selected_option.type == 'splay':
