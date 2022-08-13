@@ -1772,7 +1772,7 @@ class InnovationGame(Game):
 
     # Age 4 effects
     def colonialism_effect_0(self):
-        while True:
+        while not self.game_over:
             self.draw_and_tuck(3)
             if not self.active_card.contains_icon(self.crown):
                 break
@@ -3029,10 +3029,11 @@ class InnovationGame(Game):
         return self.aaa_test_splay(self.yellow, self.right, [0, 4, 1, 0, 0, 0], [0, 2, 1, 0, 0, 0])
 
 
-def main():
-    number_of_runs = 1000
+def ai_gym():
+    number_of_runs = 10000
     run_number = 0
     winners = []
+    percent_complete = 0
     while run_number < number_of_runs:
         g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch",
                            True)
@@ -3045,7 +3046,12 @@ def main():
         else:
             winners.append('tie')
         run_number += 1
-        print("\r{r}%".format(r=int((run_number // (number_of_runs / 100)))), end="")
+        new_percent_complete = int(run_number // (number_of_runs / 100))
+        if new_percent_complete > percent_complete:
+            percent_complete = new_percent_complete
+        print("\r{r}%".format(r=percent_complete), end="")
+
+        # print("\r{r}%".format(r=round(((run_number / (number_of_runs / 100))), 1)), end="")
 
     mookifer = winners.count('Mookifer')
     debbie = winners.count('Debbie')
@@ -3057,34 +3063,20 @@ def main():
     print("Win Percentages - only won games:")
     won_runs = number_of_runs - ties
     print(won_runs)
-    print("Mookifer {m}%".format(m=(int(100 * mookifer / won_runs))))
-    print("Debbie   {m}%".format(m=(int(100 * debbie / won_runs))))
+    print("Mookifer {m}%".format(m=(round((100 * mookifer / won_runs), 2))))
+    print("Debbie   {m}%".format(m=(round((100 * debbie / won_runs), 2))))
 
+def main():
+    ai_gym()
 
 if __name__ == "__main__":
     main()
 
-# g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+# g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", False, 'Jurdrick', True, "Blanch", True)
+# g.create_game()
+# g.set_up_game()
+# g.play_game()
 
 # g.aaa_create_tests()
 # # g.aaa_test_an_effect('Engineering', 1)
 # g.aaa_run_all_tests()
-
-# g.create_game()
-# g.set_up_game()
-# g.play_game()
-#
-# number_of_runs = 100
-# run_number = 0
-# winners = []
-# while run_number < number_of_runs:
-#     g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch",
-#                        True)
-#     g.create_game()
-#     g.set_up_game()
-#     g.play_game()
-#     if g.winning_player:
-#         winners.append(g.winning_player.name)
-#     else:
-#         winners.append('draw')
-#     run_number += 1
