@@ -449,7 +449,7 @@ class Player:
 class InnovationPlayer(Player):
     """Class for a player for the game Innovation"""
 
-    def __init__(self, n, num, ai, p_achieve, p_score, p_hand, s_blue, s_green, s_purple, s_red, s_yellow):
+    def __init__(self, n, num, ai, p_achieve, p_score, p_hand, s_blue, s_green, s_purple, s_red, s_yellow, s_action, s_option):
         Player.__init__(self, n)
 
         if not isinstance(num, int):
@@ -480,6 +480,9 @@ class InnovationPlayer(Player):
         self.share_order = []
 
         self.winner = False
+
+        self.select_an_option = s_option
+        self.select_an_action = s_action
 
     def total_icons_on_board(self):
         """Returns a list of the total icons a player has of each type"""
@@ -744,6 +747,13 @@ class InnovationGame(Game):
         self.player_names = []
         self.ai_players = []
 
+        # Set the AI action functions
+        self.ai_action_functions = [self.ai_select_action_random, self.ai_select_action_random_always_achieve]
+        self.ai_option_functions = [self.ai_select_random_option,
+                                    self.ai_select_random_option,
+                                    self.ai_select_random_option,
+                                    self.ai_select_random_option]
+
         self.active_player = None
         self.active_card = None
         self.turn_player = None
@@ -894,7 +904,16 @@ class InnovationGame(Game):
             self.stacks.append(r_stack)
             self.stacks.append(y_stack)
 
-            player = InnovationPlayer(self.player_names[i], i, self.ai_players[i], achievement_pile, score_pile, hand, b_stack, g_stack, p_stack, r_stack, y_stack)
+            # Option selection function
+            if self.ai_players[i]:
+                action_function = self.ai_action_functions[i]
+                option_function = self.ai_option_functions[i]
+            else:
+                action_function = self.input_select_action
+                option_function = self.input_select_option
+
+            player = InnovationPlayer(self.player_names[i], i, self.ai_players[i], achievement_pile, score_pile, hand,
+                                      b_stack, g_stack, p_stack, r_stack, y_stack, action_function, option_function)
             self.add_player(player)
 
         for player in self.players:
