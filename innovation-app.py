@@ -2989,14 +2989,37 @@ class InnovationGame(Game):
     def test_statistics_1_assess(self):
         return self.aaa_test_splay(self.yellow, self.right, [0, 4, 1, 0, 0, 0], [0, 2, 1, 0, 0, 0])
 
+def main():
+    g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch",
+                       True)
+    g.create_game()
+    g.set_up_game()
+    g.play_game()
 
-g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+if __name__ == "__main__":
+    main()
+
+# g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 
 # g.aaa_create_tests()
 # # g.aaa_test_an_effect('Engineering', 1)
 # g.aaa_run_all_tests()
 
-g.create_game()
-g.set_up_game()
-g.play_game()
-
+# g.create_game()
+# g.set_up_game()
+# g.play_game()
+#
+# number_of_runs = 100
+# run_number = 0
+# winners = []
+# while run_number < number_of_runs:
+#     g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch",
+#                        True)
+#     g.create_game()
+#     g.set_up_game()
+#     g.play_game()
+#     if g.winning_player:
+#         winners.append(g.winning_player.name)
+#     else:
+#         winners.append('draw')
+#     run_number += 1
