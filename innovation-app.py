@@ -752,6 +752,8 @@ class InnovationGame(Game):
 
         self.ordered_players = []
 
+        self.winning_player = None
+
         # Variables for each of the icon types
         self.crown = 0
         self.leaf = 1
@@ -1029,7 +1031,11 @@ class InnovationGame(Game):
     def game_end(self):
         self.game_over = True
         print('Game over')
-        # TODO - write code to evaluate scores
+        self.print_final_scores()
+        if self.winning_player:
+            print("Winner - {n}".format(n=self.winning_player.name))
+        else:
+            print('Game ends in draw')
         if not self.testing:
             quit()
 
@@ -1055,15 +1061,25 @@ class InnovationGame(Game):
 
         if len(highest_score_players) == 1:
             highest_score_players[0].winner = True
+            self.winning_player = highest_score_players[0]
         else:
             players_with_most_achievements = self.get_players_with_most_achievements(highest_score_players)
             if len(players_with_most_achievements) == 1:
                 players_with_most_achievements[0].winner = True
+                self.winning_player = players_with_most_achievements[0]
             else:
                 # TODO - Do I need to do anything special if there is a draw?
                 pass
 
         self.game_end()
+
+    def print_final_scores(self):
+        if self.verbose:
+            print('---Final Scores---')
+            for player in self.players:
+                print(player.name)
+                print("Score:        {s}".format(s=player.get_score()))
+                print("Achievements: {a}\n".format(a=player.achievement_pile.get_pile_size()))
 
     def get_players_with_lowest_score(self):
         scores = []
@@ -1162,7 +1178,7 @@ class InnovationGame(Game):
                 self.active_card = card
                 return card
 
-        self.game_end()
+        self.game_end_score()
 
     def base_meld(self, card):
         """Base function to meld a card"""
@@ -2961,7 +2977,7 @@ class InnovationGame(Game):
         return self.aaa_test_splay(self.yellow, self.right, [0, 4, 1, 0, 0, 0], [0, 2, 1, 0, 0, 0])
 
 
-g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", False, 'Jurdrick', True, "Blanch", True)
+g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 
 # g.aaa_create_tests()
 # # g.aaa_test_an_effect('Engineering', 1)
