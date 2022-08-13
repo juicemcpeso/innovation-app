@@ -486,8 +486,6 @@ class InnovationPlayer(Player):
 
         self.winner = False
 
-
-
     def total_icons_on_board(self):
         """Returns a list of the total icons a player has of each type"""
         total_icons = []
@@ -568,6 +566,11 @@ class InnovationPlayer(Player):
                 top_cards_with_icon.append(top_card)
 
         return top_cards_with_icon
+
+    def get_pass_option(self):
+        for option in self.options:
+            if option.type == 'pass':
+                return option
 
 
 class Action:
@@ -757,7 +760,7 @@ class InnovationGame(Game):
                                     self.ai_select_action_random,
                                     self.ai_select_action_random_always_achieve]
         self.ai_option_functions = [self.ai_select_random_option,
-                                    self.ai_select_random_option,
+                                    self.ai_select_random_option_always_splay,
                                     self.ai_select_random_option,
                                     self.ai_select_random_option]
 
@@ -793,6 +796,9 @@ class InnovationGame(Game):
         self.left = 'left'
         self.right = 'right'
         self.up = 'up'
+        self.splay = 'splay'
+        self.none = 'none'
+        self.splay_hierarchy = [self.none, self.left, self.right, self.up]
 
         for i in range(self.number_of_players):
             self.player_names.append(possible_player_names[i])
@@ -1590,6 +1596,23 @@ class InnovationGame(Game):
     def ai_select_random_option(self):
         index = random.randrange(len(self.active_player.options))
         self.active_player.selected_option = self.active_player.options[index]
+
+    def ai_select_random_option_always_splay(self):
+        upgrade_options = []
+
+        for option in self.active_player.options:
+            if option.type == self.splay:
+                current_splay = self.active_player.stacks[option.color].get_splay_type()
+                if self.splay_hierarchy.index(current_splay) < self.splay_hierarchy.index(option.direction):
+                    upgrade_options.append(option)
+
+        if len(upgrade_options) == 1:
+            self.active_player.selected_option = upgrade_options[0]
+        elif len(upgrade_options) > 1:
+            index = random.randrange(len(upgrade_options))
+            self.active_player.selected_option = upgrade_options[index]
+        else:
+            self.active_player.selected_option = self.active_player.get_pass_option()
 
     # Options
     def take_option(self):
@@ -3022,14 +3045,20 @@ def main():
         else:
             winners.append('tie')
         run_number += 1
+        print("\r{r}%".format(r=int((run_number // (number_of_runs / 100)))), end="")
 
     mookifer = winners.count('Mookifer')
     debbie = winners.count('Debbie')
     ties = winners.count('tie')
-    print("Win Percentages:")
-    print("Mookifer {m}%".format(m=(100*mookifer/number_of_runs)))
-    print("Debbie   {m}%".format(m=(100*debbie / number_of_runs)))
-    print("Ties     {t}%".format(t=(100*ties / number_of_runs)))
+    print("\nWin Percentages:")
+    print("Mookifer {m}%".format(m=(100 * mookifer / number_of_runs)))
+    print("Debbie   {m}%".format(m=(100 * debbie / number_of_runs)))
+    print("Ties     {t}%".format(t=(100 * ties / number_of_runs)))
+    print("Win Percentages - only won games:")
+    won_runs = number_of_runs - ties
+    print(won_runs)
+    print("Mookifer {m}%".format(m=(int(100 * mookifer / won_runs))))
+    print("Debbie   {m}%".format(m=(int(100 * debbie / won_runs))))
 
 
 if __name__ == "__main__":
