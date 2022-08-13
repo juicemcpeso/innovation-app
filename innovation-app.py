@@ -449,7 +449,7 @@ class Player:
 class InnovationPlayer(Player):
     """Class for a player for the game Innovation"""
 
-    def __init__(self, n, num, ai, p_achieve, p_score, p_hand, s_blue, s_green, s_purple, s_red, s_yellow, s_action, s_option):
+    def __init__(self, n, num, ai, p_achieve, p_score, p_hand, s_blue, s_green, s_purple, s_red, s_yellow, s_option):
         Player.__init__(self, n)
 
         if not isinstance(num, int):
@@ -481,8 +481,8 @@ class InnovationPlayer(Player):
 
         self.winner = False
 
+        # self.select_an_action = s_action()
         self.select_an_option = s_option
-        self.select_an_action = s_action
 
     def total_icons_on_board(self):
         """Returns a list of the total icons a player has of each type"""
@@ -913,7 +913,7 @@ class InnovationGame(Game):
                 option_function = self.input_select_option
 
             player = InnovationPlayer(self.player_names[i], i, self.ai_players[i], achievement_pile, score_pile, hand,
-                                      b_stack, g_stack, p_stack, r_stack, y_stack, action_function, option_function)
+                                      b_stack, g_stack, p_stack, r_stack, y_stack, option_function)
             self.add_player(player)
 
         for player in self.players:
@@ -1574,7 +1574,7 @@ class InnovationGame(Game):
 
     def ai_select_random_option(self):
         index = random.randrange(len(self.active_player.options))
-        return self.active_player.options[index]
+        self.active_player.selected_option = self.active_player.options[index]
 
     # Options
     def take_option(self):
@@ -1582,12 +1582,7 @@ class InnovationGame(Game):
         self.execute_option()
 
     def select_option(self):
-        self.active_player.selected_option = None
-        if self.active_player.ai_flag:
-            # TODO - write function for AI to select an action
-            self.active_player.selected_option = self.ai_select_random_option()
-        else:
-            self.input_select_option()
+        self.active_player.select_an_option()
 
     def execute_option(self):
         if self.active_player.selected_option.type == 'splay':
@@ -2996,7 +2991,7 @@ class InnovationGame(Game):
         return self.aaa_test_splay(self.yellow, self.right, [0, 4, 1, 0, 0, 0], [0, 2, 1, 0, 0, 0])
 
 
-g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", False, 'Jurdrick', True, "Blanch", True)
 
 # g.aaa_create_tests()
 # # g.aaa_test_an_effect('Engineering', 1)
