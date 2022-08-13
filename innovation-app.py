@@ -449,7 +449,7 @@ class Player:
 class InnovationPlayer(Player):
     """Class for a player for the game Innovation"""
 
-    def __init__(self, n, num, ai, p_achieve, p_score, p_hand, s_blue, s_green, s_purple, s_red, s_yellow, s_option):
+    def __init__(self, n, num, ai, p_achieve, p_score, p_hand, s_blue, s_green, s_purple, s_red, s_yellow, s_action, s_option):
         Player.__init__(self, n)
 
         if not isinstance(num, int):
@@ -473,16 +473,20 @@ class InnovationPlayer(Player):
         self.yellow_stack = s_yellow
         self.stacks = [self.blue_stack, self.green_stack, self.purple_stack, self.red_stack, self.yellow_stack]
 
+        self.action_options = []
+        self.selected_action = None
+        self.select_an_action = s_action
+
         self.options = []
         self.selected_option = None
+        self.select_an_option = s_option
 
         self.table_position = 0
         self.share_order = []
 
         self.winner = False
 
-        # self.select_an_action = s_action()
-        self.select_an_option = s_option
+
 
     def total_icons_on_board(self):
         """Returns a list of the total icons a player has of each type"""
@@ -748,7 +752,10 @@ class InnovationGame(Game):
         self.ai_players = []
 
         # Set the AI action functions
-        self.ai_action_functions = [self.ai_select_action_random, self.ai_select_action_random_always_achieve]
+        self.ai_action_functions = [self.ai_select_action_random,
+                                    self.ai_select_action_random_always_achieve,
+                                    self.ai_select_action_random,
+                                    self.ai_select_action_random_always_achieve]
         self.ai_option_functions = [self.ai_select_random_option,
                                     self.ai_select_random_option,
                                     self.ai_select_random_option,
@@ -913,7 +920,7 @@ class InnovationGame(Game):
                 option_function = self.input_select_option
 
             player = InnovationPlayer(self.player_names[i], i, self.ai_players[i], achievement_pile, score_pile, hand,
-                                      b_stack, g_stack, p_stack, r_stack, y_stack, option_function)
+                                      b_stack, g_stack, p_stack, r_stack, y_stack, action_function, option_function)
             self.add_player(player)
 
         for player in self.players:
@@ -955,15 +962,16 @@ class InnovationGame(Game):
                 action_options.append(meld_action)
 
             # Select one of the cards to meld
-            selected_action = self.select_action(action_options)
+            self.turn_player.action_options = action_options
+            self.select_action()
 
             # Add the player and their selected card to meld to the list of all the melds.
-            starting_actions.append(selected_action)
+            starting_actions.append(self.turn_player.selected_action)
 
         # Once everybody has selected their action, meld them all
         for action in starting_actions:
             self.turn_player = action.player
-            self.execute_action(action)
+            self.execute_action()
 
         # Determine who has the first card alphabetically and set each player's turn position
         alphabetical_order = sorted(starting_actions, key=lambda x: x.card.name)
@@ -1457,9 +1465,9 @@ class InnovationGame(Game):
         self.set_action_pile_state()
         self.set_effect_pile_state()
         self.active_player = self.turn_player
-        available_actions = self.available_actions()
-        selected_action = self.select_action(available_actions)
-        self.execute_action(selected_action)
+        self.available_actions()
+        self.select_action()
+        self.execute_action()
 
     def available_actions(self):
         draw_action = Action('draw', self.turn_player, None)
@@ -1484,24 +1492,14 @@ class InnovationGame(Game):
                 dogma_action = Action('dogma', self.turn_player, stack.see_top_card())
                 options.append(dogma_action)
 
-        return options
+        self.turn_player.action_options = options
 
-    def select_action(self, action_list):
-        """Function that takes a list of possible actions and selects which one to execute. Human code will select
-        based off input, AI via algorithm."""
-        if self.turn_player.ai_flag:
-            # TODO - write function for AI to select an action
-            selected_action = self.ai_select_action_random_always_achieve(action_list)
-        else:
-            selected_action = self.input_select_action(action_list)
+    def select_action(self):
+        self.turn_player.select_an_action()
+        self.print_for_testing("{p} chooses {s}".format(p=self.turn_player.name, s=self.turn_player.selected_action.name))
 
-        # self.print_for_testing(selected_action.name)
-        self.print_for_testing("{p} chooses {s}".format(p=self.active_player.name, s=selected_action.name))
-
-        return selected_action
-
-    def execute_action(self, action):
-        """Function that takes an action pair ['action', card]"""
+    def execute_action(self):
+        action = self.turn_player.selected_action
         self.active_card = action.card
         self.turn_card = action.card
         self.active_player = self.turn_player
@@ -1516,11 +1514,11 @@ class InnovationGame(Game):
             self.action_dogma()
 
     # Humans
-    def print_available_actions(self, action_list):
+    def print_available_actions(self):
         print("Available actions")
         i = 0
-        while i < len(action_list):
-            formatted_string = "{n} | {a}".format(n=(i + 1), a=action_list[i].name)
+        while i < len(self.turn_player.action_options):
+            formatted_string = "{n} | {a}".format(n=(i + 1), a=self.turn_player.action_options[i].name)
             print(formatted_string)
             i = i + 1
 
@@ -1532,13 +1530,14 @@ class InnovationGame(Game):
             print(formatted_string)
             i = i + 1
 
-    def input_select_action(self, action_list):
-        self.print_available_actions(action_list)
+    def input_select_action(self):
+        self.print_available_actions()
 
         while True:
             selected_number = int(input("Select an action: "))
-            if selected_number in range(1, (len(action_list) + 1)):
-                return action_list[(selected_number - 1)]
+            if selected_number in range(1, (len(self.turn_player.action_options) + 1)):
+                self.turn_player.selected_action = self.turn_player.action_options[(selected_number - 1)]
+                break
 
     def input_select_option(self):
         self.print_available_options()
@@ -1550,27 +1549,27 @@ class InnovationGame(Game):
                 break
 
     # AIs
-    def ai_select_action_random(self, action_list):
+    def ai_select_action_random(self):
         """Baseline AI to determine which action to select by random selection"""
-        index = random.randrange(len(action_list))
-        return action_list[index]
+        index = random.randrange(len(self.turn_player.action_options))
+        self.turn_player.selected_action = self.turn_player.action_options[index]
 
-    def ai_select_action_random_always_achieve(self, action_list):
+    def ai_select_action_random_always_achieve(self):
         """If this AI can select an achievement it does, otherwise it picks randomly.
         If it can pick multiple, it picks the lowest available achievement."""
         selection = None
 
         i = 0
-        for option in action_list:
+        for option in self.turn_player.action_options:
             if option.type == 'achieve':
                 selection = i
                 break
             i += 1
 
         if not selection:
-            selection = random.randrange(len(action_list))
+            selection = random.randrange(len(self.turn_player.action_options))
 
-        return action_list[selection]
+        self.turn_player.selected_action = self.turn_player.action_options[selection]
 
     def ai_select_random_option(self):
         index = random.randrange(len(self.active_player.options))
@@ -2991,7 +2990,7 @@ class InnovationGame(Game):
         return self.aaa_test_splay(self.yellow, self.right, [0, 4, 1, 0, 0, 0], [0, 2, 1, 0, 0, 0])
 
 
-g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", False, 'Jurdrick', True, "Blanch", True)
+g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
 
 # g.aaa_create_tests()
 # # g.aaa_test_an_effect('Engineering', 1)
