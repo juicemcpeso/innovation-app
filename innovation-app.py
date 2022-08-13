@@ -1050,6 +1050,21 @@ class InnovationGame(Game):
                 player.winner = True
                 self.game_end()
 
+    def game_end_score(self):
+        highest_score_players = self.get_players_with_highest_score()
+
+        if len(highest_score_players) == 1:
+            highest_score_players[0].winner = True
+        else:
+            players_with_most_achievements = self.get_players_with_most_achievements(highest_score_players)
+            if len(players_with_most_achievements) == 1:
+                players_with_most_achievements[0].winner = True
+            else:
+                # TODO - Do I need to do anything special if there is a draw?
+                pass
+
+        self.game_end()
+
     def get_players_with_lowest_score(self):
         scores = []
         lowest_players = []
@@ -1072,6 +1087,19 @@ class InnovationGame(Game):
 
         for player in self.players:
             if player.get_score() == highest_score:
+                highest_players.append(player)
+
+        return highest_players
+
+    def get_players_with_most_achievements(self, player_list):
+        achievements = []
+        highest_players = []
+        for player in player_list:
+            achievements.append(player.achievement_pile.get_pile_size())
+        most_achievements = max(achievements)
+
+        for player in player_list:
+            if player.achievement_pile.get_pile_size() == most_achievements:
                 highest_players.append(player)
 
         return highest_players
