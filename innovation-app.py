@@ -3030,7 +3030,7 @@ class InnovationGame(Game):
 
 
 def ai_gym():
-    number_of_runs = 10000
+    number_of_runs = 100
     run_number = 0
     winners = []
     percent_complete = 0
@@ -3066,17 +3066,39 @@ def ai_gym():
     print("Mookifer {m}%".format(m=(round((100 * mookifer / won_runs), 2))))
     print("Debbie   {m}%".format(m=(round((100 * debbie / won_runs), 2))))
 
+
+def play_innovation_game():
+    g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", False, 'Jurdrick', True, "Blanch", True)
+    g.create_game()
+    g.set_up_game()
+    g.play_game()
+
+
+def test_innovation():
+    g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+    g.aaa_create_tests()
+    g.aaa_run_all_tests()
+
+
 def main():
-    ai_gym()
+    while True:
+        main_option_string = "-----------\n" \
+                             "Main Menu\n" \
+                             "1 | quit\n" \
+                             "2 | play a game\n" \
+                             "3 | ai gym\n" \
+                             "4 | test\n" \
+                             "Selection: "
+        selection = int(input(main_option_string))
+        if selection == 1:
+            break
+        elif selection == 2:
+            play_innovation_game()
+        elif selection == 3:
+            ai_gym()
+        elif selection == 4:
+            test_innovation()
+
 
 if __name__ == "__main__":
     main()
-
-# g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", False, 'Jurdrick', True, "Blanch", True)
-# g.create_game()
-# g.set_up_game()
-# g.play_game()
-
-# g.aaa_create_tests()
-# # g.aaa_test_an_effect('Engineering', 1)
-# g.aaa_run_all_tests()
