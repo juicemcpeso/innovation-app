@@ -623,6 +623,12 @@ class SplayOption(Option):
         self.direction = d
 
 
+class ScoreOption(Option):
+    def __init__(self, n, t, c):
+        Option.__init__(self, n, t)
+        self.cards = c
+
+
 class Game:
     """Base class for a collection of Pile objects and players"""
 
@@ -1634,9 +1640,11 @@ class InnovationGame(Game):
         self.active_player.stacks[selected_option.color].set_splay(selected_option.direction)
 
     # Create options
+    # Pass options
     def create_pass_option(self):
         self.active_player.options.append(PassOption())
 
+    # Splay options
     def create_splay_option(self, splay_color, splay_direction):
         name = "Splay {c} cards {d}".format(c=self.colors[splay_color], d=splay_direction)
         self.active_player.options.append(SplayOption(name, 'splay', splay_color, splay_direction))
@@ -1645,6 +1653,18 @@ class InnovationGame(Game):
         self.active_player.clear_options()
         for color in color_list:
             self.create_splay_option(color, splay_direction)
+        self.create_pass_option()
+
+    # Score options
+    def create_score_option(self, cards_to_score):
+        name_string = "Score:"
+        for card in cards_to_score:
+            name_string.append(", {n}".format(n=card.name))
+        self.active_player.options.append(ScoreOption(name_string, 'score', cards_to_score))
+
+    def create_score_all_option_suite(self, cards_to_score):
+        self.active_player.clear_options()
+        self.create_score_option(cards_to_score)
         self.create_pass_option()
 
     # Effects
@@ -1927,6 +1947,9 @@ class InnovationGame(Game):
         self.draw_and_meld(10)
         self.draw_and_meld(10)
         self.execute_dogma_for_yourself()
+
+    def stem_cells_effect_0(self):
+
 
     def the_internet_effect_0(self):
         self.create_splay_option_suite([self.green], self.up)
