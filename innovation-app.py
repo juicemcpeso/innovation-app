@@ -2937,19 +2937,20 @@ class InnovationGame(Game):
 
     # New test style tests
     def aaa_create_tests(self):
-        # Test name, setup function, action function, evaluation function, corresponding card, effect number
-        aaa_tests = [['Canal Building 0', self.test_canal_building_0_arrange, self.test_canal_building_0_assess, 'Canal Building', 0],    # Age 2
-                     ['Engineering 0', self.test_engineering_0_arrange, self.test_engineering_0_assess, 'Engineering', 0],
-                     ['Engineering 1', self.test_engineering_0_arrange, self.test_engineering_1_assess, 'Engineering', 1],
-                     ['Statistics 0', self.test_statistics_0_arrange, self.test_statistics_0_assess, 'Statistics', 0],
-                     ['Statistics 1', self.test_statistics_1_arrange, self.test_statistics_1_assess, 'Statistics', 1],
-                     ['Bicycle 0', self.test_bicycle_0_arrange, self.test_bicycle_0_assess, 'Bicycle', 0],                                # Age 7
-                     ['Stem Cells 0', self.test_stem_cells_0_arrange, self.test_stem_cells_0_assess, 'Stem Cells', 0]]
+        # Card name, effect number, arrange, assess
+        aaa_tests = [['Canal Building', 0, self.test_canal_building_0_arrange, self.test_canal_building_0_assess],      # Age 2
+                     ['Engineering', 0, self.test_engineering_0_arrange, self.test_engineering_0_assess],
+                     ['Engineering', 1, self.test_engineering_0_arrange, self.test_engineering_1_assess],
+                     ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess],
+                     ['Statistics', 1, self.test_statistics_1_arrange, self.test_statistics_1_assess],
+                     ['Bicycle', 0, self.test_bicycle_0_arrange, self.test_bicycle_0_assess],                           # Age 7
+                     ['Stem Cells', 0, self.test_stem_cells_0_arrange, self.test_stem_cells_0_assess]]
 
         for test_to_add in aaa_tests:
-            test = AAATest(test_to_add[0], test_to_add[1], self.get_effect_object(self.get_card_object(test_to_add[3]), test_to_add[4]), test_to_add[2], self.get_card_object(test_to_add[3]), test_to_add[4])
+            name = test_to_add[0] + ' ' + str(test_to_add[1])
+            test = AAATest(name, test_to_add[2], self.get_effect_object(self.get_card_object(test_to_add[0]), test_to_add[1]), test_to_add[3], self.get_card_object(test_to_add[0]), test_to_add[1])
             self.add_aaatest_to_game(test)
-            associated_effect = self.get_effect_object(self.get_card_object(test_to_add[3]), test_to_add[4])
+            associated_effect = self.get_effect_object(self.get_card_object(test_to_add[0]), test_to_add[1])
             associated_effect.tests.append(test)
 
     def aaa_run_test(self):
