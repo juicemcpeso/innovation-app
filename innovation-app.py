@@ -654,6 +654,12 @@ class ExchangeOption(Option):
         self.location_2_cards = loc_2_cards
 
 
+class ReturnCardOption(Option):
+    def __init__(self, n, t, fun, c):
+        Option.__init__(self, n, t, fun)
+        self.card = c
+
+
 class SplayOption(Option):
     def __init__(self, n, t, fun, c, d):
         Option.__init__(self, n, t, fun)
@@ -1687,6 +1693,10 @@ class InnovationGame(Game):
         self.move_multiple_cards_to_pile(self.active_player.selected_option.location_1_cards,
                                          self.active_player.selected_option.location_2)
 
+    def execute_option_return_a_card(self):
+        self.active_card = self.active_player.selected_option.card
+        self.return_card()
+
     def execute_option_splay(self):
         selected_option = self.active_player.selected_option
         self.active_player.stacks[selected_option.color].set_splay(selected_option.direction)
@@ -1718,6 +1728,17 @@ class InnovationGame(Game):
         self.create_exchange_option(loc_1, loc_1_cards, loc_2, loc_2_cards)
         self.create_pass_option()
 
+    # Return options
+    def create_return_a_card_option(self, card):
+        name_string = "Return {c}".format(c=card.name)
+        self.active_player.options.append(ReturnCardOption(name_string, 'return', self.execute_option_return_a_card, card))
+
+    def create_return_a_card_option_suite(self, card_options):
+        self.active_player.clear_options()
+        for card in card_options:
+            self.create_return_a_card_option(card)
+        self.create_pass_option()
+
     # Splay options
     def create_splay_option(self, splay_color, splay_direction):
         name = "Splay {c} cards {d}".format(c=self.colors[splay_color], d=splay_direction)
@@ -1742,7 +1763,8 @@ class InnovationGame(Game):
     # Effects
     def create_effects(self):
         # [Card name, effect number, effect type (str), demand_flag, function]
-        effects_list = [['Metalworking', 0, 'castle', False, self.metalworking_effect_0],           # Age 1
+        effects_list = [['Agriculture', 0, 'leaf', False, self.agriculture_effect_0],               # Age 1
+                        ['Metalworking', 0, 'castle', False, self.metalworking_effect_0],
                         ['Mysticism', 0, 'castle', False, self.mysticism_effect_0],
                         ['Sailing', 0, 'crown', False, self.sailing_effect_0],
                         ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
@@ -1805,6 +1827,12 @@ class InnovationGame(Game):
         return top_cards
 
     # Age 1 Effects
+    def agriculture_effect_0(self):
+        self.create_return_a_card_option_suite(self.active_player.hand.cards)
+        self.take_option()
+        if self.active_player.selected_option.type == 'return':
+            self.draw_and_score((self.active_player.selected_option.card.age + 1))
+
     def metalworking_effect_0(self):
         while not self.game_over:
             self.draw_and_reveal(1)
@@ -2976,7 +3004,8 @@ class InnovationGame(Game):
     # New test style tests
     def aaa_create_tests(self):
         # Card name, effect number, arrange, assess
-        aaa_tests = [['Canal Building', 0, self.test_canal_building_0_arrange, self.test_canal_building_0_assess],      # Age 2
+        aaa_tests = [['Agriculture', 0, self.test_agriculture_0_arrange, self.test_agriculture_0_assess],               # Age 1
+                     ['Canal Building', 0, self.test_canal_building_0_arrange, self.test_canal_building_0_assess],      # Age 2
                      ['Engineering', 0, self.test_engineering_0_arrange, self.test_engineering_0_assess],               # Age 3
                      ['Engineering', 1, self.test_engineering_0_arrange, self.test_engineering_1_assess],
                      ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess],                  # Age 5
@@ -3122,6 +3151,9 @@ class InnovationGame(Game):
     def aaa_test_card_in_draw_pile(self, card):
         return self.get_pile_object(str(card.age)).cards and (self.get_pile_object(str(card.age)).cards[0] == card)
 
+    def aaa_test_card_is_returned(self, card):
+        return self.get_pile_object(str(card.age)).cards and (self.get_pile_object(str(card.age)).cards[-1] == card)
+
     def aaa_test_draw_a_card(self, value):
         draw_value = value
         while draw_value <= 10:
@@ -3131,6 +3163,23 @@ class InnovationGame(Game):
     def aaa_test_draw_and_tuck(self, value):
         drawn_card = self.aaa_test_draw_a_card(value)
         return self.active_player.stacks[drawn_card.color].get_bottom_card() == drawn_card
+
+    # Age 1 tests
+    def test_agriculture_0_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_hand('Sailing')
+        self.aaa_test_setup_draw('Calendar')
+        self.test_general_setup()
+
+    def test_agriculture_0_assess(self):
+        if self.active_player.selected_option.type == 'return':
+            return self.aaa_test_cards_in_score_pile(self.active_player, [self.get_card_object('Calendar')]) and \
+                   self.aaa_test_card_is_returned(self.get_card_object('Sailing'))
+        elif self.active_player.selected_option.type == 'pass':
+            return self.aaa_test_cards_in_hand(self.active_player, [self.get_card_object('Sailing')]) and \
+                   self.aaa_test_card_in_draw_pile(self.get_card_object('Calendar'))
+        else:
+            return False
 
     # Age 2 tests
     def test_canal_building_0_arrange(self):
@@ -3362,6 +3411,13 @@ def test_innovation():
     g.aaa_run_all_tests()
 
 
+def test_innovation_effect():
+    card_name = input('Enter card name: ')
+    effect_number = int(input('Enter effect number: '))
+    g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+    g.aaa_create_tests()
+    g.aaa_test_an_effect(card_name, effect_number)
+
 def main():
     while True:
         main_option_string = "-----------\n" \
@@ -3369,7 +3425,8 @@ def main():
                              "1 | quit\n" \
                              "2 | play a game\n" \
                              "3 | ai gym\n" \
-                             "4 | test\n" \
+                             "4 | test all cards\n" \
+                             "5 | test an effect\n" \
                              "Selection: "
         selection = int(input(main_option_string))
         if selection == 1:
@@ -3380,6 +3437,8 @@ def main():
             ai_gym()
         elif selection == 4:
             test_innovation()
+        elif selection == 5:
+            test_innovation_effect()
 
 
 if __name__ == "__main__":
