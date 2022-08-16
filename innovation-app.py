@@ -590,6 +590,12 @@ class InnovationPlayer(Player):
             if option.type == 'pass':
                 return option
 
+    def is_card_top_card(self, card):
+        for stack in self.stacks:
+            if stack.cards and (stack.cards[0] == card):
+                return True
+        return False
+
 
 class Action:
     def __init__(self, t, p, c=None):
@@ -1772,6 +1778,7 @@ class InnovationGame(Game):
                         ['Calendar', 0, 'leaf', False, self.calendar_effect_0],                     # Age 2
                         ['Canal Building', 0, 'crown', False, self.canal_building_effect_0],
                         ['Fermenting', 0, 'leaf', False, self.fermenting_effect_0],
+                        ['Mathematics', 0, 'lightbulb', False, self.mathematics_effect_0],
                         ['Engineering', 0, 'castle', True, self.engineering_effect_0],              # Age 3
                         ['Engineering', 1, 'castle', False, self.engineering_effect_1],
                         ['Paper', 0, 'lightbulb', False, self.paper_effect_0],
@@ -1884,6 +1891,12 @@ class InnovationGame(Game):
         while i < stacks_with_leaves:
             self.draw_to_hand(2)
             i += 1
+
+    def mathematics_effect_0(self):
+        self.create_return_a_card_option_suite(self.active_player.hand.cards)
+        self.take_option()
+        if self.active_player.selected_option.type == 'return':
+            self.draw_and_meld((self.active_player.selected_option.card.age + 1))
 
     # Age 3 effects
     def engineering_effect_0(self):
@@ -3006,6 +3019,7 @@ class InnovationGame(Game):
         # Card name, effect number, arrange, assess
         aaa_tests = [['Agriculture', 0, self.test_agriculture_0_arrange, self.test_agriculture_0_assess],               # Age 1
                      ['Canal Building', 0, self.test_canal_building_0_arrange, self.test_canal_building_0_assess],      # Age 2
+                     ['Mathematics', 0, self.test_mathematics_0_arrange, self.test_mathematics_0_assess],
                      ['Engineering', 0, self.test_engineering_0_arrange, self.test_engineering_0_assess],               # Age 3
                      ['Engineering', 1, self.test_engineering_0_arrange, self.test_engineering_1_assess],
                      ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess],                  # Age 5
@@ -3148,6 +3162,9 @@ class InnovationGame(Game):
     def aaa_test_cards_in_hand(self, player, card_list):
         return player.hand.are_multiple_cards_in_pile(card_list)
 
+    def aaa_test_top_card(self, player, card):
+        return player.is_card_top_card(card)
+
     def aaa_test_card_in_draw_pile(self, card):
         return self.get_pile_object(str(card.age)).cards and (self.get_pile_object(str(card.age)).cards[0] == card)
 
@@ -3212,6 +3229,23 @@ class InnovationGame(Game):
         elif self.get_player_object(0).selected_option.type == 'pass':
             return (self.aaa_test_cards_in_score_pile(self.get_player_object(0), pass_score_list)
                     and self.aaa_test_cards_in_hand(self.get_player_object(0), pass_hand_list))
+        else:
+            return False
+
+    def test_mathematics_0_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_hand('Sailing')
+        self.aaa_test_setup_draw('Fermenting')
+        self.test_general_setup()
+
+    def test_mathematics_0_assess(self):
+        if self.active_player.selected_option.type == 'return':
+            return self.aaa_test_top_card(self.active_player, self.get_card_object('Fermenting')) and \
+                   self.aaa_test_card_is_returned(self.get_card_object('Sailing'))
+
+        elif self.active_player.selected_option.type == 'pass':
+            return self.aaa_test_cards_in_hand(self.active_player, [self.get_card_object('Sailing')]) and \
+                   self.aaa_test_card_in_draw_pile(self.get_card_object('Fermenting'))
         else:
             return False
 
@@ -3361,7 +3395,7 @@ class InnovationGame(Game):
 
 
 def ai_gym():
-    number_of_runs = 100
+    number_of_runs = int(input('Enter number of runs: '))
     run_number = 0
     winners = []
     percent_complete = 0
@@ -3417,6 +3451,7 @@ def test_innovation_effect():
     g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
     g.aaa_create_tests()
     g.aaa_test_an_effect(card_name, effect_number)
+
 
 def main():
     while True:
