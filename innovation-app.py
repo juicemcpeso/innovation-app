@@ -609,15 +609,20 @@ class Action:
 
 
 class Option:
-    def __init__(self, n, t):
+    def __init__(self, n, t, fun=None):
         self.name = n
         self.type = t
+        self.function = fun
 
     def __repr__(self):
         return "<%s>" % self.name
 
     def __str__(self):
         return self.name
+
+    def execute(self):
+        if self.function:
+            self.function()
 
 
 class PassOption(Option):
@@ -626,8 +631,8 @@ class PassOption(Option):
 
 
 class ExchangeOption(Option):
-    def __init__(self, n, t, loc_1, loc_1_cards, loc_2, loc_2_cards):
-        Option.__init__(self, n, t)
+    def __init__(self, n, t, fun, loc_1, loc_1_cards, loc_2, loc_2_cards):
+        Option.__init__(self, n, t, fun)
         self.location_1 = loc_1
         self.location_1_cards = loc_1_cards
         self.location_2 = loc_2
@@ -635,15 +640,15 @@ class ExchangeOption(Option):
 
 
 class SplayOption(Option):
-    def __init__(self, n, t, c, d):
-        Option.__init__(self, n, t)
+    def __init__(self, n, t, fun, c, d):
+        Option.__init__(self, n, t, fun)
         self.color = c
         self.direction = d
 
 
 class ScoreOption(Option):
-    def __init__(self, n, t, c):
-        Option.__init__(self, n, t)
+    def __init__(self, n, t, fun, c):
+        Option.__init__(self, n, t, fun)
         self.cards = c
 
 
@@ -1656,13 +1661,7 @@ class InnovationGame(Game):
     def execute_option(self):
         self.print_for_testing("{p} chooses to {s}".format(p=self.active_player.name,
                                                            s=self.active_player.selected_option.name))
-
-        if self.active_player.selected_option.type == 'exchange':
-            self.execute_option_exchange()
-        elif self.active_player.selected_option.type == 'splay':
-            self.execute_option_splay()
-        elif self.active_player.selected_option.type == 'score':
-            self.execute_option_score()
+        self.active_player.selected_option.execute()
 
     def execute_option_exchange(self):
         self.move_multiple_cards_to_pile(self.active_player.selected_option.location_2_cards,
@@ -1685,7 +1684,7 @@ class InnovationGame(Game):
     # Exchange options
     def create_exchange_option(self, loc_1, loc_1_cards, loc_2, loc_2_cards):
         name = "Exchange {f} with {t}".format(f=loc_1.name, t=loc_2.name)
-        self.active_player.options.append(ExchangeOption(name, 'exchange', loc_1, loc_1_cards, loc_2, loc_2_cards))
+        self.active_player.options.append(ExchangeOption(name, 'exchange', self.execute_option_exchange, loc_1, loc_1_cards, loc_2, loc_2_cards))
 
     def create_exchange_option_suite(self, loc_1, loc_1_cards, loc_2, loc_2_cards):
         self.active_player.clear_options()
@@ -1695,7 +1694,7 @@ class InnovationGame(Game):
     # Splay options
     def create_splay_option(self, splay_color, splay_direction):
         name = "Splay {c} cards {d}".format(c=self.colors[splay_color], d=splay_direction)
-        self.active_player.options.append(SplayOption(name, 'splay', splay_color, splay_direction))
+        self.active_player.options.append(SplayOption(name, 'splay', self.execute_option_splay, splay_color, splay_direction))
 
     def create_splay_option_suite(self, color_list, splay_direction):
         self.active_player.clear_options()
@@ -1706,7 +1705,7 @@ class InnovationGame(Game):
     # Score options
     def create_score_option(self, name, cards_to_score):
         name_string = "score {n}".format(n=name)
-        self.active_player.options.append(ScoreOption(name_string, 'score', cards_to_score))
+        self.active_player.options.append(ScoreOption(name_string, 'score', self.execute_option_score, cards_to_score))
 
     def create_score_all_option_suite(self, name, cards_to_score):
         self.active_player.clear_options()
