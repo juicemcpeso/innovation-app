@@ -576,6 +576,15 @@ class InnovationPlayer(Player):
 
         return top_cards_with_icon
 
+    def get_top_cards_without_icon(self, icon):
+        top_cards_without_icon = []
+        for stack in self.stacks:
+            top_card = stack.see_top_card()
+            if top_card and not top_card.contains_icon(icon):
+                top_cards_without_icon.append(top_card)
+
+        return top_cards_without_icon
+
     def get_pass_option(self):
         for option in self.options:
             if option.type == 'pass':
@@ -628,6 +637,12 @@ class Option:
 class PassOption(Option):
     def __init__(self):
         Option.__init__(self, 'Pass', 'pass')
+
+
+class DrawOption(Option):
+    def __init__(self, n, t, fun, val):
+        Option.__init__(self, n, t, fun)
+        self.value = val
 
 
 class ExchangeOption(Option):
@@ -1663,6 +1678,9 @@ class InnovationGame(Game):
                                                            s=self.active_player.selected_option.name))
         self.active_player.selected_option.execute()
 
+    def execute_option_draw_and_tuck(self):
+        self.draw_and_tuck(self.active_player.selected_option.value)
+
     def execute_option_exchange(self):
         self.move_multiple_cards_to_pile(self.active_player.selected_option.location_2_cards,
                                          self.active_player.selected_option.location_1)
@@ -1680,6 +1698,15 @@ class InnovationGame(Game):
     # Pass options
     def create_pass_option(self):
         self.active_player.options.append(PassOption())
+
+    def create_draw_and_tuck_option(self, value):
+        name = "Draw and tuck a {v}".format(v=value)
+        self.active_player.options.append(DrawOption(name, 'draw', self.execute_option_draw_and_tuck, value))
+
+    def create_draw_and_tuck_option_suite(self, value):
+        self.active_player.clear_options()
+        self.create_draw_and_tuck_option(value)
+        self.create_pass_option()
 
     # Exchange options
     def create_exchange_option(self, loc_1, loc_1_cards, loc_2, loc_2_cards):
@@ -1738,6 +1765,8 @@ class InnovationGame(Game):
                         ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
                         ['Atomic Theory', 0, 'lightbulb', False, self.atomic_theory_effect_0],      # Age 6
                         ['Atomic Theory', 1, 'lightbulb', False, self.atomic_theory_effect_1],
+                        ['Canning', 0, 'factory', False, self.canning_effect_0],
+                        ['Canning', 1, 'factory', False, self.canning_effect_1],
                         ['Industrialization', 0, 'factory', False, self.industrialization_effect_0],
                         ['Industrialization', 1, 'factory', False, self.industrialization_effect_1],
                         ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],
@@ -1916,6 +1945,16 @@ class InnovationGame(Game):
 
     def atomic_theory_effect_1(self):
         self.draw_and_meld(7)
+
+    def canning_effect_0(self):
+        self.create_draw_and_tuck_option_suite(6)
+        self.take_option()
+        if self.active_player.selected_option.type == 'draw':
+            self.score_cards(self.active_player.get_top_cards_without_icon(self.factory))
+
+    def canning_effect_1(self):
+        self.create_splay_option_suite([self.yellow], self.right)
+        self.take_option()
 
     def industrialization_effect_0(self):
         colors_with_factories = self.active_player.count_colors_with_one_or_more_icon(self.factory)
@@ -2938,10 +2977,12 @@ class InnovationGame(Game):
     def aaa_create_tests(self):
         # Card name, effect number, arrange, assess
         aaa_tests = [['Canal Building', 0, self.test_canal_building_0_arrange, self.test_canal_building_0_assess],      # Age 2
-                     ['Engineering', 0, self.test_engineering_0_arrange, self.test_engineering_0_assess],
+                     ['Engineering', 0, self.test_engineering_0_arrange, self.test_engineering_0_assess],               # Age 3
                      ['Engineering', 1, self.test_engineering_0_arrange, self.test_engineering_1_assess],
-                     ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess],
+                     ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess],                  # Age 5
                      ['Statistics', 1, self.test_statistics_1_arrange, self.test_statistics_1_assess],
+                     ['Canning', 0, self.test_canning_0_arrange, self.test_canning_0_assess],
+                     ['Canning', 1, self.test_canning_1_arrange, self.test_canning_1_assess],                           # Age 6
                      ['Bicycle', 0, self.test_bicycle_0_arrange, self.test_bicycle_0_assess],                           # Age 7
                      ['Stem Cells', 0, self.test_stem_cells_0_arrange, self.test_stem_cells_0_assess]]
 
@@ -3008,11 +3049,18 @@ class InnovationGame(Game):
 
     def aaa_test_setup_hand(self, card_name):
         self.active_card = self.get_card_object(card_name)
+        self.find_and_remove_card(self.active_card)
         self.add_card_to_hand()
 
     def aaa_test_setup_score(self, card_name):
         self.active_card = self.get_card_object(card_name)
+        self.find_and_remove_card(self.active_card)
         self.add_card_to_score_pile()
+
+    def aaa_test_setup_draw(self, card_name):
+        card = self.get_card_object(card_name)
+        self.find_and_remove_card(card)
+        self.get_pile_object(str(card.age)).add_card_to_top(card)
 
     def aaa_test_an_effect(self, card_name, effect_number):
         passed_tests = []
@@ -3070,6 +3118,19 @@ class InnovationGame(Game):
 
     def aaa_test_cards_in_hand(self, player, card_list):
         return player.hand.are_multiple_cards_in_pile(card_list)
+
+    def aaa_test_card_in_draw_pile(self, card):
+        return self.get_pile_object(str(card.age)).cards and (self.get_pile_object(str(card.age)).cards[0] == card)
+
+    def aaa_test_draw_a_card(self, value):
+        draw_value = value
+        while draw_value <= 10:
+            if self.active_test.draw_piles[draw_value]:
+                return self.get_card_object(self.active_test.draw_piles[draw_value][0])
+
+    def aaa_test_draw_and_tuck(self, value):
+        drawn_card = self.aaa_test_draw_a_card(value)
+        return self.active_player.stacks[drawn_card.color].get_bottom_card() == drawn_card
 
     # Age 2 tests
     def test_canal_building_0_arrange(self):
@@ -3169,6 +3230,34 @@ class InnovationGame(Game):
 
     def test_statistics_1_assess(self):
         return self.aaa_test_splay(self.yellow, self.right, [0, 4, 1, 0, 0, 0], [0, 2, 1, 0, 0, 0])
+
+    # Age 6 tests
+    def test_canning_0_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_meld('Machine Tools')
+        self.aaa_test_setup_meld('Calendar')
+        self.aaa_test_setup_meld('Sailing')
+        self.aaa_test_setup_draw('Industrialization')
+        self.test_general_setup()
+
+    def test_canning_0_assess(self):
+        score_list = [self.get_card_object('Sailing'),
+                      self.get_card_object('Calendar')]
+        if self.active_player.selected_option.type == 'draw':
+            return ((self.active_player.stacks[self.red].see_bottom_card() == self.get_card_object('Industrialization'))
+                    and self.aaa_test_cards_in_score_pile(self.active_player, score_list))
+        elif self.active_player.selected_option.type == 'pass':
+            return self.aaa_test_card_in_draw_pile(self.get_card_object('Industrialization'))
+        else:
+            return False
+
+    def test_canning_1_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_meld('Fermenting')
+        self.test_general_setup()
+
+    def test_canning_1_assess(self):
+        return self.aaa_test_splay(self.yellow, self.right, [0, 3, 0, 0, 2, 0], [0, 1, 0, 0, 2, 0])
 
     # Age 7 tests
     def test_bicycle_0_arrange(self):
