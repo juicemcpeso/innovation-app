@@ -1722,6 +1722,7 @@ class InnovationGame(Game):
                         ['The Wheel', 0, 'castle', False, self.the_wheel_effect_0],
                         ['Writing', 0, 'lightbulb', False, self.writing_effect_0],
                         ['Calendar', 0, 'leaf', False, self.calendar_effect_0],                     # Age 2
+                        ['Canal Building', 0, 'crown', False, self.canal_building_effect_0],
                         ['Fermenting', 0, 'leaf', False, self.fermenting_effect_0],
                         ['Engineering', 0, 'castle', True, self.engineering_effect_0],              # Age 3
                         ['Engineering', 1, 'castle', False, self.engineering_effect_1],
@@ -1809,6 +1810,13 @@ class InnovationGame(Game):
         if self.active_player.score_pile.get_pile_size() > self.active_player.hand.get_pile_size():
             self.draw_to_hand(3)
             self.draw_to_hand(3)
+
+    def canal_building_effect_0(self):
+        self.create_exchange_option_suite(self.active_player.hand,
+                                          self.active_player.hand.get_highest_cards(),
+                                          self.active_player.score_pile,
+                                          self.active_player.score_pile.get_highest_cards())
+        self.take_option()
 
     def fermenting_effect_0(self):
         stacks_with_leaves = 0
@@ -2930,17 +2938,18 @@ class InnovationGame(Game):
     # New test style tests
     def aaa_create_tests(self):
         # Test name, setup function, action function, evaluation function, corresponding card, effect number
-        aaa_tests = [['Engineering 0', self.test_engineering_0_arrange, self.test_engineering_0_assess, self.get_card_object('Engineering'), 0],
-                     ['Engineering 1', self.test_engineering_0_arrange, self.test_engineering_1_assess, self.get_card_object('Engineering'), 1],
-                     ['Statistics 0', self.test_statistics_0_arrange, self.test_statistics_0_assess, self.get_card_object('Statistics'), 0],
-                     ['Statistics 1', self.test_statistics_1_arrange, self.test_statistics_1_assess, self.get_card_object('Statistics'), 1],
-                     ['Bicycle 0', self.test_bicycle_0_arrange, self.test_bicycle_0_assess, self.get_card_object('Bicycle'), 0],
-                     ['Stem Cells 0', self.test_stem_cells_0_arrange, self.test_stem_cells_0_assess, self.get_card_object('Stem Cells'), 0]]
+        aaa_tests = [['Canal Building 0', self.test_canal_building_0_arrange, self.test_canal_building_0_assess, 'Canal Building', 0],    # Age 2
+                     ['Engineering 0', self.test_engineering_0_arrange, self.test_engineering_0_assess, 'Engineering', 0],
+                     ['Engineering 1', self.test_engineering_0_arrange, self.test_engineering_1_assess, 'Engineering', 1],
+                     ['Statistics 0', self.test_statistics_0_arrange, self.test_statistics_0_assess, 'Statistics', 0],
+                     ['Statistics 1', self.test_statistics_1_arrange, self.test_statistics_1_assess, 'Statistics', 1],
+                     ['Bicycle 0', self.test_bicycle_0_arrange, self.test_bicycle_0_assess, 'Bicycle', 0],                                # Age 7
+                     ['Stem Cells 0', self.test_stem_cells_0_arrange, self.test_stem_cells_0_assess, 'Stem Cells', 0]]
 
         for test_to_add in aaa_tests:
-            test = AAATest(test_to_add[0], test_to_add[1], self.get_effect_object(test_to_add[3], test_to_add[4]), test_to_add[2], test_to_add[3], test_to_add[4])
+            test = AAATest(test_to_add[0], test_to_add[1], self.get_effect_object(self.get_card_object(test_to_add[3]), test_to_add[4]), test_to_add[2], self.get_card_object(test_to_add[3]), test_to_add[4])
             self.add_aaatest_to_game(test)
-            associated_effect = self.get_effect_object(test_to_add[3], test_to_add[4])
+            associated_effect = self.get_effect_object(self.get_card_object(test_to_add[3]), test_to_add[4])
             associated_effect.tests.append(test)
 
     def aaa_run_test(self):
@@ -3061,6 +3070,40 @@ class InnovationGame(Game):
 
     def aaa_test_cards_in_hand(self, player, card_list):
         return player.hand.are_multiple_cards_in_pile(card_list)
+
+    # Age 2 tests
+    def test_canal_building_0_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_hand('Statistics')
+        self.aaa_test_setup_hand('Astronomy')
+        self.aaa_test_setup_hand('Colonialism')
+        self.aaa_test_setup_score('Calendar')
+        self.aaa_test_setup_score('Fermenting')
+        self.aaa_test_setup_score('Sailing')
+        self.test_general_setup()
+
+    def test_canal_building_0_assess(self):
+        score_list = [self.get_card_object('Statistics'),
+                      self.get_card_object('Astronomy'),
+                      self.get_card_object('Sailing')]
+        hand_list = [self.get_card_object('Colonialism'),
+                     self.get_card_object('Calendar'),
+                     self.get_card_object('Fermenting')]
+        pass_score_list = [self.get_card_object('Sailing'),
+                           self.get_card_object('Calendar'),
+                           self.get_card_object('Fermenting')]
+        pass_hand_list = [self.get_card_object('Statistics'),
+                          self.get_card_object('Astronomy'),
+                          self.get_card_object('Colonialism')]
+
+        if self.get_player_object(0).selected_option.type == 'exchange':
+            return (self.aaa_test_cards_in_score_pile(self.get_player_object(0), score_list)
+                    and self.aaa_test_cards_in_hand(self.get_player_object(0), hand_list))
+        elif self.get_player_object(0).selected_option.type == 'pass':
+            return (self.aaa_test_cards_in_score_pile(self.get_player_object(0), pass_score_list)
+                    and self.aaa_test_cards_in_hand(self.get_player_object(0), pass_hand_list))
+        else:
+            return False
 
     # Age 3 tests
     def test_engineering_0_arrange(self):

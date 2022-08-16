@@ -12,6 +12,7 @@ Sailing|green|1|crown|crown|crown||leaf|Draw and meld a 1||
 The Wheel|green|1|castle||castle|castle|castle|Draw two 1.||
 Writing|blue|1|lightbulb||lightbulb|lightbulb|crown|Draw a 2||
 Calendar|blue|2|leaf||leaf|leaf|lightbulb|If you have more cards in your score pile than in your hand, draw two 3.||
+Canal Building|yellow|2|crown||crown|leaf|crown|You may exchange all the highest cards in your hand with all the highest cards in your score pile.||
 Fermenting|yellow|2|leaf|leaf|leaf||castle|Draw a 2 for every color on your board with one or more [Leaf].||
 Alchemy|blue|3|castle||leaf|castle|castle|Draw and reveal a 4 for every three [Castle] icons on your board. If any of the drawn cards are red, return the cards drawn and all cards in your hand. Otherwise, keep them.|Meld a card from your hand, then score a card from your hand.|
 Engineering|red|3|castle|castle||lightbulb|castle|I demand you transfer all top cards with a [Castle] from your board to my score pile!|You may splay your red cards left.|
