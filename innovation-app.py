@@ -318,6 +318,9 @@ class Pile:
 
         return highest_value
 
+    def get_highest_cards(self):
+        return self.get_cards_of_value(self.highest_card_value())
+
     def get_cards_of_value(self, value):
         cards_of_value = []
         for card in self.cards:
@@ -620,6 +623,15 @@ class Option:
 class PassOption(Option):
     def __init__(self):
         Option.__init__(self, 'Pass', 'pass')
+
+
+class ExchangeOption(Option):
+    def __init__(self, n, t, loc_1, loc_1_cards, loc_2, loc_2_cards):
+        Option.__init__(self, n, t)
+        self.location_1 = loc_1
+        self.location_1_cards = loc_1_cards
+        self.location_2 = loc_2
+        self.location_2_cards = loc_2_cards
 
 
 class SplayOption(Option):
@@ -1264,6 +1276,12 @@ class InnovationGame(Game):
     def move_card_to_pile(self, card, pile):
         self.find_and_remove_card(card)
         pile.add_card_to_bottom(card)
+        self.print_for_testing("{a} moves {c} to {p}".format(a=self.active_player.name, c=card.name, p=pile.name))
+
+    def move_multiple_cards_to_pile(self, card_list, destination_pile):
+        cards = list(card_list)
+        for card in cards:
+            self.move_card_to_pile(card, destination_pile)
 
     def transfer_cards_to_your_hand(self, card_list):
         for card in card_list:
@@ -1639,10 +1657,18 @@ class InnovationGame(Game):
         self.print_for_testing("{p} chooses to {s}".format(p=self.active_player.name,
                                                            s=self.active_player.selected_option.name))
 
-        if self.active_player.selected_option.type == 'splay':
+        if self.active_player.selected_option.type == 'exchange':
+            self.execute_option_exchange()
+        elif self.active_player.selected_option.type == 'splay':
             self.execute_option_splay()
         elif self.active_player.selected_option.type == 'score':
             self.execute_option_score()
+
+    def execute_option_exchange(self):
+        self.move_multiple_cards_to_pile(self.active_player.selected_option.location_2_cards,
+                                         self.active_player.selected_option.location_1)
+        self.move_multiple_cards_to_pile(self.active_player.selected_option.location_1_cards,
+                                         self.active_player.selected_option.location_2)
 
     def execute_option_splay(self):
         selected_option = self.active_player.selected_option
@@ -1655,6 +1681,16 @@ class InnovationGame(Game):
     # Pass options
     def create_pass_option(self):
         self.active_player.options.append(PassOption())
+
+    # Exchange options
+    def create_exchange_option(self, loc_1, loc_1_cards, loc_2, loc_2_cards):
+        name = "Exchange {f} with {t}".format(f=loc_1.name, t=loc_2.name)
+        self.active_player.options.append(ExchangeOption(name, 'exchange', loc_1, loc_1_cards, loc_2, loc_2_cards))
+
+    def create_exchange_option_suite(self, loc_1, loc_1_cards, loc_2, loc_2_cards):
+        self.active_player.clear_options()
+        self.create_exchange_option(loc_1, loc_1_cards, loc_2, loc_2_cards)
+        self.create_pass_option()
 
     # Splay options
     def create_splay_option(self, splay_color, splay_direction):
@@ -1707,7 +1743,8 @@ class InnovationGame(Game):
                         ['Machine Tools', 0, 'factory', False, self.machine_tools_effect_0],
                         ['Metric System', 0, 'crown', False, self.metric_system_effect_0],
                         ['Metric System', 1, 'crown', False, self.metric_system_effect_1],
-                        ['Electricity', 0, 'factory', False, self.electricity_effect_0],            # Age 7
+                        ['Bicycle', 0, 'crown', False, self.bicycle_effect_0],                      # Age 7
+                        ['Electricity', 0, 'factory', False, self.electricity_effect_0],
                         ['Flight', 0, 'crown', False, self.flight_effect_0],                        # Age 8
                         ['Flight', 1, 'crown', False, self.flight_effect_1],
                         ['Computers', 0, 'clock', False, self.computers_effect_0],                  # Age 9
@@ -1895,6 +1932,13 @@ class InnovationGame(Game):
         self.take_option()
 
     # Age 7 effects
+    def bicycle_effect_0(self):
+        self.create_exchange_option_suite(self.active_player.hand,
+                                          self.active_player.hand.get_highest_cards(),
+                                          self.active_player.score_pile,
+                                          self.active_player.score_pile.cards)
+        self.take_option()
+
     def electricity_effect_0(self):
         number_of_cards_returned = 0
         for stack in self.active_player.stacks:
@@ -2890,6 +2934,7 @@ class InnovationGame(Game):
                      ['Engineering 1', self.test_engineering_0_arrange, self.test_engineering_1_assess, self.get_card_object('Engineering'), 1],
                      ['Statistics 0', self.test_statistics_0_arrange, self.test_statistics_0_assess, self.get_card_object('Statistics'), 0],
                      ['Statistics 1', self.test_statistics_1_arrange, self.test_statistics_1_assess, self.get_card_object('Statistics'), 1],
+                     ['Bicycle 0', self.test_bicycle_0_arrange, self.test_bicycle_0_assess, self.get_card_object('Bicycle'), 0],
                      ['Stem Cells 0', self.test_stem_cells_0_arrange, self.test_stem_cells_0_assess, self.get_card_object('Stem Cells'), 0]]
 
         for test_to_add in aaa_tests:
@@ -3081,6 +3126,37 @@ class InnovationGame(Game):
 
     def test_statistics_1_assess(self):
         return self.aaa_test_splay(self.yellow, self.right, [0, 4, 1, 0, 0, 0], [0, 2, 1, 0, 0, 0])
+
+    # Age 7 tests
+    def test_bicycle_0_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_hand('Statistics')
+        self.aaa_test_setup_hand('Astronomy')
+        self.aaa_test_setup_hand('Colonialism')
+        self.aaa_test_setup_score('Sailing')
+        self.aaa_test_setup_score('The Wheel')
+        self.test_general_setup()
+
+    def test_bicycle_0_assess(self):
+        score_list = [self.get_card_object('Statistics'),
+                      self.get_card_object('Astronomy')]
+        hand_list = [self.get_card_object('Colonialism'),
+                     self.get_card_object('Sailing'),
+                     self.get_card_object('The Wheel')]
+        pass_score_list = [self.get_card_object('Sailing'),
+                           self.get_card_object('The Wheel')]
+        pass_hand_list = [self.get_card_object('Statistics'),
+                          self.get_card_object('Astronomy'),
+                          self.get_card_object('Colonialism')]
+
+        if self.get_player_object(0).selected_option.type == 'exchange':
+            return (self.aaa_test_cards_in_score_pile(self.get_player_object(0), score_list)
+                    and self.aaa_test_cards_in_hand(self.get_player_object(0), hand_list))
+        elif self.get_player_object(0).selected_option.type == 'pass':
+            return (self.aaa_test_cards_in_score_pile(self.get_player_object(0), pass_score_list)
+                    and self.aaa_test_cards_in_hand(self.get_player_object(0), pass_hand_list))
+        else:
+            return False
 
     # Age 10 tests
     def test_stem_cells_0_arrange(self):
