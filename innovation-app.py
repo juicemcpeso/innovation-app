@@ -487,6 +487,7 @@ class InnovationPlayer(Player):
         self.select_an_action = s_action
 
         self.options = []
+        self.selected_option_log = []
         self.selected_option = None
         self.select_an_option = s_option
 
@@ -1693,6 +1694,7 @@ class InnovationGame(Game):
 
     def select_option(self):
         self.active_player.select_an_option()
+        self.active_player.selected_option_log.append(self.active_player.selected_option)
 
     def execute_option(self):
         self.print_for_testing("{p} chooses to {s}".format(p=self.active_player.name,
@@ -1991,6 +1993,7 @@ class InnovationGame(Game):
                     break
                 else:
                     self.create_mandatory_score_a_card_option_suite(self.active_player.hand.cards)
+                    self.take_option()
 
                 i = i + 1
 
@@ -2248,8 +2251,10 @@ class InnovationGame(Game):
             print('The following tests failed:')
             for test in failed_test_list:
                 print(test.name)
+            return False
         else:
             print('All tests passed')
+            return True
 
     def test_cards_and_piles(self):
         initial_cards_in_game = self.test_convert_piles_to_card_list(self.piles_at_beginning_of_effect)
@@ -3080,7 +3085,8 @@ class InnovationGame(Game):
                      ['Education', 0, self.test_education_0_arrange, self.test_education_0_assess],
                      ['Engineering', 0, self.test_engineering_0_arrange, self.test_engineering_0_assess],               # Age 3
                      ['Engineering', 1, self.test_engineering_0_arrange, self.test_engineering_1_assess],
-                     ['Anatomy', 0, self.test_anatomy_0_arrange, self.test_anatomy_0_assess],                           # Age 4®
+                     ['Anatomy', 0, self.test_anatomy_0_arrange, self.test_anatomy_0_assess],                           # Age 4
+                     ['Perspective', 0, self.test_perspective_0_arrange, self.test_perspective_0_assess],
                      ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess],                  # Age 5
                      ['Statistics', 1, self.test_statistics_1_arrange, self.test_statistics_1_assess],
                      ['Canning', 0, self.test_canning_0_arrange, self.test_canning_0_assess],
@@ -3177,7 +3183,7 @@ class InnovationGame(Game):
             else:
                 failed_tests.append(test)
 
-        self.determine_pass_or_fail(failed_tests)
+        return self.determine_pass_or_fail(failed_tests)
 
     def aaa_run_all_tests(self):
         passed_tests = []
@@ -3194,7 +3200,7 @@ class InnovationGame(Game):
                     failed_tests.append(test)
                 print(test.result)
 
-        self.determine_pass_or_fail(failed_tests)
+        return(self.determine_pass_or_fail(failed_tests))
 
     def aaa_test_splay(self, splay_color, splay_direction, splayed_icons_list, non_splayed_icons_list):
         splay_name = "Splay {c} cards {d}".format(c=self.colors[splay_color], d=splay_direction)
@@ -3398,13 +3404,34 @@ class InnovationGame(Game):
         self.aaa_test_setup_hand('Metalworking')
         self.aaa_test_setup_hand('Statistics')
         self.aaa_test_setup_hand('Engineering')
+        self.aaa_test_setup_hand('Astronomy')
 
         self.test_general_setup()
 
     def test_perspective_0_assess(self):
-        cards = [self.get_card_object('Engineering'),
+        cards = [self.get_card_object('Astronomy'),
+                 self.get_card_object('Engineering'),
                  self.get_card_object('Metalworking'),
                  self.get_card_object('Statistics')]
+        results = []
+
+        if self.active_player.selected_option_log[0].type == 'return':
+            returned_card = self.active_player.selected_option_log[0].card
+            results.append(self.aaa_test_card_is_returned(returned_card))
+
+            card_scored_1 = self.active_player.selected_option_log[1].cards[0]
+            results.append(self.aaa_test_cards_in_score_pile(self.active_player, [card_scored_1]))
+
+            card_scored_2 = self.active_player.selected_option_log[2].cards[0]
+            results.append(self.aaa_test_cards_in_score_pile(self.active_player, [card_scored_2]))
+
+            return all(results)
+
+        elif self.active_player.selected_option_log[0].type == 'pass':
+            return self.aaa_test_cards_in_hand(self.active_player, cards)
+
+        else:
+            return False
 
     # Age 5 tests
     def test_statistics_0_arrange(self):
@@ -3556,17 +3583,35 @@ def play_innovation_game():
 
 
 def test_innovation():
-    g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
-    g.aaa_create_tests()
-    g.aaa_run_all_tests()
+    number_of_tests = int(input('How many tests to run: '))
+    i = 0
+    results = []
+    while i < number_of_tests:
+        g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+        g.aaa_create_tests()
+        g.aaa_run_all_tests()
+        i = i + 1
+
+    print('---')
+    print('All tests run ' + str(number_of_tests) + ' times.')
+    print('Every test passed: ' + str(all(results)))
 
 
 def test_innovation_effect():
     card_name = input('Enter card name: ')
     effect_number = int(input('Enter effect number: '))
-    g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
-    g.aaa_create_tests()
-    g.aaa_test_an_effect(card_name, effect_number)
+    number_of_tests = int(input('How many tests to run: '))
+    i = 0
+    results = []
+    while i < number_of_tests:
+        g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+        g.aaa_create_tests()
+        results. append(g.aaa_test_an_effect(card_name, effect_number))
+        i = i + 1
+
+    print('---')
+    print(str(card_name) + ' effect ' + str(effect_number) + ' run ' + str(number_of_tests) + ' times.')
+    print('All tests passed: ' + str(all(results)))
 
 
 def main():
