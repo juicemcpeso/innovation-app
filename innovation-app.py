@@ -1774,14 +1774,23 @@ class InnovationGame(Game):
         self.create_pass_option()
 
     # Score options
-    def create_score_option(self, name, cards_to_score):
+    def create_score_a_card_option(self, card_to_score):
+        name_string = "Score {n}".format(n=card_to_score.name)
+        self.active_player.options.append(ScoreOption(name_string, 'score', self.execute_option_score, [card_to_score]))
+
+    def create_score_all_option(self, name, cards_to_score):
         name_string = "score {n}".format(n=name)
         self.active_player.options.append(ScoreOption(name_string, 'score', self.execute_option_score, cards_to_score))
 
     def create_score_all_option_suite(self, name, cards_to_score):
         self.active_player.clear_options()
-        self.create_score_option(name, cards_to_score)
+        self.create_score_all_option(name, cards_to_score)
         self.create_pass_option()
+
+    def create_mandatory_score_a_card_option_suite(self, cards_to_score):
+        self.active_player.clear_options()
+        for card in cards_to_score:
+            self.create_score_a_card_option(card)
 
     # Effects
     def create_effects(self):
@@ -1806,6 +1815,7 @@ class InnovationGame(Game):
                         ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
                         ['Invention', 0, 'lightbulb', False, self.invention_effect_0],
                         ['Invention', 1, 'lightbulb', False, self.invention_effect_1],
+                        ['Perspective', 0, 'lightbulb', False, self.perspective_effect_0],
                         ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],              # Age 5
                         ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
                         ['Statistics', 0, 'leaf', True, self.statistics_effect_0],
@@ -1969,6 +1979,20 @@ class InnovationGame(Game):
         stacks_splayed = self.active_player.get_number_stacks_splayed_any_direction()
         if stacks_splayed == '5':
             self.claim_special_achievement('Universe')
+
+    def perspective_effect_0(self):
+        self.create_return_a_card_option_suite(self.active_player.hand.cards)
+        self.take_option()
+        if self.active_player.selected_option.type == 'return':
+            number_of_lightbulbs = self.active_player.count_icons_on_board(self.lightbulb) // 2
+            i = 0
+            while i < number_of_lightbulbs:
+                if not self.active_player.hand.cards:
+                    break
+                else:
+                    self.create_mandatory_score_a_card_option_suite(self.active_player.hand.cards)
+
+                i = i + 1
 
     # Age 5 effects
     def astronomy_effect_0(self):
@@ -3367,6 +3391,20 @@ class InnovationGame(Game):
     def test_anatomy_0_assess(self):
         card_list = [self.get_card_object('Education'), self.get_card_object('Paper')]
         return self.aaa_test_multiple_cards_are_returned(card_list)
+
+    def test_perspective_0_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_meld('Atomic Theory')
+        self.aaa_test_setup_hand('Metalworking')
+        self.aaa_test_setup_hand('Statistics')
+        self.aaa_test_setup_hand('Engineering')
+
+        self.test_general_setup()
+
+    def test_perspective_0_assess(self):
+        cards = [self.get_card_object('Engineering'),
+                 self.get_card_object('Metalworking'),
+                 self.get_card_object('Statistics')]
 
     # Age 5 tests
     def test_statistics_0_arrange(self):
