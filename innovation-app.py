@@ -1779,7 +1779,8 @@ class InnovationGame(Game):
                         ['Canal Building', 0, 'crown', False, self.canal_building_effect_0],
                         ['Fermenting', 0, 'leaf', False, self.fermenting_effect_0],
                         ['Mathematics', 0, 'lightbulb', False, self.mathematics_effect_0],
-                        ['Engineering', 0, 'castle', True, self.engineering_effect_0],              # Age 3
+                        ['Education', 0, 'lightbulb', False, self.education_effect_0],              # Age 3
+                        ['Engineering', 0, 'castle', True, self.engineering_effect_0],
                         ['Engineering', 1, 'castle', False, self.engineering_effect_1],
                         ['Paper', 0, 'lightbulb', False, self.paper_effect_0],
                         ['Paper', 0, 'lightbulb', False, self.paper_effect_1],
@@ -1899,6 +1900,12 @@ class InnovationGame(Game):
             self.draw_and_meld((self.active_player.selected_option.card.age + 1))
 
     # Age 3 effects
+    def education_effect_0(self):
+        self.create_return_a_card_option_suite(self.active_player.score_pile.get_highest_cards())
+        self.take_option()
+        if self.active_player.selected_option.type == 'return':
+            self.draw_to_hand((self.active_player.score_pile.highest_card_value() + 2))
+
     def engineering_effect_0(self):
         cards_with_castles = self.active_player.get_top_cards_with_icon(self.castle)
         self.demand_transfer_multiple_cards_from_board_to_score_pile(cards_with_castles)
@@ -3020,6 +3027,7 @@ class InnovationGame(Game):
         aaa_tests = [['Agriculture', 0, self.test_agriculture_0_arrange, self.test_agriculture_0_assess],               # Age 1
                      ['Canal Building', 0, self.test_canal_building_0_arrange, self.test_canal_building_0_assess],      # Age 2
                      ['Mathematics', 0, self.test_mathematics_0_arrange, self.test_mathematics_0_assess],
+                     ['Education', 0, self.test_education_0_arrange, self.test_education_0_assess],
                      ['Engineering', 0, self.test_engineering_0_arrange, self.test_engineering_0_assess],               # Age 3
                      ['Engineering', 1, self.test_engineering_0_arrange, self.test_engineering_1_assess],
                      ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess],                  # Age 5
@@ -3250,6 +3258,23 @@ class InnovationGame(Game):
             return False
 
     # Age 3 tests
+    def test_education_0_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_score('Mathematics')
+        self.aaa_test_setup_score('Agriculture')
+        self.aaa_test_setup_draw('Paper')
+        self.test_general_setup()
+
+    def test_education_0_assess(self):
+        if self.active_player.selected_option.type == 'return':
+            return self.aaa_test_card_is_returned(self.get_card_object('Mathematics')) and \
+                   self.aaa_test_cards_in_hand(self.active_player, [self.get_card_object('Paper')])
+        elif self.active_player.selected_option.type == 'pass':
+            return self.aaa_test_cards_in_score_pile(self.active_player, [self.get_card_object('Mathematics')]) and \
+                   self.aaa_test_card_in_draw_pile(self.get_card_object('Paper'))
+        else:
+            return False
+
     def test_engineering_0_arrange(self):
         self.active_player = self.get_player_object(1)
         self.active_card = self.get_card_object('City States')
