@@ -585,6 +585,15 @@ class InnovationPlayer(Player):
 
         return top_cards_without_icon
 
+    def get_top_cards_of_value(self, value):
+        top_cards_of_value = []
+        for stack in self.stacks:
+            top_card = stack.see_top_card()
+            if top_card and top_card.age == value:
+                top_cards_of_value.append(top_card)
+
+        return top_cards_of_value
+
     def get_pass_option(self):
         for option in self.options:
             if option.type == 'pass':
@@ -816,7 +825,7 @@ class InnovationGame(Game):
                                     self.ai_select_action_random,
                                     self.ai_select_action_random_always_achieve]
         self.ai_option_functions = [self.ai_select_random_option,
-                                    self.ai_select_random_option_always_splay,
+                                    self.ai_select_random_option,
                                     self.ai_select_random_option,
                                     self.ai_select_random_option]
 
@@ -1745,6 +1754,14 @@ class InnovationGame(Game):
             self.create_return_a_card_option(card)
         self.create_pass_option()
 
+    def create_mandatory_return_a_card_option_suite(self, card_options):
+        self.active_player.clear_options()
+        if card_options:
+            for card in card_options:
+                self.create_return_a_card_option(card)
+        else:
+            self.create_pass_option()
+
     # Splay options
     def create_splay_option(self, splay_color, splay_direction):
         name = "Splay {c} cards {d}".format(c=self.colors[splay_color], d=splay_direction)
@@ -1784,7 +1801,8 @@ class InnovationGame(Game):
                         ['Engineering', 1, 'castle', False, self.engineering_effect_1],
                         ['Paper', 0, 'lightbulb', False, self.paper_effect_0],
                         ['Paper', 0, 'lightbulb', False, self.paper_effect_1],
-                        ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],            # Age 4
+                        ['Anatomy', 0, 'leaf', True, self.anatomy_effect_0],                        # Age 4
+                        ['Colonialism', 0, 'factory', False, self.colonialism_effect_0],
                         ['Experimentation', 0, 'lightbulb', False, self.experimentation_effect_0],
                         ['Invention', 0, 'lightbulb', False, self.invention_effect_0],
                         ['Invention', 1, 'lightbulb', False, self.invention_effect_1],
@@ -1923,6 +1941,14 @@ class InnovationGame(Game):
         self.draw_to_hand_multiple(4, colors_splayed_left)
 
     # Age 4 effects
+    def anatomy_effect_0(self):
+        self.create_mandatory_return_a_card_option_suite(self.active_player.score_pile.cards)
+        self.take_option()
+        if self.active_player.selected_option.type == 'return':
+            card_value = self.active_player.selected_option.card.age
+            self.create_mandatory_return_a_card_option_suite(self.active_player.get_top_cards_of_value(card_value))
+            self.take_option()
+
     def colonialism_effect_0(self):
         while not self.game_over:
             self.draw_and_tuck(3)
@@ -3030,6 +3056,7 @@ class InnovationGame(Game):
                      ['Education', 0, self.test_education_0_arrange, self.test_education_0_assess],
                      ['Engineering', 0, self.test_engineering_0_arrange, self.test_engineering_0_assess],               # Age 3
                      ['Engineering', 1, self.test_engineering_0_arrange, self.test_engineering_1_assess],
+                     ['Anatomy', 0, self.test_anatomy_0_arrange, self.test_anatomy_0_assess],                           # Age 4®
                      ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess],                  # Age 5
                      ['Statistics', 1, self.test_statistics_1_arrange, self.test_statistics_1_assess],
                      ['Canning', 0, self.test_canning_0_arrange, self.test_canning_0_assess],
@@ -3179,6 +3206,21 @@ class InnovationGame(Game):
     def aaa_test_card_is_returned(self, card):
         return self.get_pile_object(str(card.age)).cards and (self.get_pile_object(str(card.age)).cards[-1] == card)
 
+    def aaa_test_multiple_cards_are_returned(self, card_list):
+        index = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+        results = []
+        card_list.reverse()
+
+        for card in card_list:
+            if self.get_pile_object(str(card.age)).cards and \
+                    (self.get_pile_object(str(card.age)).cards[index[(card.age - 1)]] == card):
+                results.append(True)
+            else:
+                results.append(False)
+            index[(card.age - 1)] = index[(card.age - 1)] - 1
+
+        return all(results)
+
     def aaa_test_draw_a_card(self, value):
         draw_value = value
         while draw_value <= 10:
@@ -3314,6 +3356,17 @@ class InnovationGame(Game):
 
     def test_engineering_1_assess(self):
         return self.aaa_test_splay(self.red, self.left, [0,0,1,6,0,0], [0,0,1,5,0,0])
+
+    # Age 4 tests
+    def test_anatomy_0_arrange(self):
+        self.active_player = self.get_player_object(1)
+        self.aaa_test_setup_meld('Paper')
+        self.aaa_test_setup_score('Education')
+        self.test_general_setup()
+
+    def test_anatomy_0_assess(self):
+        card_list = [self.get_card_object('Education'), self.get_card_object('Paper')]
+        return self.aaa_test_multiple_cards_are_returned(card_list)
 
     # Age 5 tests
     def test_statistics_0_arrange(self):
