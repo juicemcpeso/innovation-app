@@ -595,6 +595,15 @@ class InnovationPlayer(Player):
 
         return top_cards_of_value
 
+    def get_highest_top_card_value(self):
+        highest_top_card_value = 0
+        for stack in self.stacks:
+            top_card = stack.see_top_card()
+            if top_card:
+                if top_card.age > highest_top_card_value:
+                    highest_top_card_value = top_card.age
+        return highest_top_card_value
+
     def get_pass_option(self):
         for option in self.options:
             if option.type == 'pass':
@@ -1822,6 +1831,8 @@ class InnovationGame(Game):
                         ['Printing Press', 1, 'lightbulb', False, self.printing_press_effect_1],
                         ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],              # Age 5
                         ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
+                        ['Chemistry', 0, 'factory', False, self.chemistry_effect_0],
+                        ['Chemistry', 1, 'factory', False, self.chemistry_effect_1],
                         ['Statistics', 0, 'leaf', True, self.statistics_effect_0],
                         ['Statistics', 1, 'leaf', False, self.statistics_effect_1],
                         ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
@@ -2034,6 +2045,15 @@ class InnovationGame(Game):
 
         if all(do_cards_meet_criteria):
             self.claim_special_achievement('Universe')
+
+    def chemistry_effect_0(self):
+        self.create_splay_option_suite([self.blue], self.right)
+        self.take_option()
+
+    def chemistry_effect_1(self):
+        self.draw_and_score((self.active_player.get_highest_top_card_value() + 1))
+        self.create_mandatory_return_a_card_option_suite(self.active_player.score_pile.cards)
+        self.take_option()
 
     def statistics_effect_0(self):
         highest_value = self.active_player.score_pile.highest_card_value()
@@ -2727,7 +2747,7 @@ class InnovationGame(Game):
         else:
             return True
 
-    # Age 5 tests
+    # Age 5
     def test_astronomy_setup(self, card_name):
         self.set_up_test_generic(card_name)
 
@@ -3102,7 +3122,9 @@ class InnovationGame(Game):
                      ['Perspective', 0, self.test_perspective_0_arrange, self.test_perspective_0_assess],
                      ['Printing Press', 0, self.test_printing_press_0_arrange, self.test_printing_press_0_assess],
                      ['Printing Press', 1, self.test_printing_press_1_arrange, self.test_printing_press_1_assess],
-                     ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess],                  # Age 5
+                     ['Chemistry', 0, self.test_chemistry_0_arrange, self.test_chemistry_0_assess],                     # Age 5
+                     ['Chemistry', 1, self.test_chemistry_1_arrange, self.test_chemistry_1_assess],
+                     ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess],
                      ['Statistics', 1, self.test_statistics_1_arrange, self.test_statistics_1_assess],
                      ['Canning', 0, self.test_canning_0_arrange, self.test_canning_0_assess],
                      ['Canning', 1, self.test_canning_1_arrange, self.test_canning_1_assess],                           # Age 6
@@ -3474,6 +3496,24 @@ class InnovationGame(Game):
         return self.aaa_test_splay(self.blue, self.right, [1, 1, 2, 0, 0, 0], [1, 0, 2, 0, 0, 0])
 
     # Age 5 tests
+    def test_chemistry_0_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_meld('Atomic Theory')
+
+        self.test_general_setup()
+
+    def test_chemistry_0_assess(self):
+        return self.aaa_test_splay(self.blue, self.right, [0, 0, 3, 0, 2, 0], [0, 0, 1, 0, 2, 0])
+
+    def test_chemistry_1_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_draw('Canning')
+        self.aaa_test_setup_meld('Paper')
+        self.test_general_setup()
+
+    def test_chemistry_1_assess(self):
+        return self.aaa_test_card_is_returned(self.get_card_object('Canning'))
+
     def test_statistics_0_arrange(self):
         self.active_player = self.get_player_object(1)
         self.aaa_test_setup_score('Mysticism')
