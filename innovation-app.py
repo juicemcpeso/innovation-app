@@ -1851,6 +1851,7 @@ class InnovationGame(Game):
                         ['Flight', 1, 'crown', False, self.flight_effect_1],
                         ['Computers', 0, 'clock', False, self.computers_effect_0],                  # Age 9
                         ['Computers', 1, 'clock', False, self.computers_effect_1],
+                        ['Ecology', 0, 'lightbulb', False, self.ecology_effect_0],
                         ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],
                         ['A.I.', 0, 'lightbulb', False, self.ai_effect_0],                          # Age 10
                         ['A.I.', 1, 'lightbulb', False, self.ai_effect_1],
@@ -2152,6 +2153,14 @@ class InnovationGame(Game):
     def computers_effect_1(self):
         self.draw_and_meld(10)
         self.execute_dogma_for_yourself()
+
+    def ecology_effect_0(self):
+        self.create_return_a_card_option_suite(self.active_player.hand.cards)
+        self.take_option()
+        if self.active_player.selected_option.type == 'return':
+            self.create_mandatory_score_a_card_option_suite(self.active_player.hand.cards)
+            self.take_option()
+            self.draw_to_hand_multiple(10, 2)
 
     def genetics_effect_0(self):
         self.draw_and_meld(10)
@@ -2595,7 +2604,7 @@ class InnovationGame(Game):
         else:
             return True
 
-    # Age 1 tests
+    # Age 1
     def test_metalworking(self):
         deck = self.test_see_all_draw_cards(1)
         cards_that_will_be_drawn = []
@@ -2644,7 +2653,7 @@ class InnovationGame(Game):
     def test_writing(self):
         return self.test_draw_cards(2, 1)
 
-    # Age 2 tests
+    # Age 2
     def test_calendar_setup(self, card_name):
         """Condition where player has cards in score pile"""
         self.set_up_test_generic(card_name)
@@ -2675,7 +2684,7 @@ class InnovationGame(Game):
 
         return self.test_draw_cards(2, total_leaves)
 
-    # Age 3 tests
+    # Age 3
     def test_paper(self):
         return self.test_paper_0() and self.test_paper_1()
 
@@ -2834,7 +2843,7 @@ class InnovationGame(Game):
 
         return score_correctly and tuck_correctly
 
-    # Age 6 tests
+    # Age 6
     def test_atomic_theory_setup(self, card_name):
         self.set_up_test_generic(card_name)
 
@@ -2898,7 +2907,7 @@ class InnovationGame(Game):
         else:
             return True
 
-    # Age 7 tests
+    # Age 7
     def test_electricity_setup(self, card_name):
         self.set_up_test_generic(card_name)
         self.active_card = self.get_card_object('Astronomy')
@@ -2927,7 +2936,7 @@ class InnovationGame(Game):
 
         return returned_correctly and draw_correctly
 
-    # Age 8 tests
+    # Age 8
     def test_flight(self):
         return self.test_flight_0() and self.test_flight_1()
 
@@ -2943,7 +2952,7 @@ class InnovationGame(Game):
         else:
             return True
 
-    # Age 9 tests
+    # Age 9
     def test_computers(self):
         return self.test_computers_0() and self.test_computers_1()
 
@@ -2982,7 +2991,7 @@ class InnovationGame(Game):
 
         return melded_correctly and scored_correctly
 
-    # Age 10 tests
+    # Age 10
     def test_ai_setup_0(self, card_name):
         """Case where robotics and software are present, but no lowest score"""
         self.set_up_test_generic(card_name)
@@ -3129,7 +3138,8 @@ class InnovationGame(Game):
                      ['Canning', 0, self.test_canning_0_arrange, self.test_canning_0_assess],
                      ['Canning', 1, self.test_canning_1_arrange, self.test_canning_1_assess],                           # Age 6
                      ['Bicycle', 0, self.test_bicycle_0_arrange, self.test_bicycle_0_assess],                           # Age 7
-                     ['Stem Cells', 0, self.test_stem_cells_0_arrange, self.test_stem_cells_0_assess]]
+                     ['Ecology', 0, self.test_ecology_0_arrange, self.test_ecology_0_assess],                           # Age 9
+                     ['Stem Cells', 0, self.test_stem_cells_0_arrange, self.test_stem_cells_0_assess]]                  # Age 10
 
         for test_to_add in aaa_tests:
             name = test_to_add[0] + ' ' + str(test_to_add[1])
@@ -3268,7 +3278,13 @@ class InnovationGame(Game):
         return player.is_card_top_card(card)
 
     def aaa_test_card_in_draw_pile(self, card):
-        return self.get_pile_object(str(card.age)).cards and (self.get_pile_object(str(card.age)).cards[0] == card)
+        return self.get_pile_object(str(card.age)).cards and (card in self.get_pile_object(str(card.age)).cards)
+
+    def aaa_test_multiple_cards_in_draw_pile(self, card_list):
+        results = []
+        for card in card_list:
+            results.append(self.aaa_test_card_in_draw_pile(card))
+        return all(results)
 
     def aaa_test_card_is_returned(self, card):
         return self.get_pile_object(str(card.age)).cards and (self.get_pile_object(str(card.age)).cards[-1] == card)
@@ -3593,6 +3609,40 @@ class InnovationGame(Game):
         elif self.get_player_object(0).selected_option.type == 'pass':
             return (self.aaa_test_cards_in_score_pile(self.get_player_object(0), pass_score_list)
                     and self.aaa_test_cards_in_hand(self.get_player_object(0), pass_hand_list))
+        else:
+            return False
+
+    # Age 8 tests
+
+    # Age 9 tests
+    def test_ecology_0_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_hand('Chemistry')
+        self.aaa_test_setup_hand('Paper')
+        self.aaa_test_setup_draw('Software')
+        self.aaa_test_setup_draw('Robotics')
+        self.test_general_setup()
+
+    def test_ecology_0_assess(self):
+        results = []
+        draw_cards = [self.get_card_object('Robotics'), self.get_card_object('Software')]
+        hand_cards = [self.get_card_object('Chemistry'), self.get_card_object('Paper')]
+
+        if self.active_player.selected_option_log[0].type == 'return':
+            returned_card = self.active_player.selected_option_log[0].card
+            results.append(self.aaa_test_card_is_returned(returned_card))
+
+            card_scored = self.active_player.selected_option_log[1].cards[0]
+            results.append(self.aaa_test_cards_in_score_pile(self.active_player, [card_scored]))
+
+            results.append(self.aaa_test_cards_in_hand(self.active_player, draw_cards))
+
+            return all(results)
+
+        elif self.active_player.selected_option_log[0].type == 'pass':
+            return self.aaa_test_cards_in_hand(self.active_player, hand_cards) and \
+                   self.aaa_test_multiple_cards_in_draw_pile(draw_cards)
+
         else:
             return False
 
