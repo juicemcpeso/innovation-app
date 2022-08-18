@@ -1818,6 +1818,8 @@ class InnovationGame(Game):
                         ['Invention', 0, 'lightbulb', False, self.invention_effect_0],
                         ['Invention', 1, 'lightbulb', False, self.invention_effect_1],
                         ['Perspective', 0, 'lightbulb', False, self.perspective_effect_0],
+                        ['Printing Press', 0, 'lightbulb', False, self.printing_press_effect_0],
+                        ['Printing Press', 1, 'lightbulb', False, self.printing_press_effect_1],
                         ['Astronomy', 0, 'lightbulb', False, self.astronomy_effect_0],              # Age 5
                         ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
                         ['Statistics', 0, 'leaf', True, self.statistics_effect_0],
@@ -1996,6 +1998,17 @@ class InnovationGame(Game):
                     self.take_option()
 
                 i = i + 1
+
+    def printing_press_effect_0(self):
+        self.create_return_a_card_option_suite(self.active_player.score_pile.cards)
+        self.take_option()
+        if self.active_player.selected_option.type == 'return':
+            top_card = self.active_player.purple_stack.see_top_card()
+            self.draw_to_hand((top_card.age + 2))
+
+    def printing_press_effect_1(self):
+        self.create_splay_option_suite([self.blue], self.right)
+        self.take_option()
 
     # Age 5 effects
     def astronomy_effect_0(self):
@@ -2657,7 +2670,7 @@ class InnovationGame(Game):
         colors_splayed_left = self.active_player.get_number_colors_splayed_a_direction(self.left)
         return self.test_draw_cards(4, colors_splayed_left)
 
-    # Age 4 tests
+    # Age 4
     def test_colonialism(self):
         all_cards = self.test_see_all_draw_cards(3)
         cards_to_be_drawn = []
@@ -3087,6 +3100,8 @@ class InnovationGame(Game):
                      ['Engineering', 1, self.test_engineering_0_arrange, self.test_engineering_1_assess],
                      ['Anatomy', 0, self.test_anatomy_0_arrange, self.test_anatomy_0_assess],                           # Age 4
                      ['Perspective', 0, self.test_perspective_0_arrange, self.test_perspective_0_assess],
+                     ['Printing Press', 0, self.test_printing_press_0_arrange, self.test_printing_press_0_assess],
+                     ['Printing Press', 1, self.test_printing_press_1_arrange, self.test_printing_press_1_assess],
                      ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess],                  # Age 5
                      ['Statistics', 1, self.test_statistics_1_arrange, self.test_statistics_1_assess],
                      ['Canning', 0, self.test_canning_0_arrange, self.test_canning_0_assess],
@@ -3432,6 +3447,31 @@ class InnovationGame(Game):
 
         else:
             return False
+
+    def test_printing_press_0_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_score('Metalworking')
+        self.aaa_test_setup_meld('Education')
+        self.aaa_test_setup_draw('Steam Engine')
+        self.test_general_setup()
+
+    def test_printing_press_0_assess(self):
+        if self.active_player.selected_option.type == 'return':
+            return self.aaa_test_card_is_returned(self.get_card_object('Metalworking')) and \
+                   self.aaa_test_cards_in_hand(self.active_player, [self.get_card_object('Steam Engine')])
+        elif self.active_player.selected_option.type == 'pass':
+            return self.aaa_test_cards_in_score_pile(self.active_player, [self.get_card_object('Metalworking')]) and \
+                   self.aaa_test_card_in_draw_pile(self.get_card_object('Steam Engine'))
+        else:
+            return False
+
+    def test_printing_press_1_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_meld('Calendar')
+        self.test_general_setup()
+
+    def test_printing_press_1_assess(self):
+        return self.aaa_test_splay(self.blue, self.right, [1, 1, 2, 0, 0, 0], [1, 0, 2, 0, 0, 0])
 
     # Age 5 tests
     def test_statistics_0_arrange(self):
