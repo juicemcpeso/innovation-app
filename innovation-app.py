@@ -161,13 +161,14 @@ class Test:
 
 class AAATest:
 
-    def __init__(self, tn, sup, act, fun, cd=None, en=None):
+    def __init__(self, tn, sup, act, fun, cd=None, en=None, tnum=None):
         self.name = 'Test: ' + tn
         self.setup = sup
         self.act = act
         self.function = fun
         self.card = cd
         self.effect_number = en
+        self.test_number = tn
 
         self.toggle = True
         self.result = False
@@ -1155,6 +1156,14 @@ class InnovationGame(Game):
                 lowest_players[0].winner = True
                 self.game_end()
 
+    def check_game_end_globalization(self):
+        for player in self.players:
+            leaves = self.active_player.count_icons_on_board(self.leaf)
+            factories = self.active_player.count_icons_on_board(self.factory)
+            if leaves > factories:
+                return
+        self.check_single_player_highest_score()
+
     def check_game_end_achievements(self):
         """Runs when a card is added to an achievement pile. Checks to see if anybody has met goal."""
         for player in self.players:
@@ -1163,6 +1172,13 @@ class InnovationGame(Game):
             if player.achievement_pile.get_pile_size() >= self.achievement_goal:
                 player.winner = True
                 self.game_end()
+
+    def check_single_player_highest_score(self):
+        highest_score_players = self.get_players_with_highest_score()
+        if len(highest_score_players) == 1:
+            highest_score_players[0].winner = True
+            self.winning_player = highest_score_players[0]
+            self.game_end()
 
     def game_end_score(self):
         highest_score_players = self.get_players_with_highest_score()
@@ -1855,6 +1871,8 @@ class InnovationGame(Game):
                         ['Genetics', 0, 'lightbulb', False, self.genetics_effect_0],
                         ['A.I.', 0, 'lightbulb', False, self.ai_effect_0],                          # Age 10
                         ['A.I.', 1, 'lightbulb', False, self.ai_effect_1],
+                        ['Globalization', 0, 'factory', True, self.globalization_effect_0],
+                        ['Globalization', 1, 'factory', False, self.globalization_effect_1],
                         ['Robotics', 0, 'factory', False, self.robotics_effect_0],
                         ['Software', 0, 'clock', False, self.software_effect_0],
                         ['Software', 1, 'clock', False, self.software_effect_1],
@@ -2174,6 +2192,14 @@ class InnovationGame(Game):
 
     def ai_effect_1(self):
         self.check_game_end_ai()
+
+    def globalization_effect_0(self):
+        self.create_mandatory_return_a_card_option_suite(self.active_player.get_top_cards_with_icon(self.leaf))
+        self.take_option()
+
+    def globalization_effect_1(self):
+        self.draw_and_score(6)
+        self.check_game_end_globalization()
 
     def robotics_effect_0(self):
         if self.active_player.green_stack.cards:
@@ -3121,29 +3147,32 @@ class InnovationGame(Game):
     # New test style tests
     def aaa_create_tests(self):
         # Card name, effect number, arrange, assess
-        aaa_tests = [['Agriculture', 0, self.test_agriculture_0_arrange, self.test_agriculture_0_assess],               # Age 1
-                     ['Canal Building', 0, self.test_canal_building_0_arrange, self.test_canal_building_0_assess],      # Age 2
-                     ['Mathematics', 0, self.test_mathematics_0_arrange, self.test_mathematics_0_assess],
-                     ['Education', 0, self.test_education_0_arrange, self.test_education_0_assess],
-                     ['Engineering', 0, self.test_engineering_0_arrange, self.test_engineering_0_assess],               # Age 3
-                     ['Engineering', 1, self.test_engineering_0_arrange, self.test_engineering_1_assess],
-                     ['Anatomy', 0, self.test_anatomy_0_arrange, self.test_anatomy_0_assess],                           # Age 4
-                     ['Perspective', 0, self.test_perspective_0_arrange, self.test_perspective_0_assess],
-                     ['Printing Press', 0, self.test_printing_press_0_arrange, self.test_printing_press_0_assess],
-                     ['Printing Press', 1, self.test_printing_press_1_arrange, self.test_printing_press_1_assess],
-                     ['Chemistry', 0, self.test_chemistry_0_arrange, self.test_chemistry_0_assess],                     # Age 5
-                     ['Chemistry', 1, self.test_chemistry_1_arrange, self.test_chemistry_1_assess],
-                     ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess],
-                     ['Statistics', 1, self.test_statistics_1_arrange, self.test_statistics_1_assess],
-                     ['Canning', 0, self.test_canning_0_arrange, self.test_canning_0_assess],
-                     ['Canning', 1, self.test_canning_1_arrange, self.test_canning_1_assess],                           # Age 6
-                     ['Bicycle', 0, self.test_bicycle_0_arrange, self.test_bicycle_0_assess],                           # Age 7
-                     ['Ecology', 0, self.test_ecology_0_arrange, self.test_ecology_0_assess],                           # Age 9
-                     ['Stem Cells', 0, self.test_stem_cells_0_arrange, self.test_stem_cells_0_assess]]                  # Age 10
+        aaa_tests = [['Agriculture', 0, self.test_agriculture_0_arrange, self.test_agriculture_0_assess, 0],               # Age 1
+                     ['Canal Building', 0, self.test_canal_building_0_arrange, self.test_canal_building_0_assess, 0],      # Age 2
+                     ['Mathematics', 0, self.test_mathematics_0_arrange, self.test_mathematics_0_assess, 0],
+                     ['Education', 0, self.test_education_0_arrange, self.test_education_0_assess, 0],
+                     ['Engineering', 0, self.test_engineering_0_arrange, self.test_engineering_0_assess, 0],               # Age 3
+                     ['Engineering', 1, self.test_engineering_0_arrange, self.test_engineering_1_assess, 0],
+                     ['Anatomy', 0, self.test_anatomy_0_arrange, self.test_anatomy_0_assess, 0],                           # Age 4
+                     ['Perspective', 0, self.test_perspective_0_arrange, self.test_perspective_0_assess, 0],
+                     ['Printing Press', 0, self.test_printing_press_0_arrange, self.test_printing_press_0_assess, 0],
+                     ['Printing Press', 1, self.test_printing_press_1_arrange, self.test_printing_press_1_assess, 0],
+                     ['Chemistry', 0, self.test_chemistry_0_arrange, self.test_chemistry_0_assess, 0],                     # Age 5
+                     ['Chemistry', 1, self.test_chemistry_1_arrange, self.test_chemistry_1_assess, 0],
+                     ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess, 0],
+                     ['Statistics', 1, self.test_statistics_1_arrange, self.test_statistics_1_assess, 0],
+                     ['Canning', 0, self.test_canning_0_arrange, self.test_canning_0_assess, 0],
+                     ['Canning', 1, self.test_canning_1_arrange, self.test_canning_1_assess, 0],                           # Age 6
+                     ['Bicycle', 0, self.test_bicycle_0_arrange, self.test_bicycle_0_assess, 0],                           # Age 7
+                     ['Ecology', 0, self.test_ecology_0_arrange, self.test_ecology_0_assess, 0],                           # Age 9
+                     ['Globalization', 0, self.test_globalization_0_arrange, self.test_globalization_0_assess, 0],         # Age 10
+                     ['Globalization', 1, self.test_globalization_1_arrange_0, self.test_globalization_1_assess_0, 0],
+                     ['Globalization', 1, self.test_globalization_1_arrange_1, self.test_globalization_1_assess_1, 1],
+                     ['Stem Cells', 0, self.test_stem_cells_0_arrange, self.test_stem_cells_0_assess, 0]]
 
         for test_to_add in aaa_tests:
-            name = test_to_add[0] + ' ' + str(test_to_add[1])
-            test = AAATest(name, test_to_add[2], self.get_effect_object(self.get_card_object(test_to_add[0]), test_to_add[1]), test_to_add[3], self.get_card_object(test_to_add[0]), test_to_add[1])
+            name = test_to_add[0] + ' effect ' + str(test_to_add[1]) + ', test ' + str(test_to_add[4])
+            test = AAATest(name, test_to_add[2], self.get_effect_object(self.get_card_object(test_to_add[0]), test_to_add[1]), test_to_add[3], self.get_card_object(test_to_add[0]), test_to_add[1], test_to_add[4])
             self.add_aaatest_to_game(test)
             associated_effect = self.get_effect_object(self.get_card_object(test_to_add[0]), test_to_add[1])
             associated_effect.tests.append(test)
@@ -3155,12 +3184,47 @@ class InnovationGame(Game):
         self.aaa_test_dogma()
         self.active_test.evaluate()
 
+    def aaa_test_an_effect(self, card_name, effect_number, test_number):
+        passed_tests = []
+        failed_tests = []
+        effect = self.get_effect_object(self.get_card_object(card_name), effect_number)
+
+        test = effect.tests[test_number]
+        self.active_test = test
+        self.aaa_run_test()
+        if self.active_test.result:
+            passed_tests.append(test)
+        else:
+            failed_tests.append(test)
+
+        return self.determine_pass_or_fail(failed_tests)
+
+    def aaa_run_all_tests(self):
+        passed_tests = []
+        failed_tests = []
+        self.testing = True
+
+        for test in self.tests:
+            if test.toggle:
+                self.game_over = False
+                self.winning_player = None
+                self.active_test = test
+                self.aaa_run_test()
+                if test.result:
+                    passed_tests.append(test)
+                else:
+                    failed_tests.append(test)
+                print(test.result)
+
+        return self.determine_pass_or_fail(failed_tests)
+
     def aaa_test_dogma(self):
         """Function to execute the dogma effects"""
         sharing_players = self.determine_who_can_share()
         self.aaa_execute_a_dogma_effect(sharing_players, self.get_effect_object(self.active_test.card, self.active_test.effect_number))
 
     def aaa_execute_a_dogma_effect(self, sharing_players, effect):
+        dogma_was_shared = False
         if effect.demand:
             # Demand effects
             for eligible_player in self.turn_player.share_order:
@@ -3216,38 +3280,6 @@ class InnovationGame(Game):
         card = self.get_card_object(card_name)
         self.find_and_remove_card(card)
         self.get_pile_object(str(card.age)).add_card_to_top(card)
-
-    def aaa_test_an_effect(self, card_name, effect_number):
-        passed_tests = []
-        failed_tests = []
-        effect = self.get_effect_object(self.get_card_object(card_name), effect_number)
-
-        for test in effect.tests:
-            self.active_test = test
-            self.aaa_run_test()
-            if self.active_test.result:
-                passed_tests.append(test)
-            else:
-                failed_tests.append(test)
-
-        return self.determine_pass_or_fail(failed_tests)
-
-    def aaa_run_all_tests(self):
-        passed_tests = []
-        failed_tests = []
-        self.testing = True
-
-        for test in self.tests:
-            if test.toggle:
-                self.active_test = test
-                self.aaa_run_test()
-                if test.result:
-                    passed_tests.append(test)
-                else:
-                    failed_tests.append(test)
-                print(test.result)
-
-        return(self.determine_pass_or_fail(failed_tests))
 
     def aaa_test_splay(self, splay_color, splay_direction, splayed_icons_list, non_splayed_icons_list):
         splay_name = "Splay {c} cards {d}".format(c=self.colors[splay_color], d=splay_direction)
@@ -3313,6 +3345,15 @@ class InnovationGame(Game):
     def aaa_test_draw_and_tuck(self, value):
         drawn_card = self.aaa_test_draw_a_card(value)
         return self.active_player.stacks[drawn_card.color].get_bottom_card() == drawn_card
+
+    def aaa_test_game_over(self):
+        return self.game_over
+
+    def aaa_test_winner(self, player):
+        return (player == self.winning_player) and player.winner
+
+    def aaa_test_game_not_over(self):
+        return not self.game_over and not self.winning_player
 
     # Age 1 tests
     def test_agriculture_0_arrange(self):
@@ -3647,6 +3688,44 @@ class InnovationGame(Game):
             return False
 
     # Age 10 tests
+    def test_globalization_0_arrange(self):
+        self.active_player = self.get_player_object(1)
+        self.aaa_test_setup_meld('Agriculture')
+        self.test_general_setup()
+
+    def test_globalization_0_assess(self):
+        return self.aaa_test_card_is_returned(self.get_card_object('Agriculture'))
+
+    def test_globalization_1_arrange_0(self):
+        self.active_player = self.get_player_object(1)
+        self.aaa_test_setup_meld('Robotics')
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_draw('Canning')
+        self.test_general_setup()
+
+    def test_globalization_1_assess_0(self):
+        return self.aaa_test_cards_in_score_pile(self.get_player_object(0), [self.get_card_object('Canning')]) and \
+               self.aaa_test_winner(self.get_player_object(0)) and \
+               self.aaa_test_game_over()
+
+    def test_globalization_1_arrange_1(self):
+        self.active_player = self.get_player_object(1)
+        self.aaa_test_setup_meld('Sailing')
+        self.aaa_test_setup_meld('Anatomy')
+        self.aaa_test_setup_meld('Machine Tools')
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_draw('Canning')
+        self.aaa_test_setup_draw('Atomic Theory')
+        self.test_general_setup()
+
+    def test_globalization_1_assess_1(self):
+        # print(self.aaa_test_cards_in_score_pile(self.get_player_object(1), [self.get_card_object('Atomic Theory')]))
+        # print(self.aaa_test_cards_in_score_pile(self.get_player_object(0), [self.get_card_object('Canning')]))
+        # print(self.aaa_test_game_not_over())
+        return self.aaa_test_cards_in_score_pile(self.get_player_object(1), [self.get_card_object('Atomic Theory')]) and \
+               self.aaa_test_cards_in_score_pile(self.get_player_object(0), [self.get_card_object('Canning')]) and \
+               self.aaa_test_game_not_over()
+
     def test_stem_cells_0_arrange(self):
         self.active_player = self.get_player_object(0)
         self.aaa_test_setup_hand('Mysticism')
@@ -3715,32 +3794,32 @@ def play_innovation_game():
 def test_innovation():
     number_of_tests = int(input('How many tests to run: '))
     i = 0
-    results = []
     while i < number_of_tests:
         g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
         g.aaa_create_tests()
-        g.aaa_run_all_tests()
+        results = g.aaa_run_all_tests()
         i = i + 1
 
     print('---')
     print('All tests run ' + str(number_of_tests) + ' times.')
-    print('Every test passed: ' + str(all(results)))
+    print('Every test passed: ' + str(results))
 
 
 def test_innovation_effect():
     card_name = input('Enter card name: ')
     effect_number = int(input('Enter effect number: '))
+    test_number = int(input('Enter test number: '))
     number_of_tests = int(input('How many tests to run: '))
     i = 0
     results = []
     while i < number_of_tests:
         g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
         g.aaa_create_tests()
-        results. append(g.aaa_test_an_effect(card_name, effect_number))
+        results.append(g.aaa_test_an_effect(card_name, effect_number, test_number))
         i = i + 1
 
     print('---')
-    print(str(card_name) + ' effect ' + str(effect_number) + ' run ' + str(number_of_tests) + ' times.')
+    print(str(card_name) + ' effect ' + str(effect_number) + ', test ' + str(test_number) + ' run ' + str(number_of_tests) + ' times.')
     print('All tests passed: ' + str(all(results)))
 
 
