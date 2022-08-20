@@ -35,7 +35,6 @@ Computers|blue|9|clock|clock||clock|factory|You may splay your red cards or your
 Ecology|yellow|9|lightbulb|leaf|lightbulb|lightbulb||You may return a card from your hand. If you do, score a card from your hand and draw two 10.||
 Genetics|blue|9|lightbulb|lightbulb|lightbulb|lightbulb||Draw and meld a 10. Score all cards beneath it.||
 A.I.|purple|10|clock|lightbulb|lightbulb|clock||Draw and score a 10.|If Robotics and Software are top cards on any board, the single player with the lowest score wins.|
-Bioengineering|blue|10|clock|lightbulb|clock|clock||Transfer a top card with a [Leaf] from any opponent’s board to your score pile.|If any player has fewer than three [Leaf] icons on their board, the single player with the most [Leaf] icons on their board wins.|
 Databases|green|10|clock||clock|clock|clock|I demand you return half (rounded up) of the cards in your score pile!||
 Globalization|yellow|10|factory||factory|factory|factory|I demand you return a top card with a [Leaf] on your board!|Draw and score a 6. If no player has more [Leaf] icons than [Factory] icons on their board, the single player with the most points wins.|
 Miniaturization|red|10|lightbulb||lightbulb|clock|lightbulb|You may return a card from your hand. If you returned a 10, draw a 10 for every different value of card in your score pile.||
