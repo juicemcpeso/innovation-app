@@ -330,6 +330,13 @@ class Pile:
 
         return cards_of_value
 
+    def get_different_values(self):
+        different_values = []
+        for card in self.cards:
+            if card.age not in different_values:
+                different_values.append(card.age)
+        return len(different_values)
+
     def __repr__(self):
         string = "<CardPile: %s>\n" % self.name
         for card in self.cards:
@@ -569,6 +576,14 @@ class InnovationPlayer(Player):
     def get_number_stacks_splayed_any_direction(self):
         return len(self.get_stacks_splayed_any_direction())
 
+    def get_top_cards(self):
+        top_cards = []
+        for stack in self.stacks:
+            top_card = stack.see_top_card()
+            if top_card:
+                top_cards.append(top_card)
+        return top_cards
+
     def get_top_cards_with_icon(self, icon):
         top_cards_with_icon = []
         for stack in self.stacks:
@@ -604,6 +619,13 @@ class InnovationPlayer(Player):
                 if top_card.age > highest_top_card_value:
                     highest_top_card_value = top_card.age
         return highest_top_card_value
+
+    def get_different_top_card_values(self):
+        top_card_values = []
+        for card in self.get_top_cards():
+            if card.age not in top_card_values:
+                top_card_values.append(card)
+        return len(top_card_values)
 
     def get_pass_option(self):
         for option in self.options:
@@ -1873,6 +1895,7 @@ class InnovationGame(Game):
                         ['A.I.', 1, 'lightbulb', False, self.ai_effect_1],
                         ['Globalization', 0, 'factory', True, self.globalization_effect_0],
                         ['Globalization', 1, 'factory', False, self.globalization_effect_1],
+                        ['Miniaturization', 0, 'lightbulb', False, self.miniaturization_effect_0],
                         ['Robotics', 0, 'factory', False, self.robotics_effect_0],
                         ['Software', 0, 'clock', False, self.software_effect_0],
                         ['Software', 1, 'clock', False, self.software_effect_1],
@@ -2200,6 +2223,12 @@ class InnovationGame(Game):
     def globalization_effect_1(self):
         self.draw_and_score(6)
         self.check_game_end_globalization()
+
+    def miniaturization_effect_0(self):
+        self.create_return_a_card_option_suite(self.active_player.hand.cards)
+        self.take_option()
+        if self.active_player.selected_option.type == 'return' and self.active_player.selected_option.card.age == 10:
+            self.draw_to_hand_multiple(10, self.active_player.score_pile.get_different_values())
 
     def robotics_effect_0(self):
         if self.active_player.green_stack.cards:
@@ -3168,6 +3197,7 @@ class InnovationGame(Game):
                      ['Globalization', 0, self.test_globalization_0_arrange, self.test_globalization_0_assess, 0],         # Age 10
                      ['Globalization', 1, self.test_globalization_1_arrange_0, self.test_globalization_1_assess_0, 0],
                      ['Globalization', 1, self.test_globalization_1_arrange_1, self.test_globalization_1_assess_1, 1],
+                     ['Miniaturization', 0, self.test_miniaturization_0_arrange, self.test_miniaturization_0_assess, 0],
                      ['Stem Cells', 0, self.test_stem_cells_0_arrange, self.test_stem_cells_0_assess, 0]]
 
         for test_to_add in aaa_tests:
@@ -3719,12 +3749,29 @@ class InnovationGame(Game):
         self.test_general_setup()
 
     def test_globalization_1_assess_1(self):
-        # print(self.aaa_test_cards_in_score_pile(self.get_player_object(1), [self.get_card_object('Atomic Theory')]))
-        # print(self.aaa_test_cards_in_score_pile(self.get_player_object(0), [self.get_card_object('Canning')]))
-        # print(self.aaa_test_game_not_over())
         return self.aaa_test_cards_in_score_pile(self.get_player_object(1), [self.get_card_object('Atomic Theory')]) and \
                self.aaa_test_cards_in_score_pile(self.get_player_object(0), [self.get_card_object('Canning')]) and \
                self.aaa_test_game_not_over()
+
+    def test_miniaturization_0_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_score('Anatomy')
+        self.aaa_test_setup_score('Statistics')
+        self.aaa_test_setup_score('Chemistry')
+        self.aaa_test_setup_hand('Globalization')
+        self.aaa_test_setup_draw('Software')
+        self.aaa_test_setup_draw('Robotics')
+        self.test_general_setup()
+
+    def test_miniaturization_0_assess(self):
+        draw_cards = [self.get_card_object('Software'), self.get_card_object('Robotics')]
+        if self.active_player.selected_option.type == 'return':
+            return self.aaa_test_card_is_returned(self.get_card_object('Globalization')) and \
+                   self.aaa_test_cards_in_hand(self.active_player, draw_cards)
+        elif self.active_player.selected_option.type == 'pass':
+            return self.aaa_test_multiple_cards_in_draw_pile(draw_cards)
+        else:
+            return False
 
     def test_stem_cells_0_arrange(self):
         self.active_player = self.get_player_object(0)
