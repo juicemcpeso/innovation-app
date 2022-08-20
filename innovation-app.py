@@ -3899,6 +3899,7 @@ def test_innovation_effect():
     results = []
     while i < number_of_tests:
         g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+        g.create_game()
         g.aaa_create_tests()
         results.append(g.aaa_test_an_effect(card_name, effect_number, test_number))
         i = i + 1
