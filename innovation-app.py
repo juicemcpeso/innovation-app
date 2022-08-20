@@ -3868,7 +3868,32 @@ def ai_gym():
 
 
 def play_innovation_game():
-    g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", False, 'Jurdrick', True, "Blanch", True)
+    player_list = [['Player 1', True], ['Player 2', True], ['Player 3', True], ['Player 4', True]]
+
+    while True:
+        number_of_players = int(input('Number of players: '))
+        if number_of_players in [2, 3, 4]:
+            break
+
+    for index in range(number_of_players):
+        while True:
+            ai_flag = int(input("{p} is:\n"
+                                "0 | Human\n"
+                                "1 | AI\n".format(p=player_list[index][0])))
+            if ai_flag == 0:
+                player_list[index][1] = False
+                player_name = str(input("Enter {s} name: ".format(s=(player_list[0][0]))))
+                player_list[index][0] = player_name
+                break
+            elif ai_flag == 1:
+                player_list[index][1] = True
+                break
+
+    g = InnovationGame('test', '2022-04-25', number_of_players, None,
+                       player_list[0][0], player_list[0][1],
+                       player_list[1][0], player_list[1][1],
+                       player_list[2][0], player_list[2][1],
+                       player_list[3][0], player_list[3][1])
     g.create_game()
     g.set_up_game()
     g.print_card_locations()
