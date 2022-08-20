@@ -9,7 +9,6 @@ Calendar|blue|2|leaf||leaf|leaf|lightbulb|If you have more cards in your score p
 Canal Building|yellow|2|crown||crown|leaf|crown|You may exchange all the highest cards in your hand with all the highest cards in your score pile.||
 Fermenting|yellow|2|leaf|leaf|leaf||castle|Draw a 2 for every color on your board with one or more [Leaf].||
 Mathematics|blue|2|lightbulb||lightbulb|crown|lightbulb|You may return a card from your hand. If you do, draw and meld a card of value one higher than the card you returned.||
-Alchemy|blue|3|castle||leaf|castle|castle|Draw and reveal a 4 for every three [Castle] icons on your board. If any of the drawn cards are red, return the cards drawn and all cards in your hand. Otherwise, keep them.|Meld a card from your hand, then score a card from your hand.|
 Education|purple|3|lightbulb|lightbulb|lightbulb|lightbulb||You may return the highest card from your score pile. If you do, draw a card of value two higher than the highest card remaining in your score pile.||
 Engineering|red|3|castle|castle||lightbulb|castle|I demand you transfer all top cards with a [Castle] from your board to my score pile!|You may splay your red cards left.|
 Paper|green|3|lightbulb||lightbulb|lightbulb|crown|You may splay your green or blue cards left.|Draw a 4 for every color you have splayed left.|
@@ -31,9 +30,7 @@ Machine Tools|red|6|factory|factory|factory||factory|Draw and score a card of va
 Metric System|green|6|crown||factory|crown|crown|If your green cards are splayed right, you may splay any one color of your cards right.|You may splay your green cards right.|
 Bicycle|green|7|crown|crown|crown|crown||You may exchange all the cards in your hand with all the cards in your score pile. If you exchange one, you must exchange them all.||
 Electricity|green|7|lightbulb|lightbulb|factory||factory|Return all your top cards without a [Factory], then draw an 8 for each card you returned.||
-Antibiotics|yellow|8|leaf|leaf|leaf|leaf||You may return up to three cards from your hand. For every different value of card that you returned, draw two 8.||
 Flight|red|8|crown|crown||clock|crown|If your red cards are splayed up, you may splay any one color of your cards up.|You may splay your red cards up.|
-Collaboration|green|9|crown||crown|clock|crown|I demand you draw two 9 and reveal them. Transfer the card of my choice to my board, and meld the other.|If you have ten or more green cards on your board, you win.|
 Computers|blue|9|clock|clock||clock|factory|You may splay your red cards or your green cards up.|Draw and meld a 10, then execute its non-demand dogma effects. Do not share them.|
 Ecology|yellow|9|lightbulb|leaf|lightbulb|lightbulb||You may return a card from your hand. If you do, score a card from your hand and draw two 10.||
 Genetics|blue|9|lightbulb|lightbulb|lightbulb|lightbulb||Draw and meld a 10. Score all cards beneath it.||
