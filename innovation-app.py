@@ -306,6 +306,12 @@ class Pile:
         if len(self.cards) > 0:
             return self.cards[-1]
 
+    def get_top_card_value(self):
+        top_card_value = 0
+        if self.see_top_card():
+            top_card_value = self.see_top_card().age
+        return top_card_value
+
     def shuffle_pile(self):
         random.seed(self.seed)
         random.shuffle(self.cards)
@@ -2069,8 +2075,8 @@ class InnovationGame(Game):
         self.create_return_a_card_option_suite(self.active_player.score_pile.cards)
         self.take_option()
         if self.active_player.selected_option.type == 'return':
-            top_card = self.active_player.purple_stack.see_top_card()
-            self.draw_to_hand((top_card.age + 2))
+            top_card_value = self.active_player.purple_stack.get_top_card_value()
+            self.draw_to_hand((top_card_value + 2))
 
     def printing_press_effect_1(self):
         self.create_splay_option_suite([self.blue], self.right)
@@ -3206,7 +3212,8 @@ class InnovationGame(Game):
                      ['Engineering', 1, self.test_engineering_0_arrange, self.test_engineering_1_assess, 0],
                      ['Anatomy', 0, self.test_anatomy_0_arrange, self.test_anatomy_0_assess, 0],                           # Age 4
                      ['Perspective', 0, self.test_perspective_0_arrange, self.test_perspective_0_assess, 0],
-                     ['Printing Press', 0, self.test_printing_press_0_arrange, self.test_printing_press_0_assess, 0],
+                     ['Printing Press', 0, self.test_printing_press_0_arrange_0, self.test_printing_press_0_assess_0, 0],
+                     ['Printing Press', 0, self.test_printing_press_0_arrange_1, self.test_printing_press_0_assess_1, 1],
                      ['Printing Press', 1, self.test_printing_press_1_arrange, self.test_printing_press_1_assess, 0],
                      ['Chemistry', 0, self.test_chemistry_0_arrange, self.test_chemistry_0_assess, 0],                     # Age 5
                      ['Chemistry', 1, self.test_chemistry_1_arrange, self.test_chemistry_1_assess, 0],
@@ -3573,20 +3580,36 @@ class InnovationGame(Game):
         else:
             return False
 
-    def test_printing_press_0_arrange(self):
+    def test_printing_press_0_arrange_0(self):
         self.active_player = self.get_player_object(0)
         self.aaa_test_setup_score('Metalworking')
         self.aaa_test_setup_meld('Education')
         self.aaa_test_setup_draw('Steam Engine')
         self.test_general_setup()
 
-    def test_printing_press_0_assess(self):
+    def test_printing_press_0_assess_0(self):
         if self.active_player.selected_option.type == 'return':
             return self.aaa_test_card_is_returned(self.get_card_object('Metalworking')) and \
                    self.aaa_test_cards_in_hand(self.active_player, [self.get_card_object('Steam Engine')])
         elif self.active_player.selected_option.type == 'pass':
             return self.aaa_test_cards_in_score_pile(self.active_player, [self.get_card_object('Metalworking')]) and \
                    self.aaa_test_card_in_draw_pile(self.get_card_object('Steam Engine'))
+        else:
+            return False
+
+    def test_printing_press_0_arrange_1(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_score('Metalworking')
+        self.aaa_test_setup_draw('Mathematics')
+        self.test_general_setup()
+
+    def test_printing_press_0_assess_1(self):
+        if self.active_player.selected_option.type == 'return':
+            return self.aaa_test_card_is_returned(self.get_card_object('Metalworking')) and \
+                   self.aaa_test_cards_in_hand(self.active_player, [self.get_card_object('Mathematics')])
+        elif self.active_player.selected_option.type == 'pass':
+            return self.aaa_test_cards_in_score_pile(self.active_player, [self.get_card_object('Metalworking')]) and \
+                   self.aaa_test_card_in_draw_pile(self.get_card_object('Mathematics'))
         else:
             return False
 
