@@ -1376,6 +1376,11 @@ class InnovationGame(Game):
         for card in card_list:
             self.move_card_to_pile(card, self.active_player.hand)
 
+    def reveal_card(self, card):
+        if not self.game_over:
+            # TODO - update to inform card counting module, remove printing
+            self.print_for_testing('{p} reveals {c}'.format(p=self.active_player, c=card.name))
+
     # Combination functions used as card actions
     def add_card_to_achievement_pile(self):
         """Moves selected card to a player's achievement pile"""
@@ -1871,6 +1876,7 @@ class InnovationGame(Game):
                         ['Astronomy', 1, 'lightbulb', False, self.astronomy_effect_1],
                         ['Chemistry', 0, 'factory', False, self.chemistry_effect_0],
                         ['Chemistry', 1, 'factory', False, self.chemistry_effect_1],
+                        ['Measurement', 0, 'lightbulb', False, self.measurement_effect_0],
                         ['Statistics', 0, 'leaf', True, self.statistics_effect_0],
                         ['Statistics', 1, 'leaf', False, self.statistics_effect_1],
                         ['Steam Engine', 0, 'factory', False, self.steam_engine_effect_0],
@@ -2096,6 +2102,15 @@ class InnovationGame(Game):
         self.draw_and_score((self.active_player.get_highest_top_card_value() + 1))
         self.create_mandatory_return_a_card_option_suite(self.active_player.score_pile.cards)
         self.take_option()
+
+    def measurement_effect_0(self):
+        self.create_return_a_card_option_suite(self.active_player.hand.cards)
+        self.take_option()
+        if self.active_player.selected_option.type == 'return':
+            card = self.active_player.selected_option.card
+            self.reveal_card(card)
+            self.active_player.stacks[card.color].set_splay(self.right)
+            self.draw_to_hand(self.active_player.stacks[card.color].get_pile_size())
 
     def statistics_effect_0(self):
         highest_value = self.active_player.score_pile.highest_card_value()
@@ -3188,6 +3203,7 @@ class InnovationGame(Game):
                      ['Printing Press', 1, self.test_printing_press_1_arrange, self.test_printing_press_1_assess, 0],
                      ['Chemistry', 0, self.test_chemistry_0_arrange, self.test_chemistry_0_assess, 0],                     # Age 5
                      ['Chemistry', 1, self.test_chemistry_1_arrange, self.test_chemistry_1_assess, 0],
+                     ['Measurement', 0, self.test_measurement_arrange, self.test_measurement_assess, 0],
                      ['Statistics', 0, self.test_statistics_0_arrange, self.test_statistics_0_assess, 0],
                      ['Statistics', 1, self.test_statistics_1_arrange, self.test_statistics_1_assess, 0],
                      ['Canning', 0, self.test_canning_0_arrange, self.test_canning_0_assess, 0],
@@ -3321,6 +3337,14 @@ class InnovationGame(Game):
                            and self.active_player.total_icons_on_board() == non_splayed_icons_list else False
         else:
             return False
+
+    def aaa_test_mandatory_splay(self, splay_color, splay_direction, splayed_icons_list, non_splayed_icons_list):
+        if self.active_player.selected_option.type == 'pass':
+            return True if self.active_player.stacks[splay_color].get_splay_type() == 'none' and \
+                           self.active_player.total_icons_on_board() == non_splayed_icons_list else False
+        else:
+            return True if self.active_player.stacks[splay_color].get_splay_type() == splay_direction \
+                           and self.active_player.total_icons_on_board() == splayed_icons_list else False
 
     def aaa_test_score_from_hand_option(self, player, card_list):
         if player.selected_option.type == 'score':
@@ -3600,6 +3624,26 @@ class InnovationGame(Game):
 
     def test_chemistry_1_assess(self):
         return self.aaa_test_card_is_returned(self.get_card_object('Canning'))
+
+    def test_measurement_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_meld('Statistics')
+        self.aaa_test_setup_meld('Anatomy')
+        self.aaa_test_setup_hand('Globalization')
+        self.aaa_test_setup_draw('Mathematics')
+        self.test_general_setup()
+
+    def test_measurement_assess(self):
+        if self.active_player.selected_option.type == 'return':
+            return self.aaa_test_mandatory_splay(self.yellow, self.right, [0, 5, 3, 0, 0, 0], [0, 4, 2, 0, 0, 0]) and \
+                   self.aaa_test_cards_in_hand(self.active_player, [self.get_card_object('Mathematics')]) and \
+                   self.aaa_test_card_is_returned(self.get_card_object('Globalization'))
+        elif self.active_player.selected_option.type == 'pass':
+            return self.aaa_test_splay(self.yellow, self.right, [0, 5, 3, 0, 0, 0], [0, 4, 2, 0, 0, 0]) and \
+                   self.aaa_test_cards_in_hand(self.active_player, [self.get_card_object('Globalization')]) and \
+                   self.aaa_test_card_in_draw_pile(self.get_card_object('Mathematics'))
+        else:
+            return False
 
     def test_statistics_0_arrange(self):
         self.active_player = self.get_player_object(1)
