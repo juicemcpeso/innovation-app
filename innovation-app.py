@@ -924,7 +924,7 @@ class InnovationGame(Game):
         self.active_test = None
 
         # Play a game (Play Ball!)
-        self.create_game()
+        # self.create_game()
         # self.set_up_game()
         # self.play_game()
 
@@ -1159,6 +1159,13 @@ class InnovationGame(Game):
         # All other rounds
         while not self.game_over:
             self.play_round()
+
+    # UI functions
+    def print_card_locations(self):
+        for pile in self.piles:
+            print(pile.name)
+            for card in pile.cards:
+                print(card.name)
 
     # Game end functions
     def game_end(self):
@@ -3497,22 +3504,7 @@ class InnovationGame(Game):
 
     def test_engineering_0_arrange(self):
         self.active_player = self.get_player_object(1)
-        self.active_card = self.get_card_object('City States')
-        self.meld_card()
-        self.active_card = self.get_card_object('Mysticism')
-        self.meld_card()
-        self.active_card = self.get_card_object('Sailing')
-        self.meld_card()
-        self.active_player = self.get_player_object(0)
-        self.active_card = self.get_card_object('Metalworking')
-        self.meld_card()
-        self.active_card = self.get_card_object('The Wheel')
-        self.meld_card()
-        self.test_general_setup()
-
-    def test_engineering_0_arrange(self):
-        self.active_player = self.get_player_object(1)
-        self.aaa_test_setup_meld('City States')
+        self.aaa_test_setup_meld('Education')
         self.aaa_test_setup_meld('Mysticism')
         self.aaa_test_setup_meld('Sailing')
 
@@ -3524,7 +3516,7 @@ class InnovationGame(Game):
 
     def test_engineering_0_assess(self):
         mysticism_correct = self.get_player_object(0).score_pile.is_card_in_pile(self.get_card_object('Mysticism'))
-        city_states_correct = self.get_player_object(1).purple_stack.is_card_in_pile(self.get_card_object('City States'))
+        city_states_correct = self.get_player_object(1).purple_stack.is_card_in_pile(self.get_card_object('Education'))
         sailing_correct = self.get_player_object(1).green_stack.is_card_in_pile(self.get_card_object('Sailing'))
 
         if mysticism_correct and city_states_correct and sailing_correct:
@@ -3879,6 +3871,7 @@ def play_innovation_game():
     g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", False, 'Jurdrick', True, "Blanch", True)
     g.create_game()
     g.set_up_game()
+    g.print_card_locations()
     g.play_game()
 
 
@@ -3887,6 +3880,7 @@ def test_innovation():
     i = 0
     while i < number_of_tests:
         g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+        g.create_game()
         g.aaa_create_tests()
         results = g.aaa_run_all_tests()
         i = i + 1

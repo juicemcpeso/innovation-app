@@ -1,11 +1,5 @@
 Name|Color|Age|Effect Type|Icon 0|Icon 1|Icon 2|Icon 3|Effect 0|Effect 1|Effect 2
 Agriculture|yellow|1|leaf||leaf|leaf|leaf|You may return a card from your hand. If you do, draw and score a card of value one higher than the card you returned.||
-Archery|red|1|castle|castle|lightbulb||castle|I DEMAND you draw a [1], then transfer the highest card in your hand to my hand.||
-City States|purple|1|crown||crown|crown|castle|I DEMAND you transfer a top card with a [Castle] from your board to my board if you have at least four [Castle] icons on your board! If you do, draw a 1!||
-Clothing|green|1|leaf||crown|leaf|leaf|Meld a card from your hand of different color from any card on your board.|Draw and score a 1 for each color present on your board not present on any other player’s board.|
-Code of Laws|purple|1|crown||crown|crown|leaf|You may tuck a card from your hand of the same color as any card on your board. If you do, you may splay that color of your cards left.||
-Domestication|yellow|1|castle|castle|crown||castle|Meld the lowest card in your hand. Draw a 1.||
-Masonry|yellow|1|castle|castle||castle|castle|You may meld any number of cards from your hand, each with a [Castle]. If you melded four or more cards in this way, claim the Monument achievement.||
 Metalworking|red|1|castle|castle|castle||castle|Draw and reveal a 1. If it has a [Castle], score it and repeat this dogma effect. Otherwise, keep it.||
 Mysticism|purple|1|castle||castle|castle|castle|Draw and reveal a 1. If it is the same color as any card on your board, meld it and draw a 1.||
 Sailing|green|1|crown|crown|crown||leaf|Draw and meld a 1||
