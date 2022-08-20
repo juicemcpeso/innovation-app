@@ -924,7 +924,7 @@ class InnovationGame(Game):
         self.active_test = None
 
         # Play a game (Play Ball!)
-        self.create_game()
+        # self.create_game()
         # self.set_up_game()
         # self.play_game()
 
@@ -1159,6 +1159,13 @@ class InnovationGame(Game):
         # All other rounds
         while not self.game_over:
             self.play_round()
+
+    # UI functions
+    def print_card_locations(self):
+        for pile in self.piles:
+            print(pile.name)
+            for card in pile.cards:
+                print(card.name)
 
     # Game end functions
     def game_end(self):
@@ -3497,22 +3504,7 @@ class InnovationGame(Game):
 
     def test_engineering_0_arrange(self):
         self.active_player = self.get_player_object(1)
-        self.active_card = self.get_card_object('City States')
-        self.meld_card()
-        self.active_card = self.get_card_object('Mysticism')
-        self.meld_card()
-        self.active_card = self.get_card_object('Sailing')
-        self.meld_card()
-        self.active_player = self.get_player_object(0)
-        self.active_card = self.get_card_object('Metalworking')
-        self.meld_card()
-        self.active_card = self.get_card_object('The Wheel')
-        self.meld_card()
-        self.test_general_setup()
-
-    def test_engineering_0_arrange(self):
-        self.active_player = self.get_player_object(1)
-        self.aaa_test_setup_meld('City States')
+        self.aaa_test_setup_meld('Education')
         self.aaa_test_setup_meld('Mysticism')
         self.aaa_test_setup_meld('Sailing')
 
@@ -3524,7 +3516,7 @@ class InnovationGame(Game):
 
     def test_engineering_0_assess(self):
         mysticism_correct = self.get_player_object(0).score_pile.is_card_in_pile(self.get_card_object('Mysticism'))
-        city_states_correct = self.get_player_object(1).purple_stack.is_card_in_pile(self.get_card_object('City States'))
+        city_states_correct = self.get_player_object(1).purple_stack.is_card_in_pile(self.get_card_object('Education'))
         sailing_correct = self.get_player_object(1).green_stack.is_card_in_pile(self.get_card_object('Sailing'))
 
         if mysticism_correct and city_states_correct and sailing_correct:
@@ -3843,8 +3835,11 @@ def ai_gym():
     winners = []
     percent_complete = 0
     while run_number < number_of_runs:
-        g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch",
-                           True)
+        g = InnovationGame('test', '2022-04-25', 2, None,
+                           "Player 1", True,
+                           "Player 2", True,
+                           'Player 3', True,
+                           "Player 4", True)
         g.verbose = False
         g.create_game()
         g.set_up_game()
@@ -3859,26 +3854,50 @@ def ai_gym():
             percent_complete = new_percent_complete
         print("\r{r}%".format(r=percent_complete), end="")
 
-        # print("\r{r}%".format(r=round(((run_number / (number_of_runs / 100))), 1)), end="")
-
-    mookifer = winners.count('Mookifer')
-    debbie = winners.count('Debbie')
+    player_1 = winners.count('Player 1')
+    player_2 = winners.count('Player 2')
     ties = winners.count('tie')
     print("\nWin Percentages:")
-    print("Mookifer {m}%".format(m=(100 * mookifer / number_of_runs)))
-    print("Debbie   {m}%".format(m=(100 * debbie / number_of_runs)))
+    print("Mookifer {m}%".format(m=(100 * player_1 / number_of_runs)))
+    print("Debbie   {m}%".format(m=(100 * player_2 / number_of_runs)))
     print("Ties     {t}%".format(t=(100 * ties / number_of_runs)))
     print("Win Percentages - only won games:")
     won_runs = number_of_runs - ties
     print(won_runs)
-    print("Mookifer {m}%".format(m=(round((100 * mookifer / won_runs), 2))))
-    print("Debbie   {m}%".format(m=(round((100 * debbie / won_runs), 2))))
+    print("Mookifer {m}%".format(m=(round((100 * player_1 / won_runs), 2))))
+    print("Debbie   {m}%".format(m=(round((100 * player_2 / won_runs), 2))))
 
 
 def play_innovation_game():
-    g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", False, 'Jurdrick', True, "Blanch", True)
+    player_list = [['Player 1', True], ['Player 2', True], ['Player 3', True], ['Player 4', True]]
+
+    while True:
+        number_of_players = int(input('Number of players: '))
+        if number_of_players in [2, 3, 4]:
+            break
+
+    for index in range(number_of_players):
+        while True:
+            ai_flag = int(input("{p} is:\n"
+                                "0 | Human\n"
+                                "1 | AI\n".format(p=player_list[index][0])))
+            if ai_flag == 0:
+                player_list[index][1] = False
+                player_name = str(input("Enter {s} name: ".format(s=(player_list[0][0]))))
+                player_list[index][0] = player_name
+                break
+            elif ai_flag == 1:
+                player_list[index][1] = True
+                break
+
+    g = InnovationGame('test', '2022-04-25', number_of_players, None,
+                       player_list[0][0], player_list[0][1],
+                       player_list[1][0], player_list[1][1],
+                       player_list[2][0], player_list[2][1],
+                       player_list[3][0], player_list[3][1])
     g.create_game()
     g.set_up_game()
+    g.print_card_locations()
     g.play_game()
 
 
@@ -3886,7 +3905,8 @@ def test_innovation():
     number_of_tests = int(input('How many tests to run: '))
     i = 0
     while i < number_of_tests:
-        g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+        g = InnovationGame('test', '2022-04-25', 2, None, "Player 1", True, "Player 2", True, 'Player 3', True, "Player 4", True)
+        g.create_game()
         g.aaa_create_tests()
         results = g.aaa_run_all_tests()
         i = i + 1
@@ -3904,7 +3924,8 @@ def test_innovation_effect():
     i = 0
     results = []
     while i < number_of_tests:
-        g = InnovationGame('test', '2022-04-25', 2, None, "Mookifer", True, "Debbie", True, 'Jurdrick', True, "Blanch", True)
+        g = InnovationGame('test', '2022-04-25', 2, None, "Player 1", True, "Player 2", True, 'Player 3', True, "Player 4", True)
+        g.create_game()
         g.aaa_create_tests()
         results.append(g.aaa_test_an_effect(card_name, effect_number, test_number))
         i = i + 1
