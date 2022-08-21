@@ -2013,7 +2013,7 @@ class InnovationGame(Game):
             self.draw_and_meld((self.active_player.selected_option.card.age + 1))
 
     def philosophy_effect_0(self):
-        self.create_splay_option_suite(self.color_constants, self.left)
+        self.create_splay_option_suite([self.blue, self.green, self.red, self.purple, self.yellow], self.left)
         self.take_option()
 
     def philosophy_effect_1(self):
@@ -3224,7 +3224,9 @@ class InnovationGame(Game):
         aaa_tests = [['Agriculture', 0, self.test_agriculture_0_arrange, self.test_agriculture_0_assess, 0],               # Age 1
                      ['Canal Building', 0, self.test_canal_building_0_arrange, self.test_canal_building_0_assess, 0],      # Age 2
                      ['Mathematics', 0, self.test_mathematics_0_arrange, self.test_mathematics_0_assess, 0],
-                     ['Education', 0, self.test_education_0_arrange, self.test_education_0_assess, 0],
+                     ['Philosophy', 0, self.test_philosophy_0_arrange, self.test_philosophy_0_assess, 0],
+                     ['Philosophy', 1, self.test_philosophy_1_arrange, self.test_philosophy_1_assess, 0],
+                     ['Education', 0, self.test_education_0_arrange, self.test_education_0_assess, 0],                      # Age 3
                      ['Engineering', 0, self.test_engineering_0_arrange, self.test_engineering_0_assess, 0],               # Age 3
                      ['Engineering', 1, self.test_engineering_0_arrange, self.test_engineering_1_assess, 0],
                      ['Anatomy', 0, self.test_anatomy_0_arrange, self.test_anatomy_0_assess, 0],                           # Age 4
@@ -3361,11 +3363,11 @@ class InnovationGame(Game):
     def aaa_test_splay(self, splay_color, splay_direction, splayed_icons_list, non_splayed_icons_list):
         splay_name = "Splay {c} cards {d}".format(c=self.colors[splay_color], d=splay_direction)
         if self.active_player.selected_option.name == splay_name:
-            return True if self.active_player.stacks[splay_color].get_splay_type() == splay_direction \
-                           and self.active_player.total_icons_on_board() == splayed_icons_list else False
+            return self.active_player.stacks[splay_color].get_splay_type() == splay_direction and \
+                   self.active_player.total_icons_on_board() == splayed_icons_list
         elif self.active_player.selected_option.name == "Pass":
-            return True if self.active_player.stacks[splay_color].get_splay_type() == 'none' \
-                           and self.active_player.total_icons_on_board() == non_splayed_icons_list else False
+            return self.active_player.stacks[splay_color].get_splay_type() == 'none' and \
+                   self.active_player.total_icons_on_board() == non_splayed_icons_list
         else:
             return False
 
@@ -3509,8 +3511,49 @@ class InnovationGame(Game):
             return False
 
     def test_philosophy_0_arrange(self):
-        pass
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_meld('Mysticism')
+        self.aaa_test_setup_meld('Agriculture')
+        self.aaa_test_setup_meld('Fermenting')
+        self.aaa_test_setup_meld('Sailing')
+        self.aaa_test_setup_meld('The Wheel')
+        self.aaa_test_setup_meld('Metalworking')
+        self.aaa_test_setup_meld('Engineering')
+        self.aaa_test_setup_meld('Writing')
+        self.aaa_test_setup_meld('Calendar')
+        self.test_general_setup()
 
+    def test_philosophy_0_assess(self):
+        if self.active_player.selected_option.type == 'splay':
+            if self.active_player.selected_option.color == self.blue:
+                return self.aaa_test_mandatory_splay(self.blue, self.left, [1, 4, 5, 6, 0, 0], [0, 4, 5, 6, 0, 0])
+            elif self.active_player.selected_option.color == self.green:
+                return self.aaa_test_mandatory_splay(self.green, self.left, [0, 5, 5, 6, 0, 0], [0, 4, 5, 6, 0, 0])
+            elif self.active_player.selected_option.color == self.red:
+                return self.aaa_test_mandatory_splay(self.red, self.left, [0, 4, 5, 7, 0, 0], [0, 4, 5, 6, 0, 0])
+            elif self.active_player.selected_option.color == self.purple:
+                return self.aaa_test_mandatory_splay(self.purple, self.left, [0, 4, 5, 7, 0, 0], [0, 4, 5, 6, 0, 0])
+            elif self.active_player.selected_option.color == self.yellow:
+                return self.aaa_test_mandatory_splay(self.yellow, self.left, [0, 5, 5, 6, 0, 0], [0, 4, 5, 6, 0, 0])
+        elif self.active_player.selected_option.type == 'pass':
+            return self.aaa_test_mandatory_splay(self.blue, self.left, [1, 4, 5, 6, 0, 0], [0, 4, 5, 6, 0, 0]) and \
+                   self.aaa_test_mandatory_splay(self.green, self.left, [0, 5, 5, 6, 0, 0], [0, 4, 5, 6, 0, 0]) and \
+                   self.aaa_test_mandatory_splay(self.red, self.left, [0, 4, 5, 7, 0, 0], [0, 4, 5, 6, 0, 0]) and \
+                   self.aaa_test_mandatory_splay(self.purple, self.left, [0, 4, 5, 7, 0, 0], [0, 4, 5, 6, 0, 0]) and \
+                   self.aaa_test_mandatory_splay(self.yellow, self.left, [0, 5, 5, 6, 0, 0], [0, 4, 5, 6, 0, 0])
+        else:
+            return False
+
+    def test_philosophy_1_arrange(self):
+        self.active_player = self.get_player_object(0)
+        self.aaa_test_setup_hand('Agriculture')
+        self.test_general_setup()
+
+    def test_philosophy_1_assess(self):
+        if self.active_player.selected_option.type == 'score':
+            return self.aaa_test_cards_in_score_pile(self.active_player, [self.get_card_object('Agriculture')])
+        elif self.active_player.selected_option.type == 'pass':
+            return self.aaa_test_cards_in_hand(self.active_player, [self.get_card_object('Agriculture')])
 
     # Age 3 tests
     def test_education_0_arrange(self):
