@@ -893,6 +893,7 @@ class InnovationGame(Game):
         self.purple = 2
         self.red = 3
         self.yellow = 4
+        self.color_constants = [self.blue, self.green, self.purple, self.red, self.yellow]
 
         self.stacks = []
 
@@ -1854,6 +1855,12 @@ class InnovationGame(Game):
         self.create_score_all_option(name, cards_to_score)
         self.create_pass_option()
 
+    def create_score_a_card_option_suite(self, cards_to_score):
+        self.active_player.clear_options()
+        for card in cards_to_score:
+            self.create_score_a_card_option(card)
+        self.create_pass_option()
+
     def create_mandatory_score_a_card_option_suite(self, cards_to_score):
         self.active_player.clear_options()
         for card in cards_to_score:
@@ -1872,6 +1879,8 @@ class InnovationGame(Game):
                         ['Canal Building', 0, 'crown', False, self.canal_building_effect_0],
                         ['Fermenting', 0, 'leaf', False, self.fermenting_effect_0],
                         ['Mathematics', 0, 'lightbulb', False, self.mathematics_effect_0],
+                        ['Philosophy', 0, 'lightbulb', False, self.philosophy_effect_0],
+                        ['Philosophy', 1, 'lightbulb', False, self.philosophy_effect_1],
                         ['Education', 0, 'lightbulb', False, self.education_effect_0],              # Age 3
                         ['Engineering', 0, 'castle', True, self.engineering_effect_0],
                         ['Engineering', 1, 'castle', False, self.engineering_effect_1],
@@ -2002,6 +2011,14 @@ class InnovationGame(Game):
         self.take_option()
         if self.active_player.selected_option.type == 'return':
             self.draw_and_meld((self.active_player.selected_option.card.age + 1))
+
+    def philosophy_effect_0(self):
+        self.create_splay_option_suite(self.color_constants, self.left)
+        self.take_option()
+
+    def philosophy_effect_1(self):
+        self.create_score_a_card_option_suite(self.active_player.hand.cards)
+        self.take_option()
 
     # Age 3 effects
     def education_effect_0(self):
@@ -3490,6 +3507,10 @@ class InnovationGame(Game):
                    self.aaa_test_card_in_draw_pile(self.get_card_object('Fermenting'))
         else:
             return False
+
+    def test_philosophy_0_arrange(self):
+        pass
+
 
     # Age 3 tests
     def test_education_0_arrange(self):
