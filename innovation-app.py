@@ -1517,7 +1517,7 @@ class InnovationGame(Game):
 
     # Actions
     def action_draw(self):
-        self.draw_to_hand(1)
+        self.draw_to_hand(self.active_player.get_highest_top_card_value())
 
     def action_meld(self):
         self.active_card = self.turn_card
